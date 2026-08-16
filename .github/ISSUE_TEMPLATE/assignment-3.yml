@@ -1,0 +1,99 @@
+name: "📝 Assignment 3 Submission"
+description: "Submit your Assignment 3 — End-to-End Streaming Pipeline"
+title: "[A3] <Your Name> — Assignment 3"
+labels: ["assignment-3"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Assignment 3 — End-to-End Streaming Retail Analytics Pipeline
+        **Due:** End of Module 2 · The capstone for Module 2.
+
+  - type: input
+    id: student_name
+    attributes:
+      label: "Full Name"
+    validations:
+      required: true
+
+  - type: input
+    id: student_id
+    attributes:
+      label: "Student ID / Roll Number"
+    validations:
+      required: true
+
+  - type: textarea
+    id: repo_link
+    attributes:
+      label: "GitHub Repository Link"
+      placeholder: "https://github.com/your-username/sda-assignment3"
+    validations:
+      required: true
+
+  - type: textarea
+    id: files
+    attributes:
+      label: "Files Submitted"
+      placeholder: |
+        - pipeline_producer.py
+        - pipeline_consumer.py
+        - dashboard.py
+        - models.py
+        - writeup.md
+        - screenshot.png
+    validations:
+      required: true
+
+  - type: input
+    id: messages_processed
+    attributes:
+      label: "Number of messages processed in your demo"
+      placeholder: "e.g. 75"
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: "Dashboard Screenshot"
+      description: "Attach a screenshot of your dashboard running with at least 50 messages processed"
+    validations:
+      required: true
+
+  - type: textarea
+    id: writeup
+    attributes:
+      label: "Business Write-up"
+      description: "What business decisions could a retail manager make from this real-time data that they couldn't make from yesterday's batch report? (minimum 150 words)"
+      placeholder: "Write your answer here..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: event_types
+    attributes:
+      label: "Event Types Implemented"
+      description: "List the 3+ event types you implemented and what each tracks"
+      placeholder: |
+        1. order_placed — tracks new purchase orders
+        2. order_cancelled — ...
+        3. item_viewed — ...
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "Submission Checklist"
+      options:
+        - label: "At least 3 event types implemented"
+          required: true
+        - label: "Two consumer groups implemented"
+          required: true
+        - label: "Screenshot shows 50+ messages processed"
+          required: true
+        - label: "Business write-up is included (150+ words)"
+          required: true
+        - label: "Code runs end-to-end without errors"
+          required: true

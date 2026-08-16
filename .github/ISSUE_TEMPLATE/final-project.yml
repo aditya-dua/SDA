@@ -1,0 +1,127 @@
+name: "🏆 Final Project Submission"
+description: "Submit your Final Project — Streaming Analytics Solution"
+title: "[PROJECT] <Team Name> — Final Project"
+labels: ["project"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Final Project — Streaming Analytics Solution
+        **Lecture 20 Capstone** · Each team presents a real-world streaming analytics solution.
+        Fill in all sections carefully — this is your project record for grading.
+
+  - type: input
+    id: team_name
+    attributes:
+      label: "Team Name"
+      placeholder: "e.g. Team DataFlow"
+    validations:
+      required: true
+
+  - type: textarea
+    id: members
+    attributes:
+      label: "Team Members"
+      description: "Full name and student ID for each member"
+      placeholder: |
+        1. Priya Sharma — MBA2025-042
+        2. Rahul Mehta — MBA2025-017
+        3. Ananya Iyer — MBA2025-031
+    validations:
+      required: true
+
+  - type: dropdown
+    id: industry
+    attributes:
+      label: "Industry Domain"
+      options:
+        - "E-Commerce / Retail"
+        - "Financial Services / Fintech"
+        - "Healthcare"
+        - "Logistics / Supply Chain"
+        - "Media & Entertainment"
+        - "Manufacturing / IoT"
+        - "Other"
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: "Business Problem Statement"
+      description: "Describe the real business problem your streaming solution solves (100–200 words)"
+      placeholder: "Our company faces the problem of..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: architecture
+    attributes:
+      label: "Architecture Description"
+      description: "Describe your pipeline: data source → Kafka → processing → output. What tools did you use?"
+      placeholder: |
+        Data Source: ...
+        Kafka Topic(s): ...
+        Consumer(s): ...
+        Storage: ...
+        Dashboard: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: repo_link
+    attributes:
+      label: "GitHub Repository Link"
+      description: "Public repo with all project code, README, and setup instructions"
+      placeholder: "https://github.com/your-team/sda-final-project"
+    validations:
+      required: true
+
+  - type: textarea
+    id: demo_link
+    attributes:
+      label: "Demo Video / Presentation Link"
+      description: "Link to a short demo video (2–5 min) or your presentation slides"
+      placeholder: "https://..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: roi
+    attributes:
+      label: "Business ROI Analysis"
+      description: "What is the measurable business value of your solution? Include at least one quantified metric (cost saved, time reduced, risk mitigated, revenue opportunity)."
+      placeholder: "By implementing this solution, [Company] can expect..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: challenges
+    attributes:
+      label: "Key Challenges & How You Solved Them"
+      placeholder: "1. Challenge: ... Solution: ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: future
+    attributes:
+      label: "What Would You Build Next?"
+      description: "If you had 3 more months, what would you add?"
+      placeholder: "We would enhance the solution by..."
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "Submission Checklist"
+      options:
+        - label: "GitHub repository is public with a clear README"
+          required: true
+        - label: "Demo video or presentation is linked"
+          required: true
+        - label: "Business ROI analysis is included"
+          required: true
+        - label: "All team members are listed"
+          required: true
+        - label: "Code runs end-to-end (setup instructions in README)"
+          required: true
