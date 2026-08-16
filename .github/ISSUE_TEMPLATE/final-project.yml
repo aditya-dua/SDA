@@ -1,5 +1,5 @@
 name: "🏆 Final Project Submission"
-description: "Submit your Final Project — Streaming Analytics Solution"
+description: "Submit your Final Project — End-to-end streaming analytics solution (40 Marks)"
 title: "[PROJECT] <Team Name> — Final Project"
 labels: ["project"]
 body:
@@ -7,121 +7,134 @@ body:
     attributes:
       value: |
         ## Final Project — Streaming Analytics Solution
-        **Lecture 20 Capstone** · Each team presents a real-world streaming analytics solution.
-        Fill in all sections carefully — this is your project record for grading.
+        **Presentation:** Lecture 20 &nbsp;|&nbsp; **Marks:** 40 &nbsp;|&nbsp; **Team Size:** 3 members
+        
+        ### Rubric
+        | Component | Weight |
+        |-----------|--------|
+        | Problem Statement | 25% |
+        | Charts & Visualisations | 30% |
+        | Identification of Data | 20% |
+        | Technical Working (live demo) | 15% |
+        | Discussion (Q&A) | 10% |
 
   - type: input
     id: team_name
     attributes:
       label: "Team Name"
-      placeholder: "e.g. Team DataFlow"
+      placeholder: "e.g. DataFlow Analytics"
     validations:
       required: true
 
   - type: textarea
-    id: members
+    id: team_members
     attributes:
-      label: "Team Members"
-      description: "Full name and student ID for each member"
+      label: "Team Members (Name + Student ID)"
       placeholder: |
         1. Priya Sharma — MBA2025-042
-        2. Rahul Mehta — MBA2025-017
-        3. Ananya Iyer — MBA2025-031
+        2. Arjun Patel — MBA2025-018
+        3. Neha Gupta — MBA2025-063
+    validations:
+      required: true
+
+  - type: input
+    id: repo_link
+    attributes:
+      label: "GitHub Repository Link"
+      description: "Public repo with full source code, README, and setup instructions"
+      placeholder: "https://github.com/your-team/sda-final-project"
     validations:
       required: true
 
   - type: dropdown
     id: industry
     attributes:
-      label: "Industry Domain"
+      label: "Industry / Domain"
       options:
         - "E-Commerce / Retail"
-        - "Financial Services / Fintech"
+        - "Banking / Fintech"
         - "Healthcare"
         - "Logistics / Supply Chain"
         - "Media & Entertainment"
+        - "Telecom"
         - "Manufacturing / IoT"
+        - "Travel & Hospitality"
         - "Other"
     validations:
       required: true
 
   - type: textarea
-    id: problem
+    id: problem_statement
     attributes:
-      label: "Business Problem Statement"
-      description: "Describe the real business problem your streaming solution solves (100–200 words)"
-      placeholder: "Our company faces the problem of..."
-    validations:
-      required: true
-
-  - type: textarea
-    id: architecture
-    attributes:
-      label: "Architecture Description"
-      description: "Describe your pipeline: data source → Kafka → processing → output. What tools did you use?"
+      label: "Problem Statement (25% of marks)"
+      description: "What specific business problem does your project solve? Why does it require real-time streaming rather than batch processing? (minimum 150 words)"
       placeholder: |
-        Data Source: ...
-        Kafka Topic(s): ...
-        Consumer(s): ...
-        Storage: ...
-        Dashboard: ...
+        Business problem: [describe clearly]
+        Why streaming is necessary: [explain the time-sensitivity]
+        Impact if NOT solved in real-time: [quantify if possible]
+        Your solution summary: [1–2 sentences]
     validations:
       required: true
 
   - type: textarea
-    id: repo_link
+    id: data_identification
     attributes:
-      label: "GitHub Repository Link"
-      description: "Public repo with all project code, README, and setup instructions"
-      placeholder: "https://github.com/your-team/sda-final-project"
+      label: "Data Sources Identified (20% of marks)"
+      description: "List all data sources, their schemas, volume, and frequency. Explain why you chose these sources."
+      placeholder: |
+        Source 1: [name] — [schema] — [volume/freq]
+        Source 2: ...
+        Kafka topics created: [topic names and purpose]
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical_architecture
+    attributes:
+      label: "Technical Architecture (15% of marks)"
+      description: "Describe the full pipeline: data sources → producer(s) → Kafka topics → consumer(s) → processing → dashboard. Include any additional tools used."
+      placeholder: |
+        Producer(s): [file names and what they do]
+        Kafka topics: [names]
+        Consumer(s): [file names and processing logic]
+        Dashboard: [library + what it shows]
+        Additional tools: [e.g. SQLite, Redis, Streamlit]
+    validations:
+      required: true
+
+  - type: textarea
+    id: charts_visualisations
+    attributes:
+      label: "Charts & Visualisations (30% of marks)"
+      description: "List all dashboard charts/metrics with a brief explanation of the business insight each one provides. Attach screenshots."
+      placeholder: |
+        1. [Chart type] — [what it shows] — [business decision it enables]
+        2. ...
+        [Drag and drop dashboard screenshots here]
     validations:
       required: true
 
   - type: textarea
     id: demo_link
     attributes:
-      label: "Demo Video / Presentation Link"
-      description: "Link to a short demo video (2–5 min) or your presentation slides"
-      placeholder: "https://..."
-    validations:
-      required: true
-
-  - type: textarea
-    id: roi
-    attributes:
-      label: "Business ROI Analysis"
-      description: "What is the measurable business value of your solution? Include at least one quantified metric (cost saved, time reduced, risk mitigated, revenue opportunity)."
-      placeholder: "By implementing this solution, [Company] can expect..."
-    validations:
-      required: true
-
-  - type: textarea
-    id: challenges
-    attributes:
-      label: "Key Challenges & How You Solved Them"
-      placeholder: "1. Challenge: ... Solution: ..."
-    validations:
-      required: true
-
-  - type: textarea
-    id: future
-    attributes:
-      label: "What Would You Build Next?"
-      description: "If you had 3 more months, what would you add?"
-      placeholder: "We would enhance the solution by..."
+      label: "Demo Video Link (if not presenting live)"
+      description: "YouTube, Google Drive, or Loom link to a 5-minute demo of the running pipeline and dashboard"
+      placeholder: "https://loom.com/share/..."
 
   - type: checkboxes
     id: checklist
     attributes:
       label: "Submission Checklist"
       options:
-        - label: "GitHub repository is public with a clear README"
+        - label: "All 3 team members are listed with Student IDs"
           required: true
-        - label: "Demo video or presentation is linked"
+        - label: "GitHub repo is public with a clear README and setup instructions"
           required: true
-        - label: "Business ROI analysis is included"
+        - label: "Problem statement clearly explains why streaming is needed"
           required: true
-        - label: "All team members are listed"
+        - label: "Dashboard has at least 4 charts or metric visualisations"
           required: true
-        - label: "Code runs end-to-end (setup instructions in README)"
+        - label: "Live pipeline demo is ready for Lecture 20 presentation"
+          required: true
+        - label: "All team members have read and followed academic honesty guidelines"
           required: true

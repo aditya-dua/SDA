@@ -1,13 +1,13 @@
-name: "📝 Assignment 1 Submission"
-description: "Submit your Assignment 1 — Streaming Consumer Analytics"
-title: "[A1] <Your Name> — Assignment 1"
+name: "📝 Assignment 1 — Industry & Data Pipeline"
+description: "Submit Assignment 1 — Industry identification, data sources, and pipeline design (10 Marks)"
+title: "[A1] <Your Full Name> — Assignment 1"
 labels: ["assignment-1"]
 body:
   - type: markdown
     attributes:
       value: |
-        ## Assignment 1 — Streaming Consumer Analytics
-        **Due:** End of Module 2 · Please fill in all sections before submitting.
+        ## Assignment 1 — Industry & Data Pipeline Identification
+        **Due:** 16 August 2026 &nbsp;|&nbsp; **Marks:** 10 &nbsp;|&nbsp; Fill in every section before submitting.
 
   - type: input
     id: student_name
@@ -25,74 +25,77 @@ body:
     validations:
       required: true
 
-  - type: textarea
-    id: repo_link
+  - type: dropdown
+    id: industry
     attributes:
-      label: "GitHub Repository Link"
-      description: "Link to your public repo containing the submission code"
-      placeholder: "https://github.com/your-username/sda-assignment1"
+      label: "Industry Selected"
+      description: "Which industry have you chosen for your streaming analytics project?"
+      options:
+        - "E-Commerce / Retail"
+        - "Banking / Fintech"
+        - "Healthcare"
+        - "Logistics / Supply Chain"
+        - "Media & Entertainment"
+        - "Telecom"
+        - "Manufacturing / IoT"
+        - "Travel & Hospitality"
+        - "Other (describe below)"
     validations:
       required: true
 
   - type: textarea
-    id: files
+    id: industry_justification
     attributes:
-      label: "Files Submitted"
-      description: "List the files you have submitted"
+      label: "Why This Industry?"
+      description: "In 2–3 sentences, explain why streaming data analytics is particularly valuable in your chosen industry."
+      placeholder: "e.g. In retail, real-time inventory tracking allows stores to respond to stockouts instantly rather than discovering them in overnight batch reports..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: data_sources
+    attributes:
+      label: "Data Sources Identified"
+      description: "List at least 3 data sources your pipeline will use. For each, specify the source name, data type, and approximate volume/frequency."
       placeholder: |
-        - consumer_analytics.py
-        - consumer_alerts.py
-        - writeup.md
+        1. POS transaction logs — JSON events, ~500/min per store
+        2. Website clickstream — page views and add-to-cart events, ~2000/min
+        3. Inventory management system — stock level updates, ~100/min
+    validations:
+      required: true
+
+  - type: textarea
+    id: pipeline_design
+    attributes:
+      label: "Data Pipeline Design"
+      description: "Describe the pipeline you plan to use: source → Kafka topic(s) → consumer/processing → output/dashboard. Include topic names and what each consumer will do."
+      placeholder: |
+        Source: POS system → Producer: pos_producer.py → Topic: transactions
+        Consumer 1: real_time_revenue.py → aggregates revenue per minute
+        Consumer 2: alert_consumer.py → triggers alert if revenue drops > 20%
+        Output: terminal dashboard / matplotlib chart
     validations:
       required: true
 
   - type: textarea
     id: business_question
     attributes:
-      label: "Business Insight (Required Write-up)"
-      description: "What is one business decision your manager could make TODAY using your real-time consumer that they could NOT make from yesterday's batch report? (minimum 100 words)"
+      label: "Business Decision Enabled"
+      description: "What is ONE business decision a manager could make in real time with this pipeline that they CANNOT make from a daily batch report? (minimum 75 words)"
       placeholder: "Write your answer here..."
     validations:
       required: true
-
-  - type: textarea
-    id: screenshot
-    attributes:
-      label: "Screenshot / Output"
-      description: "Paste your consumer terminal output or attach a screenshot showing at least 20 messages processed"
-      placeholder: "Paste terminal output here or drag-and-drop a screenshot..."
-    validations:
-      required: true
-
-  - type: dropdown
-    id: extension
-    attributes:
-      label: "Which optional extension did you attempt?"
-      options:
-        - "Option A — Revenue by Product Table"
-        - "Option B — Custom Alert Threshold"
-        - "Option C — Orders per Minute Tracker"
-        - "None (core requirements only)"
-    validations:
-      required: true
-
-  - type: textarea
-    id: challenges
-    attributes:
-      label: "Challenges / Learnings"
-      description: "What was the hardest part? What surprised you?"
-      placeholder: "Optional but encouraged..."
 
   - type: checkboxes
     id: checklist
     attributes:
       label: "Submission Checklist"
       options:
-        - label: "My code runs without errors"
+        - label: "I have identified at least 3 data sources with justification"
           required: true
-        - label: "I have included the business write-up"
+        - label: "I have described my pipeline end-to-end (producer → topic → consumer → output)"
           required: true
-        - label: "My repo is public (or I have shared access)"
+        - label: "I have written the business decision rationale"
           required: true
         - label: "I have read and followed academic honesty guidelines"
           required: true
