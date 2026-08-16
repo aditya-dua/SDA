@@ -1,0 +1,92 @@
+name: "📝 Assignment 2 Submission"
+description: "Submit your Assignment 2 — Data Serialization & Schema Design"
+title: "[A2] <Your Name> — Assignment 2"
+labels: ["assignment-2"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Assignment 2 — Data Serialization & Schema Design
+        **Due:** End of Module 2 · Complete all sections before submitting.
+
+  - type: input
+    id: student_name
+    attributes:
+      label: "Full Name"
+      placeholder: "e.g. Rahul Mehta"
+    validations:
+      required: true
+
+  - type: input
+    id: student_id
+    attributes:
+      label: "Student ID / Roll Number"
+      placeholder: "e.g. MBA2025-017"
+    validations:
+      required: true
+
+  - type: textarea
+    id: repo_link
+    attributes:
+      label: "GitHub Repository Link"
+      placeholder: "https://github.com/your-username/sda-assignment2"
+    validations:
+      required: true
+
+  - type: textarea
+    id: files
+    attributes:
+      label: "Files Submitted"
+      placeholder: |
+        - avro_producer.py
+        - avro_consumer.py
+        - compare_sizes.py
+        - schema.avsc
+        - writeup.md
+    validations:
+      required: true
+
+  - type: textarea
+    id: size_result
+    attributes:
+      label: "Size Comparison Results"
+      description: "Paste the output of compare_sizes.py here"
+      placeholder: |
+        JSON size:  218 bytes
+        Avro size:  74 bytes
+        Savings:    144 bytes (66.1% smaller)
+        ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: cost_calc
+    attributes:
+      label: "Cost Calculation"
+      description: "If your company processes 500M events/day at your measured savings rate, what is the annual S3 cost saving at $0.023/GB? Show your working."
+      placeholder: "Working: ..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: schema_evolution
+    attributes:
+      label: "Schema Evolution Test"
+      description: "Describe what happened when you added a new field with a default value vs. without a default. Paste relevant output."
+      placeholder: "I added field X with default=0.0 and observed..."
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "Submission Checklist"
+      options:
+        - label: "compare_sizes.py output is included"
+          required: true
+        - label: "Cost calculation is included"
+          required: true
+        - label: "Schema evolution test is documented"
+          required: true
+        - label: "Code runs without errors"
+          required: true
