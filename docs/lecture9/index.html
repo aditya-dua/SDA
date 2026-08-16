@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lecture 9 — Analytics & Alerts | Streaming Data Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:       #0d1117; --bg2: #161b22; --bg3: #1c2128;
+      --border:   #30363d; --text: #e6edf3; --text2: #8b949e;
+      --accent:   #b91c1c; --accent2: #dc2626;
+      --green:    #16a34a; --green-bg: rgba(22,163,74,0.12);
+      --code-bg:  #161b22; --code-border: #30363d;
+    }
+    [data-theme="light"] {
+      --bg:       #f6f8fa; --bg2: #ffffff; --bg3: #eaeef2;
+      --border:   #d0d7de; --text: #1a1a2e; --text2: #57606a;
+      --accent:   #8C1515; --accent2: #b91c1c;
+      --green:    #166534; --green-bg: rgba(22,101,52,0.08);
+      --code-bg:  #f6f8fa; --code-border: #d0d7de;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); transition: background 0.3s, color 0.3s; }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem; display: flex; align-items: center;
+      justify-content: space-between; height: 52px;
+      backdrop-filter: blur(12px);
+    }
+    .nav-left { display: flex; align-items: center; gap: 12px; }
+    .nav-home {
+      font-size: 0.82rem; color: var(--text2); text-decoration: none;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .nav-home:hover { color: var(--text); }
+    .nav-sep { color: var(--border); }
+    .nav-title { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+    .nav-right { display: flex; align-items: center; gap: 0.75rem; }
+    .nav-badge {
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; padding: 3px 8px; border-radius: 4px;
+      background: var(--green-bg); color: var(--green); border: 1px solid var(--green);
+    }
+    .theme-btn {
+      background: var(--bg3); border: 1px solid var(--border);
+      color: var(--text2); border-radius: 7px; padding: 5px 10px;
+      cursor: pointer; font-size: 0.78rem; font-family: inherit;
+      display: flex; align-items: center; gap: 5px; transition: all 0.2s;
+    }
+    .theme-btn:hover { border-color: var(--accent); color: var(--text); }
+
+    /* SLIDE PROGRESS */
+    .progress-bar {
+      position: fixed; top: 52px; left: 0; right: 0; height: 3px;
+      background: var(--border); z-index: 99;
+    }
+    .progress-fill {
+      height: 100%; background: var(--accent);
+      transition: width 0.3s ease; width: 0%;
+    }
+
+    /* SLIDE CONTAINER */
+    .slides-wrap { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+
+    /* SLIDE */
+    .slide {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 14px; padding: 2.5rem 3rem;
+      margin-bottom: 1.25rem;
+      scroll-margin-top: 72px;
+      transition: border-color 0.2s;
+    }
+    .slide:hover { border-color: #444c56; }
+    .slide.active { border-color: var(--accent); }
+    .slide-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.5rem; padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .slide-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem; color: var(--text2); letter-spacing: 0.05em;
+    }
+    .slide-tag {
+      font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 0.08em; padding: 3px 9px; border-radius: 20px;
+    }
+    .slide-tag.theory  { background: rgba(185,28,28,0.1); color: var(--accent); border: 1px solid var(--accent); }
+    .slide-tag.lab     { background: rgba(22,163,74,0.1); color: var(--green); border: 1px solid var(--green); }
+    .slide-tag.title   { background: rgba(139,148,158,0.1); color: var(--text2); border: 1px solid var(--border); }
+    .slide-tag.discuss { background: rgba(217,119,6,0.1); color: #d97706; border: 1px solid #d97706; }
+
+    /* TITLE SLIDE */
+    .slide.title-slide {
+      background: linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%);
+      text-align: center; padding: 4rem 3rem;
+    }
+    .title-slide .lec-label {
+      display: inline-block; font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--accent); border: 1px solid var(--accent);
+      padding: 4px 14px; border-radius: 20px; margin-bottom: 1.5rem;
+    }
+    .title-slide h1 {
+      font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700;
+      line-height: 1.2; margin-bottom: 0.75rem; letter-spacing: -0.02em;
+    }
+    .title-slide h1 span { color: var(--accent); }
+    .title-slide .subtitle { font-size: 1rem; color: var(--text2); margin-bottom: 2.5rem; }
+    .title-meta {
+      display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;
+    }
+    .meta-item { font-size: 0.8rem; color: var(--text2); display: flex; align-items: center; gap: 6px; }
+    .meta-item strong { color: var(--text); }
+
+    /* SLIDE CONTENT */
+    .slide h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; letter-spacing: -0.01em; }
+    .slide h2 span { color: var(--accent); }
+    .slide h3 { font-size: 1.05rem; font-weight: 600; margin: 1.5rem 0 0.6rem; color: var(--text); }
+    .slide p  { font-size: 0.95rem; line-height: 1.7; color: var(--text2); margin-bottom: 0.75rem; }
+    .slide p strong { color: var(--text); }
+    .slide ul, .slide ol { padding-left: 1.4rem; margin-bottom: 0.75rem; }
+    .slide li { font-size: 0.93rem; line-height: 1.7; color: var(--text2); margin-bottom: 0.3rem; }
+    .slide li strong { color: var(--text); }
+
+    /* PIPELINE DIAGRAM */
+    .pipeline {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0; flex-wrap: nowrap; margin: 1.5rem 0;
+      font-size: 0.82rem;
+    }
+    .pipe-box {
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 8px; padding: 0.75rem 1rem; text-align: center;
+      min-width: 110px;
+    }
+    .pipe-box .pb-label { font-weight: 600; color: var(--text); font-size: 0.85rem; }
+    .pipe-box .pb-sub   { font-size: 0.72rem; color: var(--text2); margin-top: 3px; }
+    .pipe-box.highlight { border-color: var(--accent); background: rgba(185,28,28,0.08); }
+    .pipe-box.highlight .pb-label { color: var(--accent); }
+    .pipe-arrow { font-size: 1.2rem; color: var(--text2); padding: 0 0.5rem; flex-shrink: 0; }
+
+    /* TABLE */
+    .slide table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85rem; }
+    .slide th {
+      background: var(--bg3); text-align: left; padding: 0.6rem 0.9rem;
+      font-weight: 600; font-size: 0.78rem; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--text2);
+      border: 1px solid var(--border);
+    }
+    .slide td { padding: 0.6rem 0.9rem; border: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+    .slide td strong { color: var(--text); }
+    .slide tr:hover td { background: var(--bg3); }
+
+    /* CODE */
+    pre {
+      background: var(--code-bg); border: 1px solid var(--code-border);
+      border-radius: 8px; padding: 1.1rem 1.25rem;
+      overflow-x: auto; margin: 1rem 0;
+      position: relative;
+    }
+    pre code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem; line-height: 1.65;
+      color: var(--text); background: none;
+    }
+    .code-header {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-bottom: none; border-radius: 8px 8px 0 0;
+      padding: 0.5rem 1.1rem;
+    }
+    .code-header + pre { border-radius: 0 0 8px 8px; margin-top: 0; }
+    .code-lang { font-size: 0.7rem; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
+    .copy-btn {
+      font-size: 0.7rem; background: var(--bg2); border: 1px solid var(--border);
+      color: var(--text2); padding: 3px 10px; border-radius: 5px;
+      cursor: pointer; font-family: inherit; transition: all 0.15s;
+    }
+    .copy-btn:hover { border-color: var(--accent); color: var(--text); }
+
+    /* CALLOUT */
+    .callout {
+      border-left: 3px solid var(--accent); background: rgba(185,28,28,0.06);
+      border-radius: 0 8px 8px 0; padding: 0.9rem 1.1rem; margin: 1rem 0;
+    }
+    .callout.green { border-color: var(--green); background: var(--green-bg); }
+    .callout p { margin: 0; color: var(--text); font-size: 0.9rem; }
+    .callout strong { color: var(--accent); }
+    .callout.green strong { color: var(--green); }
+
+    /* DECISION GRID */
+    .decision-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 0.75rem; margin: 1rem 0;
+    }
+    .decision-card {
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 8px; padding: 1rem 1.1rem;
+    }
+    .decision-card .dc-action {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: var(--accent); margin-bottom: 5px;
+    }
+    .decision-card .dc-desc { font-size: 0.82rem; color: var(--text); font-weight: 500; margin-bottom: 4px; }
+    .decision-card .dc-ex   { font-size: 0.78rem; color: var(--text2); }
+
+    /* OBJECTIVES */
+    .objectives-list { list-style: none; padding: 0; margin: 0; }
+    .objectives-list li {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 0.6rem 0; border-bottom: 1px solid var(--border);
+      font-size: 0.93rem; color: var(--text2);
+    }
+    .objectives-list li:last-child { border-bottom: none; }
+    .objectives-list .check { color: var(--green); font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+    /* DOWNLOAD SECTION */
+    .download-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 0.75rem; margin: 1rem 0;
+    }
+    .download-card {
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 8px; padding: 1rem 1.1rem;
+      display: flex; align-items: center; gap: 12px;
+      text-decoration: none; color: inherit;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .download-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .dl-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .dl-info .dl-name { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+    .dl-info .dl-desc { font-size: 0.75rem; color: var(--text2); margin-top: 2px; }
+    .dl-badge {
+      margin-left: auto; font-size: 0.65rem; font-weight: 600;
+      background: var(--green-bg); color: var(--green);
+      border: 1px solid var(--green); padding: 2px 7px; border-radius: 10px;
+      flex-shrink: 0;
+    }
+
+    /* TIMELINE TABLE */
+    .timeline { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    .timeline th { background: var(--bg3); padding: 0.5rem 0.9rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text2); border: 1px solid var(--border); text-align: left; }
+    .timeline td { padding: 0.55rem 0.9rem; border: 1px solid var(--border); font-size: 0.83rem; color: var(--text2); }
+    .timeline td:first-child { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--accent); white-space: nowrap; }
+    .timeline tr:hover td { background: var(--bg3); }
+
+    /* NAV FOOTER */
+    .slide-nav {
+      position: fixed; bottom: 1.5rem; right: 1.5rem;
+      display: flex; gap: 0.5rem; z-index: 50;
+    }
+    .slide-nav button {
+      background: var(--bg2); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 8px 14px;
+      cursor: pointer; font-size: 0.85rem; font-family: inherit;
+      transition: all 0.15s;
+    }
+    .slide-nav button:hover { border-color: var(--accent); }
+    .slide-counter {
+      background: var(--bg2); border: 1px solid var(--border);
+      color: var(--text2); border-radius: 8px; padding: 8px 14px;
+      font-size: 0.78rem; display: flex; align-items: center;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* SYNTAX HIGHLIGHT TOKENS */
+    .kw  { color: #ff7b72; }   /* keywords */
+    .st  { color: #a5d6ff; }   /* strings */
+    .cm  { color: #8b949e; font-style: italic; }  /* comments */
+    .fn  { color: #d2a8ff; }   /* functions */
+    .num { color: #79c0ff; }   /* numbers */
+    .var { color: #ffa657; }   /* variables */
+
+    @media (max-width: 640px) {
+      .slide { padding: 1.5rem 1.25rem; }
+      .pipeline { flex-direction: column; gap: 0.4rem; }
+      .pipe-arrow { transform: rotate(90deg); padding: 0.2rem 0; }
+      .decision-grid { grid-template-columns: 1fr; }
+      .slide-nav { bottom: 1rem; right: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+
+  <nav>
+    <div class="nav-left">
+      <a href="../index.html" class="nav-home">← Course Home</a>
+      <span class="nav-sep">/</span>
+      <span class="nav-title">Lecture 9</span>
+    </div>
+    <div class="nav-right">
+      <a href="../commands.html" style="font-size:.78rem;font-weight:600;color:var(--text2);text-decoration:none;border:1px solid var(--border);padding:4px 10px;border-radius:6px;">⌨️ Commands</a>
+      <a href="../submissions.html" style="font-size:.78rem;font-weight:600;color:var(--accent);text-decoration:none;border:1px solid var(--accent);padding:4px 10px;border-radius:6px;">Submissions</a>
+      <span class="nav-badge">Module 2</span>
+      <button class="theme-btn" onclick="toggleTheme()">
+        <span id="ti">☀️</span><span id="tl">Light</span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+  <div class="slides-wrap" id="slides">
+
+    <!-- SLIDE 1: TITLE -->
+    <div class="slide title-slide" id="s1" data-slide="1">
+      <div class="lec-label">Lecture 09 · Module 2</div>
+      <h1>Analytics &amp; <span>Alerts</span> from Kafka</h1>
+      <p class="subtitle">Decision Framework · Offset Strategy · Analytics Consumer · Alert Triggers</p>
+      <div class="title-meta">
+        <div class="meta-item">📅 <strong>Module 2</strong> — Making Kafka Work</div>
+        <div class="meta-item">⏱ <strong>90 min</strong></div>
+        <div class="meta-item">🎓 MBA Streaming Data Analytics</div>
+      </div>
+    </div>
+
+    <!-- SLIDE 2: AGENDA -->
+    <div class="slide" id="s2" data-slide="2">
+      <div class="slide-header">
+        <span class="slide-num">02 / 09</span>
+        <span class="slide-tag title">Agenda</span>
+      </div>
+      <h2>Today's <span>90 Minutes</span></h2>
+      <table class="timeline">
+        <thead><tr><th>Time</th><th>Segment</th><th>Format</th></tr></thead>
+        <tbody>
+          <tr><td>0 – 10</td><td>Recap — consumer_stock.py + MongoDB from L7 &amp; L8</td><td>Q&amp;A</td></tr>
+          <tr><td>10 – 25</td><td>4 things you can do with streaming data (decision framework)</td><td>Lecture</td></tr>
+          <tr><td>25 – 35</td><td>earliest vs latest — a business decision, not a config</td><td>Lecture</td></tr>
+          <tr><td>35 – 60</td><td>Python consumer — analytics (running totals, aggregates)</td><td>Lab</td></tr>
+          <tr><td>60 – 80</td><td>Python consumer — triggers &amp; alerts</td><td>Lab</td></tr>
+          <tr><td>80 – 90</td><td>Takeaways + Module 2 wrap-up</td><td>Wrap-up</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SLIDE 3: DECISION FRAMEWORK -->
+    <div class="slide" id="s3" data-slide="3">
+      <div class="slide-header">
+        <span class="slide-num">03 / 09</span>
+        <span class="slide-tag theory">Framework</span>
+      </div>
+      <h2>4 Things You Can Do With <span>Streaming Data</span></h2>
+      <p>Every real-world streaming consumer does one or more of these. Decide before you write a line of code.</p>
+      <div class="decision-grid">
+        <div class="decision-card">
+          <div class="dc-action">💾 Store</div>
+          <div class="dc-desc">Persist every message to a database</div>
+          <div class="dc-ex">MongoDB, PostgreSQL, S3 — enables batch analysis later</div>
+        </div>
+        <div class="decision-card">
+          <div class="dc-action">📊 Aggregate</div>
+          <div class="dc-desc">Compute running totals, averages, counts</div>
+          <div class="dc-ex">Revenue per minute, average price last 10 ticks, top 5 movers</div>
+        </div>
+        <div class="decision-card">
+          <div class="dc-action">🔔 Trigger</div>
+          <div class="dc-desc">Fire an action when a threshold is crossed</div>
+          <div class="dc-ex">Price drops 5% → send alert; order > ₹10L → flag for review</div>
+        </div>
+        <div class="decision-card">
+          <div class="dc-action">✨ Enrich</div>
+          <div class="dc-desc">Join stream with reference data in real time</div>
+          <div class="dc-ex">Add company name to ticker, convert currency, classify transaction</div>
+        </div>
+      </div>
+      <div class="callout">
+        <p><strong>MBA lens:</strong> What question does your manager need answered in the next 60 seconds? That question determines which action(s) your consumer performs.</p>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: EARLIEST VS LATEST -->
+    <div class="slide" id="s4" data-slide="4">
+      <div class="slide-header">
+        <span class="slide-num">04 / 09</span>
+        <span class="slide-tag theory">Concept</span>
+      </div>
+      <h2>Where Do You <span>Start Reading?</span></h2>
+      <p>The <code>auto_offset_reset</code> setting is a <strong>business decision</strong>, not just a config option.</p>
+
+      <table>
+        <thead><tr><th>Setting</th><th>Behaviour</th><th>Use When</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><code>earliest</code></td>
+            <td>Read ALL messages from the very first one ever stored</td>
+            <td>Building a historical report, backfilling a database, first-time setup</td>
+          </tr>
+          <tr>
+            <td><code>latest</code></td>
+            <td>Ignore old messages — only read what arrives from now on</td>
+            <td>Live dashboard, real-time alert, anything that only cares about "right now"</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout green" style="margin-top:1rem;">
+        <p><strong>Analogy:</strong> <code>earliest</code> = reading a book from page 1. <code>latest</code> = walking into a conversation already in progress and only listening from now.</p>
+      </div>
+
+      <div class="callout" style="margin-top:.75rem;">
+        <p><strong>Important:</strong> Once a consumer has read a message, its offset is committed. If the consumer restarts it resumes from the last committed offset — not from <code>earliest</code> or <code>latest</code> again.</p>
+      </div>
+    </div>
+
+    <!-- SLIDE 5: ANALYTICS CONSUMER -->
+    <div class="slide" id="s5" data-slide="5">
+      <div class="slide-header">
+        <span class="slide-num">05 / 09</span>
+        <span class="slide-tag lab">Lab — Level 2</span>
+      </div>
+      <h2>Python Consumer — <span>Analytics</span></h2>
+      <p>Running totals per symbol — see TCS and INFY stats update with every new message.</p>
+      <div class="code-header"><span class="code-lang">python · consumer_analytics.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><code><span class="kw">from</span> kafka <span class="kw">import</span> KafkaConsumer
+<span class="kw">import</span> json
+<span class="kw">from</span> collections <span class="kw">import</span> defaultdict
+
+consumer = <span class="fn">KafkaConsumer</span>(
+    <span class="st">'stock-topic'</span>,
+    bootstrap_servers=[<span class="st">'localhost:9092'</span>],
+    auto_offset_reset=<span class="st">'earliest'</span>,
+    value_deserializer=<span class="kw">lambda</span> x: json.<span class="fn">loads</span>(x.<span class="fn">decode</span>(<span class="st">'utf-8'</span>))
+)
+
+totals = defaultdict(<span class="kw">lambda</span>: {<span class="st">'count'</span>: <span class="num">0</span>, <span class="st">'sum'</span>: <span class="num">0.0</span>, <span class="st">'min'</span>: <span class="fn">float</span>(<span class="st">'inf'</span>), <span class="st">'max'</span>: <span class="num">0.0</span>})
+
+<span class="kw">for</span> msg <span class="kw">in</span> consumer:
+    data  = msg.value
+    sym   = data.<span class="fn">get</span>(<span class="st">'symbol'</span>, <span class="st">'?'</span>)
+    price = <span class="fn">float</span>(data.<span class="fn">get</span>(<span class="st">'price'</span>, data.<span class="fn">get</span>(<span class="st">'Close'</span>, <span class="num">0</span>)))
+
+    s = totals[sym]
+    s[<span class="st">'count'</span>] += <span class="num">1</span>
+    s[<span class="st">'sum'</span>]   += price
+    s[<span class="st">'min'</span>]    = <span class="fn">min</span>(s[<span class="st">'min'</span>], price)
+    s[<span class="st">'max'</span>]    = <span class="fn">max</span>(s[<span class="st">'max'</span>], price)
+    avg           = s[<span class="st">'sum'</span>] / s[<span class="st">'count'</span>]
+
+    <span class="fn">print</span>(<span class="st">f"[{sym}]  price=₹{price:.2f}  avg=₹{avg:.2f}  min=₹{s['min']:.2f}  max=₹{s['max']:.2f}  n={s['count']}"</span>)</code></pre>
+    </div>
+
+    <!-- SLIDE 6: ALERTS CONSUMER -->
+    <div class="slide" id="s6" data-slide="6">
+      <div class="slide-header">
+        <span class="slide-num">06 / 09</span>
+        <span class="slide-tag lab">Lab — Level 3</span>
+      </div>
+      <h2>Python Consumer — <span>Triggers &amp; Alerts</span></h2>
+      <p>Fire an alert when a stock price drops more than a set threshold from the previous tick.</p>
+      <div class="code-header"><span class="code-lang">python · consumer_alerts.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><code><span class="kw">from</span> kafka <span class="kw">import</span> KafkaConsumer
+<span class="kw">import</span> json
+
+consumer = <span class="fn">KafkaConsumer</span>(
+    <span class="st">'stock-topic'</span>,
+    bootstrap_servers=[<span class="st">'localhost:9092'</span>],
+    auto_offset_reset=<span class="st">'earliest'</span>,
+    value_deserializer=<span class="kw">lambda</span> x: json.<span class="fn">loads</span>(x.<span class="fn">decode</span>(<span class="st">'utf-8'</span>))
+)
+
+ALERT_THRESHOLD = <span class="num">2.0</span>   <span class="cm"># alert if price drops more than 2%</span>
+prev = {}                 <span class="cm"># last price per symbol</span>
+
+<span class="kw">for</span> msg <span class="kw">in</span> consumer:
+    data  = msg.value
+    sym   = data.<span class="fn">get</span>(<span class="st">'symbol'</span>, <span class="st">'?'</span>)
+    price = <span class="fn">float</span>(data.<span class="fn">get</span>(<span class="st">'price'</span>, data.<span class="fn">get</span>(<span class="st">'Close'</span>, <span class="num">0</span>)))
+
+    <span class="kw">if</span> sym <span class="kw">in</span> prev:
+        change_pct = ((price - prev[sym]) / prev[sym]) * <span class="num">100</span>
+        <span class="kw">if</span> change_pct &lt;= -ALERT_THRESHOLD:
+            <span class="fn">print</span>(<span class="st">f"🚨 ALERT  {sym}  ₹{prev[sym]:.2f} → ₹{price:.2f}  ({change_pct:.2f}%)"</span>)
+        <span class="kw">else</span>:
+            <span class="fn">print</span>(<span class="st">f"   OK     {sym}  ₹{price:.2f}  ({change_pct:+.2f}%)"</span>)
+
+    prev[sym] = price</code></pre>
+
+      <div class="callout green">
+        <p><strong>Challenge:</strong> Change <code>ALERT_THRESHOLD</code> to 1.0 and run with <code>btc_producer.py</code> (from Lecture 6). How often does BTC trigger your alert?</p>
+      </div>
+    </div>
+
+    <!-- SLIDE 7: BUSINESS SCENARIOS -->
+    <div class="slide" id="s7" data-slide="7">
+      <div class="slide-header">
+        <span class="slide-num">07 / 09</span>
+        <span class="slide-tag discuss">Discussion</span>
+      </div>
+      <h2>Business <span>Scenarios</span></h2>
+      <p>For each scenario — which action (Store / Aggregate / Trigger / Enrich) applies? Which offset setting?</p>
+      <table>
+        <thead><tr><th>Scenario</th><th>Action</th><th>Offset</th></tr></thead>
+        <tbody>
+          <tr><td>Portfolio manager wants live P&amp;L across 20 stocks</td><td>Aggregate</td><td>latest</td></tr>
+          <tr><td>Risk team needs all trades in last 30 days re-processed</td><td>Store + Aggregate</td><td>earliest</td></tr>
+          <tr><td>Operations: alert if any stock drops &gt; 3% in a tick</td><td>Trigger</td><td>latest</td></tr>
+          <tr><td>Compliance: immutable log of every trade event</td><td>Store</td><td>earliest</td></tr>
+          <tr><td>Dashboard: add sector name to each ticker in real time</td><td>Enrich</td><td>latest</td></tr>
+        </tbody>
+      </table>
+      <div class="callout" style="margin-top:1rem;">
+        <p><strong>Class exercise:</strong> Pick your Assignment 1 industry. Which of the 4 actions is most valuable for your use case? What threshold would you use for a trigger?</p>
+      </div>
+    </div>
+
+    <!-- SLIDE 8: LAB -->
+    <div class="slide" id="s8" data-slide="8">
+      <div class="slide-header">
+        <span class="slide-num">08 / 09</span>
+        <span class="slide-tag lab">Hands-On Lab</span>
+      </div>
+      <h2>Lab — <span>Analytics + Alerts Together</span></h2>
+      <p>Run three terminals in parallel to see all three consumer levels working simultaneously on the same topic.</p>
+
+      <table class="timeline">
+        <thead><tr><th>Terminal</th><th>Command</th><th>What you see</th></tr></thead>
+        <tbody>
+          <tr><td><strong>T1</strong></td><td><code>python tcs_producer.py</code></td><td>TCS prices streaming</td></tr>
+          <tr><td><strong>T2</strong></td><td><code>python infy_producer.py</code></td><td>INFY prices streaming</td></tr>
+          <tr><td><strong>T3</strong></td><td><code>python consumer_analytics.py</code></td><td>Live avg/min/max per symbol</td></tr>
+          <tr><td><strong>T4</strong></td><td><code>python consumer_alerts.py</code></td><td>🚨 when price drops &gt; 2%</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout green" style="margin-top:1.25rem;">
+        <p><strong>Extension:</strong> Combine analytics and alerts into a single file. Print the running average, and trigger an alert when the latest price is more than 3% below the running average.</p>
+      </div>
+    </div>
+
+    <!-- SLIDE 9: TAKEAWAYS + DOWNLOADS -->
+    <div class="slide" id="s9" data-slide="9">
+      <div class="slide-header">
+        <span class="slide-num">09 / 09</span>
+        <span class="slide-tag title">Wrap-Up</span>
+      </div>
+      <h2>Module 2 <span>Complete</span> — Key Takeaways</h2>
+      <ul>
+        <li><strong>Every consumer makes one of 4 decisions:</strong> Store · Aggregate · Trigger · Enrich</li>
+        <li><strong><code>earliest</code> = historical replay;</strong> <code>latest</code> = live-only — choose based on the business question</li>
+        <li><strong>Analytics consumer</strong> tracks running stats per symbol with zero external tools</li>
+        <li><strong>Alert consumer</strong> fires on threshold crossings — the simplest form of real-time monitoring</li>
+        <li><strong>One topic, many consumers</strong> — analytics and alerts run independently on the same stream</li>
+      </ul>
+
+      <h3 style="margin-top:1.5rem;">Download Lab Files</h3>
+      <div class="download-grid">
+        <a href="consumer_analytics.py" download class="download-card">
+          <span class="dl-icon">📊</span>
+          <div class="dl-info">
+            <div class="dl-name">consumer_analytics.py</div>
+            <div class="dl-desc">Running avg / min / max per symbol</div>
+          </div>
+          <span class="dl-badge">↓ .py</span>
+        </a>
+        <a href="consumer_alerts.py" download class="download-card">
+          <span class="dl-icon">🚨</span>
+          <div class="dl-info">
+            <div class="dl-name">consumer_alerts.py</div>
+            <div class="dl-desc">Price-drop alert trigger</div>
+          </div>
+          <span class="dl-badge">↓ .py</span>
+        </a>
+        <a href="../lecture6/btc_producer.py" download class="download-card">
+          <span class="dl-icon">₿</span>
+          <div class="dl-info">
+            <div class="dl-name">btc_producer.py</div>
+            <div class="dl-desc">Live BTC-USD for alert testing</div>
+          </div>
+          <span class="dl-badge">↓ .py</span>
+        </a>
+      </div>
+
+      <p style="margin-top:1.25rem; color: var(--text2); font-size:0.85rem;">
+        <strong style="color:var(--text)">Next →</strong> Module 3 — Stream Processing: windowing, joins, and stateful computation with Faust / Spark Streaming
+      </p>
+    </div>
+
+  </div><!-- /slides-wrap -->
+
+  <div class="slide-nav">
+    <button onclick="prevSlide()">← Prev</button>
+    <span class="slide-counter" id="counter">1 / 9</span>
+    <button onclick="nextSlide()">Next →</button>
+  </div>
+
+  <script>
+    const TOTAL = 9;
+    let current = 1;
+
+    function goTo(n) {
+      if (n < 1 || n > TOTAL) return;
+      current = n;
+      document.getElementById('counter').textContent = current + ' / ' + TOTAL;
+      document.getElementById('progress').style.width = ((current / TOTAL) * 100) + '%';
+      const el = document.getElementById('s' + current);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+      if (el) el.classList.add('active');
+    }
+
+    function nextSlide() { goTo(current + 1); }
+    function prevSlide() { goTo(current - 1); }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
+      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   prevSlide();
+    });
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const n = parseInt(entry.target.getAttribute('data-slide'));
+          if (!isNaN(n)) {
+            current = n;
+            document.getElementById('counter').textContent = current + ' / ' + TOTAL;
+            document.getElementById('progress').style.width = ((current / TOTAL) * 100) + '%';
+          }
+        }
+      });
+    }, { threshold: 0.5 });
+    document.querySelectorAll('.slide[data-slide]').forEach(s => observer.observe(s));
+
+    function copyCode(btn) {
+      const pre = btn.closest('.code-header').nextElementSibling;
+      navigator.clipboard.writeText(pre.innerText).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 1800);
+      });
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const dark = html.getAttribute('data-theme') === 'dark';
+      html.setAttribute('data-theme', dark ? 'light' : 'dark');
+      document.getElementById('ti').textContent = dark ? '🌙' : '☀️';
+      document.getElementById('tl').textContent = dark ? 'Dark' : 'Light';
+      localStorage.setItem('sda-theme', dark ? 'light' : 'dark');
+    }
+    (function() {
+      const saved = localStorage.getItem('sda-theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+      if (saved === 'light') {
+        document.getElementById('ti').textContent = '🌙';
+        document.getElementById('tl').textContent = 'Dark';
+      }
+    })();
+  </script>
+</body>
+</html>

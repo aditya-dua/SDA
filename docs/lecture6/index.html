@@ -269,8 +269,11 @@ cd ~/SDA</code></pre>
       </div>
       <div class="os-panel" id="win-s1">
         <pre><code><span class="cm">:: Open Command Prompt (cmd) and run:</span>
-mkdir %USERPROFILE%\SDA
-cd %USERPROFILE%\SDA</code></pre>
+<span class="cm">:: SDA folder is usually on C: or D: — choose whichever drive you use</span>
+mkdir C:\SDA
+cd C:\SDA
+<span class="cm">:: If your files are on D: drive instead:</span>
+<span class="cm">:: mkdir D:\SDA  and  cd D:\SDA</span></code></pre>
       </div>
     </div>
     <h3>Step 2 — Create the virtual environment</h3>
@@ -307,9 +310,10 @@ source venv/bin/activate
 <span class="cm"># Your prompt changes to: (venv) $</span></code></pre>
       </div>
       <div class="os-panel" id="win-act">
-        <pre><code>cd %USERPROFILE%\SDA
+        <pre><code>cd C:\SDA
 venv\Scripts\activate
-<span class="cm">:: Your prompt changes to: (venv) C:\...></span></code></pre>
+<span class="cm">:: Your prompt changes to: (venv) C:\SDA></span>
+<span class="cm">:: If your SDA folder is on D: use:  cd D:\SDA</span></code></pre>
       </div>
     </div>
     <h3>Install required libraries</h3>
