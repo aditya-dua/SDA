@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Kafka Command Builder — Streaming Data Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--border:#30363d;--text:#e6edf3;--text2:#8b949e;--accent:#b91c1c;--blue:#3b82f6;--blue-bg:rgba(59,130,246,.1);--green:#22c55e;--green-bg:rgba(34,197,94,.08);}
+    [data-theme="light"]{--bg:#f6f8fa;--bg2:#fff;--bg3:#eaeef2;--border:#d0d7de;--text:#1a1a2e;--text2:#57606a;--accent:#8C1515;--blue:#1d4ed8;--blue-bg:rgba(29,78,216,.08);--green:#16a34a;--green-bg:rgba(22,163,74,.06);}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s;}
+    /* NAV */
+    nav{position:sticky;top:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:56px;backdrop-filter:blur(12px);}
+    .nav-brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:.95rem;color:var(--text);text-decoration:none;}
+    .nav-brand .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;}
+    .nav-links{display:flex;align-items:center;gap:1.5rem;}
+    .nav-links a{font-size:.85rem;color:var(--text2);text-decoration:none;transition:color .2s;}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);}
+    .nav-links a.active{color:var(--accent);font-weight:600;}
+    .theme-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:.8rem;font-family:inherit;display:flex;align-items:center;gap:6px;transition:all .2s;}
+    .theme-btn:hover{border-color:var(--accent);color:var(--text);}
+    /* HERO */
+    .hero{background:linear-gradient(135deg,var(--bg2) 0%,var(--bg3) 100%);border-bottom:1px solid var(--border);padding:2.5rem 2rem 2rem;text-align:center;}
+    .hero-badge{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:4px 12px;border-radius:20px;margin-bottom:1rem;}
+    .hero h1{font-size:clamp(1.6rem,3.5vw,2.2rem);font-weight:700;letter-spacing:-.02em;margin-bottom:.5rem;}
+    .hero h1 span{color:var(--accent);}
+    .hero p{color:var(--text2);font-size:.9rem;max-width:480px;margin:0 auto;}
+    /* SHARED INPUTS PANEL */
+    .shared-panel{max-width:860px;margin:2.5rem auto 0;padding:0 2rem;}
+    .shared-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.5rem;}
+    .shared-card h3{font-size:.9rem;font-weight:700;margin-bottom:1.1rem;display:flex;align-items:center;gap:8px;}
+    .shared-card h3 .badge{font-size:.68rem;background:rgba(185,28,28,.12);color:var(--accent);border:1px solid var(--accent);padding:2px 8px;border-radius:20px;}
+    .inputs-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.85rem;}
+    .field{display:flex;flex-direction:column;gap:.3rem;}
+    .field label{font-size:.75rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;}
+    .field input,.field select{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:.55rem .8rem;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.83rem;outline:none;transition:border-color .2s,box-shadow .2s;width:100%;}
+    .field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(185,28,28,.12);}
+    /* MAIN */
+    main{max-width:860px;margin:2rem auto 5rem;padding:0 2rem;display:flex;flex-direction:column;gap:1.75rem;}
+    /* BUILDER CARD */
+    .builder{background:var(--bg2);border:1px solid var(--border);border-radius:14px;overflow:hidden;}
+    .builder-header{padding:1.2rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:1rem;}
+    .cmd-num{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;flex-shrink:0;}
+    .cmd-info{flex:1;}
+    .cmd-info h2{font-size:1rem;font-weight:700;margin-bottom:.2rem;}
+    .cmd-info p{font-size:.8rem;color:var(--text2);}
+    .builder-body{padding:1.5rem;}
+    /* EXTRA FIELDS */
+    .extra-fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.75rem;margin-bottom:1.25rem;}
+    /* OUTPUT TABS */
+    .output-tabs{display:flex;gap:0;margin-bottom:0;border-bottom:1px solid var(--border);}
+    .out-tab{padding:.5rem 1rem;font-size:.78rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text2);border-bottom:2px solid transparent;transition:all .2s;font-family:inherit;}
+    .out-tab.active{color:var(--text);border-bottom-color:var(--accent);}
+    .out-tab:hover{color:var(--text);}
+    .output-block{position:relative;background:var(--bg);border:1px solid var(--border);border-top:none;border-radius:0 0 8px 8px;}
+    .out-panel{display:none;padding:1rem 1rem 1rem;}
+    .out-panel.active{display:block;}
+    .out-panel pre{font-family:'JetBrains Mono',monospace;font-size:.82rem;color:#7dd3fc;white-space:pre-wrap;word-break:break-all;line-height:1.6;}
+    .copy-btn{position:absolute;top:.6rem;right:.6rem;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:6px;padding:4px 12px;font-size:.72rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;}
+    .copy-btn:hover{border-color:var(--accent);color:var(--accent);}
+    .copy-btn.copied{background:var(--green-bg);border-color:var(--green);color:var(--green);}
+    /* COLOURS per command */
+    .c1 .cmd-num{background:rgba(59,130,246,.15);color:#60a5fa;}
+    .c2 .cmd-num{background:rgba(34,197,94,.12);color:#4ade80;}
+    .c3 .cmd-num{background:rgba(251,146,60,.12);color:#fb923c;}
+    /* SECTION DIVIDER */
+    .divider{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text2);display:flex;align-items:center;gap:.75rem;}
+    .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+    footer{background:var(--bg2);border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;font-size:.8rem;color:var(--text2);}
+    footer a{color:var(--accent);text-decoration:none;}
+    @media(max-width:600px){nav .nav-links{display:none;}.hero{padding:1.75rem 1.25rem;}.shared-panel,.main{padding:0 1rem;}}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-brand"><span class="dot"></span>Streaming Data Analytics</a>
+  <div class="nav-links">
+    <a href="index.html">Lectures</a>
+    <a href="commands.html" class="active">Command Builder</a>
+    <a href="submissions.html">Submissions</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:.75rem;">
+    <button class="theme-btn" onclick="toggleTheme()"><span id="ti">☀️</span><span id="tl">Light</span></button>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-badge">Interactive Tool</div>
+  <h1>Kafka <span>Command Builder</span></h1>
+  <p>Enter your container name and topic — get ready-to-run commands in both multi-line and single-line format.</p>
+</header>
+
+<!-- SHARED INPUTS -->
+<div class="shared-panel">
+  <div class="shared-card">
+    <h3>⚙️ Your Setup <span class="badge">Shared across all commands</span></h3>
+    <div class="inputs-row">
+      <div class="field">
+        <label>Docker Container Name</label>
+        <input id="g-container" type="text" value="sda-kafka-1" placeholder="e.g. sda-kafka-1" oninput="rebuildAll()"/>
+      </div>
+      <div class="field">
+        <label>Bootstrap Server</label>
+        <input id="g-bootstrap" type="text" value="localhost:9092" placeholder="localhost:9092" oninput="rebuildAll()"/>
+      </div>
+      <div class="field">
+        <label>Default Topic Name</label>
+        <input id="g-topic" type="text" value="stock-topic" placeholder="e.g. stock-topic" oninput="rebuildAll()"/>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main>
+
+  <div class="divider">Commands</div>
+
+  <!-- ── CMD 1: CREATE TOPIC ── -->
+  <div class="builder c1">
+    <div class="builder-header">
+      <div class="cmd-num">01</div>
+      <div class="cmd-info">
+        <h2>Create a Kafka Topic</h2>
+        <p>Creates a new topic with custom partitions and replication factor</p>
+      </div>
+    </div>
+    <div class="builder-body">
+      <div class="extra-fields">
+        <div class="field">
+          <label>Topic Name</label>
+          <input id="c1-topic" type="text" placeholder="uses default above" oninput="rebuildAll()"/>
+        </div>
+        <div class="field">
+          <label>Partitions</label>
+          <input id="c1-partitions" type="number" value="1" min="1" max="64" oninput="rebuildAll()"/>
+        </div>
+        <div class="field">
+          <label>Replication Factor</label>
+          <input id="c1-replication" type="number" value="1" min="1" max="3" oninput="rebuildAll()"/>
+        </div>
+      </div>
+      <div class="output-tabs">
+        <button class="out-tab active" onclick="switchTab(this,'c1-ml')">Multi-line</button>
+        <button class="out-tab" onclick="switchTab(this,'c1-sl')">Single-line</button>
+      </div>
+      <div class="output-block">
+        <div id="c1-ml" class="out-panel active"><pre id="c1-ml-pre"></pre></div>
+        <div id="c1-sl" class="out-panel"><pre id="c1-sl-pre"></pre></div>
+        <button class="copy-btn" onclick="copyActive(this,'c1')">Copy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CMD 2: LIST TOPICS ── -->
+  <div class="builder c2">
+    <div class="builder-header">
+      <div class="cmd-num">02</div>
+      <div class="cmd-info">
+        <h2>List All Topics</h2>
+        <p>See every topic currently on your Kafka broker</p>
+      </div>
+    </div>
+    <div class="builder-body">
+      <div class="output-tabs">
+        <button class="out-tab active" onclick="switchTab(this,'c2-ml')">Multi-line</button>
+        <button class="out-tab" onclick="switchTab(this,'c2-sl')">Single-line</button>
+      </div>
+      <div class="output-block">
+        <div id="c2-ml" class="out-panel active"><pre id="c2-ml-pre"></pre></div>
+        <div id="c2-sl" class="out-panel"><pre id="c2-sl-pre"></pre></div>
+        <button class="copy-btn" onclick="copyActive(this,'c2')">Copy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CMD 3: CONSOLE CONSUMER ── -->
+  <div class="builder c3">
+    <div class="builder-header">
+      <div class="cmd-num">03</div>
+      <div class="cmd-info">
+        <h2>Start Console Consumer</h2>
+        <p>Read messages from a topic directly in the terminal — no Python needed</p>
+      </div>
+    </div>
+    <div class="builder-body">
+      <div class="extra-fields">
+        <div class="field">
+          <label>Topic Name</label>
+          <input id="c3-topic" type="text" placeholder="uses default above" oninput="rebuildAll()"/>
+        </div>
+        <div class="field">
+          <label>Offset</label>
+          <select id="c3-offset" onchange="rebuildAll()">
+            <option value="--from-beginning">From beginning</option>
+            <option value="">Latest only (live)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Show Metadata</label>
+          <select id="c3-meta" onchange="rebuildAll()">
+            <option value="">No</option>
+            <option value="yes">Yes (offset + timestamp)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Consumer Group</label>
+          <input id="c3-group" type="text" placeholder="optional" oninput="rebuildAll()"/>
+        </div>
+      </div>
+      <div class="output-tabs">
+        <button class="out-tab active" onclick="switchTab(this,'c3-ml')">Multi-line</button>
+        <button class="out-tab" onclick="switchTab(this,'c3-sl')">Single-line</button>
+      </div>
+      <div class="output-block">
+        <div id="c3-ml" class="out-panel active"><pre id="c3-ml-pre"></pre></div>
+        <div id="c3-sl" class="out-panel"><pre id="c3-sl-pre"></pre></div>
+        <button class="copy-btn" onclick="copyActive(this,'c3')">Copy</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <p>Streaming Data Analytics · MBA Elective &nbsp;|&nbsp; <a href="index.html">← Lectures</a> &nbsp;|&nbsp; <a href="submissions.html">Submissions</a></p>
+</footer>
+
+<script>
+  /* ── HELPERS ── */
+  function g(id){ return document.getElementById(id); }
+  function val(id, fallback){ const v = g(id) ? g(id).value.trim() : ''; return v || fallback || ''; }
+
+  function switchTab(btn, panelId){
+    const body = btn.closest('.builder-body');
+    body.querySelectorAll('.out-tab').forEach(t => t.classList.remove('active'));
+    body.querySelectorAll('.out-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    g(panelId).classList.add('active');
+  }
+
+  function copyActive(btn, prefix){
+    const body = btn.closest('.output-block');
+    const activePanel = body.querySelector('.out-panel.active pre');
+    navigator.clipboard.writeText(activePanel.textContent).then(() => {
+      btn.textContent = '✓ Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1800);
+    });
+  }
+
+  /* ── BUILD COMMANDS ── */
+  function rebuildAll(){
+    const container  = val('g-container', 'sda-kafka-1');
+    const bootstrap  = val('g-bootstrap', 'localhost:9092');
+    const globalTopic = val('g-topic', 'stock-topic');
+
+    /* CMD 1 — CREATE TOPIC */
+    const c1topic = val('c1-topic', globalTopic);
+    const parts   = val('c1-partitions', '1');
+    const rep     = val('c1-replication', '1');
+
+    const c1args = [
+      `docker exec -it ${container} kafka-topics.sh`,
+      `  --bootstrap-server ${bootstrap}`,
+      `  --create`,
+      `  --topic ${c1topic}`,
+      `  --partitions ${parts}`,
+      `  --replication-factor ${rep}`
+    ];
+    g('c1-ml-pre').textContent = c1args.join(' \\\n');
+    g('c1-sl-pre').textContent = c1args.map(a => a.trim()).join(' ');
+
+    /* CMD 2 — LIST TOPICS */
+    const c2args = [
+      `docker exec -it ${container} kafka-topics.sh`,
+      `  --bootstrap-server ${bootstrap}`,
+      `  --list`
+    ];
+    g('c2-ml-pre').textContent = c2args.join(' \\\n');
+    g('c2-sl-pre').textContent = c2args.map(a => a.trim()).join(' ');
+
+    /* CMD 3 — CONSOLE CONSUMER */
+    const c3topic  = val('c3-topic', globalTopic);
+    const offset   = g('c3-offset').value;
+    const meta     = g('c3-meta').value;
+    const group    = val('c3-group', '');
+
+    const c3parts = [
+      `docker exec -it ${container} kafka-console-consumer.sh`,
+      `  --bootstrap-server ${bootstrap}`,
+      `  --topic ${c3topic}`
+    ];
+    if (offset)  c3parts.push(`  ${offset}`);
+    if (group)   c3parts.push(`  --group ${group}`);
+    if (meta === 'yes'){
+      c3parts.push(`  --property print.offset=true`);
+      c3parts.push(`  --property print.timestamp=true`);
+    }
+    g('c3-ml-pre').textContent = c3parts.join(' \\\n');
+    g('c3-sl-pre').textContent = c3parts.map(a => a.trim()).join(' ');
+  }
+
+  /* ── THEME ── */
+  function toggleTheme(){
+    const html = document.documentElement;
+    const dark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', dark ? 'light' : 'dark');
+    g('ti').textContent = dark ? '🌙' : '☀️';
+    g('tl').textContent = dark ? 'Dark' : 'Light';
+    localStorage.setItem('sda-theme', dark ? 'light' : 'dark');
+  }
+  (function(){
+    const saved = localStorage.getItem('sda-theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+    if (saved === 'light'){ g('ti').textContent = '🌙'; g('tl').textContent = 'Dark'; }
+  })();
+
+  // Run on load
+  rebuildAll();
+</script>
+</body>
+</html>
