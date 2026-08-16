@@ -465,18 +465,51 @@
       <p>Before writing Python — verify your stream is live with zero code.</p>
       <h3>Read all messages from the beginning</h3>
       <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-      <pre><code><span class="kw">docker exec</span> -it kafka kafka-console-consumer.sh \
+      <pre><code><span class="kw">docker exec</span> -it sda-kafka-1 kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
-  --topic orders-topic \
+  --topic stock-topic \
   --from-beginning</code></pre>
       <h3>Read with metadata (offset + timestamp)</h3>
       <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-      <pre><code><span class="kw">docker exec</span> -it kafka kafka-console-consumer.sh \
+      <pre><code><span class="kw">docker exec</span> -it sda-kafka-1 kafka-console-consumer.sh \
   --bootstrap-server localhost:9092 \
-  --topic orders-topic --from-beginning \
+  --topic stock-topic --from-beginning \
   --property print.offset=<span class="st">true</span> \
   --property print.timestamp=<span class="st">true</span></code></pre>
-      <div class="callout green">
+
+      <!-- COMMAND BUILDER -->
+      <div style="margin-top:1.5rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1.25rem;">
+        <div style="font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:.9rem;">⚙️ Command Builder — Enter your details</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.75rem;align-items:end;flex-wrap:wrap;">
+          <div>
+            <label style="font-size:.75rem;color:var(--text2);display:block;margin-bottom:.35rem;">Docker Container Name</label>
+            <input id="cb-container" type="text" value="sda-kafka-1" placeholder="e.g. sda-kafka-1 or kafka"
+              style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:.55rem .75rem;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.82rem;outline:none;transition:border-color .2s;"
+              oninput="buildCommand()" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"/>
+          </div>
+          <div>
+            <label style="font-size:.75rem;color:var(--text2);display:block;margin-bottom:.35rem;">Kafka Topic</label>
+            <input id="cb-topic" type="text" value="stock-topic" placeholder="e.g. stock-topic or orders-topic"
+              style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:.55rem .75rem;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.82rem;outline:none;transition:border-color .2s;"
+              oninput="buildCommand()" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"/>
+          </div>
+          <div>
+            <label style="font-size:.75rem;color:var(--text2);display:block;margin-bottom:.35rem;">Offset</label>
+            <select id="cb-offset" onchange="buildCommand()"
+              style="background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:.55rem .75rem;color:var(--text);font-size:.82rem;outline:none;cursor:pointer;">
+              <option value="--from-beginning">From beginning</option>
+              <option value="">Latest only</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-top:.85rem;position:relative;">
+          <div style="font-size:.72rem;color:var(--text2);margin-bottom:.3rem;">Generated command:</div>
+          <pre id="cb-output" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:.9rem 1rem;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#7dd3fc;margin:0;white-space:pre-wrap;word-break:break-all;"></pre>
+          <button onclick="copyBuilderCmd(this)" style="position:absolute;top:.5rem;right:.5rem;background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:5px;padding:3px 10px;font-size:.72rem;cursor:pointer;font-family:inherit;transition:all .2s;">Copy</button>
+        </div>
+      </div>
+
+      <div class="callout green" style="margin-top:1rem;">
         <p><strong>When to use the console:</strong> Debugging — "Is data actually in this topic?" Verify before writing a single line of Python.</p>
       </div>
     </div>
@@ -717,6 +750,25 @@ WATCH_LIST = [<span class="st">"Laptop Pro"</span>, <span class="st">"4K Monitor
         document.getElementById('tl').textContent = 'Dark';
       }
     })();
+
+    function buildCommand() {
+      const container = document.getElementById('cb-container').value.trim() || 'sda-kafka-1';
+      const topic = document.getElementById('cb-topic').value.trim() || 'stock-topic';
+      const offset = document.getElementById('cb-offset').value;
+      const cmd = `docker exec -it ${container} kafka-console-consumer.sh \\\n  --bootstrap-server localhost:9092 \\\n  --topic ${topic}${offset ? ' \\\n  ' + offset : ''}`;
+      document.getElementById('cb-output').textContent = cmd;
+    }
+
+    function copyBuilderCmd(btn) {
+      const text = document.getElementById('cb-output').textContent;
+      navigator.clipboard.writeText(text.replace(/\\\n\s*/g, ' \\\n  ')).then(() => {
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 1800);
+      });
+    }
+
+    // Init command builder on load
+    document.addEventListener('DOMContentLoaded', buildCommand);
   </script>
 </body>
 </html>
