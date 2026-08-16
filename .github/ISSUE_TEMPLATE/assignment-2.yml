@@ -1,19 +1,19 @@
-name: "📝 Assignment 2 Submission"
-description: "Submit your Assignment 2 — Data Serialization & Schema Design"
-title: "[A2] <Your Name> — Assignment 2"
+name: "🐍 Assignment 2 — Sample Data & Kafka Producer"
+description: "Submit Assignment 2 — Create sample data and stream it to Kafka (10 Marks)"
+title: "[A2] <Your Full Name> — Assignment 2"
 labels: ["assignment-2"]
 body:
   - type: markdown
     attributes:
       value: |
-        ## Assignment 2 — Data Serialization & Schema Design
-        **Due:** End of Module 2 · Complete all sections before submitting.
+        ## Assignment 2 — Sample Data & Kafka Producer
+        **Due:** 1 September 2026 &nbsp;|&nbsp; **Marks:** 10 &nbsp;|&nbsp; Based on the data sources from Assignment 1.
 
   - type: input
     id: student_name
     attributes:
       label: "Full Name"
-      placeholder: "e.g. Rahul Mehta"
+      placeholder: "e.g. Priya Sharma"
     validations:
       required: true
 
@@ -21,72 +21,80 @@ body:
     id: student_id
     attributes:
       label: "Student ID / Roll Number"
-      placeholder: "e.g. MBA2025-017"
+      placeholder: "e.g. MBA2025-042"
     validations:
       required: true
 
-  - type: textarea
+  - type: input
     id: repo_link
     attributes:
       label: "GitHub Repository Link"
+      description: "Link to your public repo containing producer.py and sample data"
       placeholder: "https://github.com/your-username/sda-assignment2"
     validations:
       required: true
 
-  - type: textarea
-    id: files
+  - type: input
+    id: kafka_topic
     attributes:
-      label: "Files Submitted"
-      placeholder: |
-        - avro_producer.py
-        - avro_consumer.py
-        - compare_sizes.py
-        - schema.avsc
-        - writeup.md
+      label: "Kafka Topic Name Used"
+      placeholder: "e.g. retail-transactions"
     validations:
       required: true
 
   - type: textarea
-    id: size_result
+    id: sample_data
     attributes:
-      label: "Size Comparison Results"
-      description: "Paste the output of compare_sizes.py here"
+      label: "Sample Data Description"
+      description: "Describe your sample data: format (CSV/JSON), fields included, how many rows, and how you generated it (manual, CSV file, Python faker, yFinance, etc.)"
       placeholder: |
-        JSON size:  218 bytes
-        Avro size:  74 bytes
-        Savings:    144 bytes (66.1% smaller)
+        Format: JSON
+        Fields: transaction_id, store_id, product_sku, quantity, price, timestamp
+        Rows: 100 records in stock_data.csv
+        Generated using: Python Faker library + manual domain knowledge
+    validations:
+      required: true
+
+  - type: textarea
+    id: producer_description
+    attributes:
+      label: "Producer Code Description"
+      description: "Briefly explain what your producer.py does — how it reads data, what message format it sends, and at what frequency."
+      placeholder: "producer.py reads from retail_data.csv row by row, serialises each row as JSON, and sends to the 'retail-transactions' topic at 1 message per second..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: "Terminal Screenshot / Output"
+      description: "Paste your producer terminal output showing at least 10 messages sent successfully, or attach a screenshot."
+      placeholder: |
+        Sent: {"transaction_id": "T001", "store_id": "S01", "product_sku": "SKU123", "quantity": 2, "price": 499.0, "timestamp": "2026-09-01T10:00:00"}
+        Sent: {"transaction_id": "T002", ...}
         ...
     validations:
       required: true
 
   - type: textarea
-    id: cost_calc
+    id: challenges
     attributes:
-      label: "Cost Calculation"
-      description: "If your company processes 500M events/day at your measured savings rate, what is the annual S3 cost saving at $0.023/GB? Show your working."
-      placeholder: "Working: ..."
-    validations:
-      required: true
-
-  - type: textarea
-    id: schema_evolution
-    attributes:
-      label: "Schema Evolution Test"
-      description: "Describe what happened when you added a new field with a default value vs. without a default. Paste relevant output."
-      placeholder: "I added field X with default=0.0 and observed..."
-    validations:
-      required: true
+      label: "Challenges & Learnings"
+      description: "What was the hardest part of getting data into Kafka? What did you learn?"
+      placeholder: "Optional but encouraged..."
 
   - type: checkboxes
     id: checklist
     attributes:
       label: "Submission Checklist"
       options:
-        - label: "compare_sizes.py output is included"
+        - label: "My producer.py runs without errors and sends data to Kafka"
           required: true
-        - label: "Cost calculation is included"
+        - label: "I have included sample data (CSV or JSON file) in my repo"
           required: true
-        - label: "Schema evolution test is documented"
+        - label: "My repo is public (or I have shared access with faculty)"
           required: true
-        - label: "Code runs without errors"
+        - label: "My submission builds directly on the industry chosen in Assignment 1"
+          required: true
+        - label: "I have read and followed academic honesty guidelines"
           required: true

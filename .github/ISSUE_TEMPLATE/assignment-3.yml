@@ -1,18 +1,19 @@
-name: "📝 Assignment 3 Submission"
-description: "Submit your Assignment 3 — End-to-End Streaming Pipeline"
-title: "[A3] <Your Name> — Assignment 3"
+name: "📊 Assignment 3 — Streaming Analytics Dashboard"
+description: "Submit Assignment 3 — Live dashboard for consumed streaming data (15 Marks)"
+title: "[A3] <Your Full Name> — Assignment 3"
 labels: ["assignment-3"]
 body:
   - type: markdown
     attributes:
       value: |
-        ## Assignment 3 — End-to-End Streaming Retail Analytics Pipeline
-        **Due:** End of Module 2 · The capstone for Module 2.
+        ## Assignment 3 — Streaming Analytics Dashboard
+        **Due:** 1 October 2026 &nbsp;|&nbsp; **Marks:** 15 &nbsp;|&nbsp; Build a live dashboard that consumes and visualises your Kafka data.
 
   - type: input
     id: student_name
     attributes:
       label: "Full Name"
+      placeholder: "e.g. Priya Sharma"
     validations:
       required: true
 
@@ -20,65 +21,71 @@ body:
     id: student_id
     attributes:
       label: "Student ID / Roll Number"
+      placeholder: "e.g. MBA2025-042"
     validations:
       required: true
 
-  - type: textarea
+  - type: input
     id: repo_link
     attributes:
       label: "GitHub Repository Link"
+      description: "Must contain consumer.py, dashboard code, and a README"
       placeholder: "https://github.com/your-username/sda-assignment3"
     validations:
       required: true
 
   - type: textarea
-    id: files
+    id: dashboard_description
     attributes:
-      label: "Files Submitted"
+      label: "Dashboard Description"
+      description: "What does your dashboard show? List the charts/metrics displayed and the library used (matplotlib, streamlit, dash, plotly, etc.)"
       placeholder: |
-        - pipeline_producer.py
-        - pipeline_consumer.py
-        - dashboard.py
-        - models.py
-        - writeup.md
-        - screenshot.png
-    validations:
-      required: true
-
-  - type: input
-    id: messages_processed
-    attributes:
-      label: "Number of messages processed in your demo"
-      placeholder: "e.g. 75"
+        Library: Streamlit
+        Charts:
+        1. Line chart — Revenue per minute (last 10 mins)
+        2. Bar chart — Top 5 products by sales count
+        3. Gauge — Current transactions per second
+        Metric cards: Total revenue today, Active stores, Alert count
     validations:
       required: true
 
   - type: textarea
-    id: screenshot
+    id: consumer_description
+    attributes:
+      label: "Consumer Code Description"
+      description: "Explain how your consumer.py reads from Kafka and feeds data to the dashboard."
+      placeholder: "consumer.py uses confluent_kafka Consumer to subscribe to 'retail-transactions', deserialises JSON messages, updates in-memory DataFrames, and Streamlit auto-refreshes every 2 seconds..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: dashboard_screenshot
     attributes:
       label: "Dashboard Screenshot"
-      description: "Attach a screenshot of your dashboard running with at least 50 messages processed"
+      description: "Attach or drag-and-drop a screenshot of your live running dashboard. This is required for grading."
+      placeholder: "Drag and drop your dashboard screenshot here..."
     validations:
       required: true
 
   - type: textarea
-    id: writeup
+    id: business_insight
     attributes:
-      label: "Business Write-up"
-      description: "What business decisions could a retail manager make from this real-time data that they couldn't make from yesterday's batch report? (minimum 150 words)"
-      placeholder: "Write your answer here..."
+      label: "Business Insight Write-up"
+      description: "What are 2–3 business insights a manager can act on from your dashboard? How does real-time visibility change the decision they would make? (minimum 100 words)"
+      placeholder: "Write your business insight here..."
     validations:
       required: true
 
-  - type: textarea
-    id: event_types
+  - type: dropdown
+    id: difficulty
     attributes:
-      label: "Event Types Implemented"
-      description: "List the 3+ event types you implemented and what each tracks"
-      placeholder: |
-        1. order_placed — tracks new purchase orders
-        2. order_cancelled — ...
-        3. item_viewed — ...
+      label: "Overall Difficulty Rating"
+      options:
+        - "1 — Very easy"
+        - "2 — Easy"
+        - "3 — Moderate"
+        - "4 — Hard"
+        - "5 — Very hard"
     validations:
       required: true
 
@@ -87,13 +94,15 @@ body:
     attributes:
       label: "Submission Checklist"
       options:
-        - label: "At least 3 event types implemented"
+        - label: "consumer.py runs and reads from Kafka without errors"
           required: true
-        - label: "Two consumer groups implemented"
+        - label: "Dashboard has at least 3 charts or metrics"
           required: true
-        - label: "Screenshot shows 50+ messages processed"
+        - label: "Dashboard screenshot is attached"
           required: true
-        - label: "Business write-up is included (150+ words)"
+        - label: "Business insight write-up is included"
           required: true
-        - label: "Code runs end-to-end without errors"
+        - label: "My repo is public (or I have shared access with faculty)"
+          required: true
+        - label: "I have read and followed academic honesty guidelines"
           required: true
