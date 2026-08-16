@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lecture 6 — Your First Producer | Streaming Data Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    :root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--border:#30363d;--text:#e6edf3;--text2:#8b949e;--accent:#b91c1c;--green:#16a34a;--green-bg:rgba(22,163,74,.12);--amber:#d97706;--amber-bg:rgba(217,119,6,.1);--blue:#3b82f6;--blue-bg:rgba(59,130,246,.1);}
+    [data-theme="light"]{--bg:#f6f8fa;--bg2:#fff;--bg3:#eaeef2;--border:#d0d7de;--text:#1a1a2e;--text2:#57606a;--accent:#8C1515;--green:#166534;--green-bg:rgba(22,101,52,.08);--amber:#92400e;--amber-bg:rgba(146,64,14,.08);--blue:#1d4ed8;--blue-bg:rgba(29,78,216,.08);}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);transition:background .3s,color .3s;}
+    nav{position:sticky;top:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:52px;}
+    .nav-left{display:flex;align-items:center;gap:12px;}
+    .nav-home{font-size:.82rem;color:var(--text2);text-decoration:none;display:flex;align-items:center;gap:6px;}
+    .nav-home:hover{color:var(--text);}
+    .nav-sep{color:var(--border);}
+    .nav-title{font-size:.88rem;font-weight:600;}
+    .nav-right{display:flex;align-items:center;gap:.75rem;}
+    .nav-badge{font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:4px;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);}
+    .theme-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:7px;padding:5px 10px;cursor:pointer;font-size:.78rem;font-family:inherit;display:flex;align-items:center;gap:5px;transition:all .2s;}
+    .theme-btn:hover{border-color:var(--accent);color:var(--text);}
+    .progress-bar{position:fixed;top:52px;left:0;right:0;height:3px;background:var(--border);z-index:99;}
+    .progress-fill{height:100%;background:var(--accent);transition:width .3s ease;width:0%;}
+    .slides-wrap{max-width:920px;margin:0 auto;padding:2rem 1.5rem 6rem;}
+    /* SLIDE */
+    .slide{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:2.5rem 3rem;margin-bottom:1.25rem;scroll-margin-top:72px;transition:border-color .2s;}
+    .slide:hover{border-color:#444c56;}
+    .slide.active{border-color:var(--accent);}
+    .slide-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:.75rem;border-bottom:1px solid var(--border);}
+    .slide-num{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text2);}
+    .slide-tag{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;padding:3px 9px;border-radius:20px;}
+    .tag-theory{background:rgba(185,28,28,.1);color:var(--accent);border:1px solid var(--accent);}
+    .tag-lab{background:var(--green-bg);color:var(--green);border:1px solid var(--green);}
+    .tag-setup{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue);}
+    .tag-discuss{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);}
+    .tag-title{background:rgba(139,148,158,.1);color:var(--text2);border:1px solid var(--border);}
+    /* TITLE SLIDE */
+    .slide.title-slide{background:linear-gradient(135deg,var(--bg2) 0%,var(--bg3) 100%);text-align:center;padding:4rem 3rem;}
+    .lec-label{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:4px 14px;border-radius:20px;margin-bottom:1.5rem;}
+    .title-slide h1{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;line-height:1.2;margin-bottom:.75rem;letter-spacing:-.02em;}
+    .title-slide h1 span{color:var(--accent);}
+    .title-slide .subtitle{font-size:1rem;color:var(--text2);margin-bottom:2.5rem;}
+    .title-meta{display:flex;justify-content:center;gap:2rem;flex-wrap:wrap;}
+    .meta-item{font-size:.8rem;color:var(--text2);display:flex;align-items:center;gap:6px;}
+    .meta-item strong{color:var(--text);}
+    /* CONTENT */
+    .slide h2{font-size:1.5rem;font-weight:700;margin-bottom:1rem;letter-spacing:-.01em;}
+    .slide h2 span{color:var(--accent);}
+    .slide h3{font-size:1.05rem;font-weight:600;margin:1.5rem 0 .6rem;}
+    .slide p{font-size:.93rem;line-height:1.7;color:var(--text2);margin-bottom:.75rem;}
+    .slide p strong{color:var(--text);}
+    .slide ul,.slide ol{padding-left:1.4rem;margin-bottom:.75rem;}
+    .slide li{font-size:.92rem;line-height:1.7;color:var(--text2);margin-bottom:.3rem;}
+    .slide li strong{color:var(--text);}
+    /* TABLE */
+    .slide table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.85rem;}
+    .slide th{background:var(--bg3);text-align:left;padding:.6rem .9rem;font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);border:1px solid var(--border);}
+    .slide td{padding:.6rem .9rem;border:1px solid var(--border);color:var(--text2);vertical-align:top;}
+    .slide td strong{color:var(--text);}
+    .slide tr:hover td{background:var(--bg3);}
+    /* CODE */
+    .code-header{display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--border);border-bottom:none;border-radius:8px 8px 0 0;padding:.5rem 1.1rem;}
+    .code-header+pre{border-radius:0 0 8px 8px;margin-top:0;}
+    .code-lang{font-size:.7rem;color:var(--text2);font-family:'JetBrains Mono',monospace;}
+    .copy-btn{font-size:.7rem;background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:3px 10px;border-radius:5px;cursor:pointer;font-family:inherit;transition:all .15s;}
+    .copy-btn:hover{border-color:var(--accent);color:var(--text);}
+    pre{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:1.1rem 1.25rem;overflow-x:auto;margin:1rem 0;}
+    pre code{font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:1.65;color:var(--text);}
+    /* CALLOUT */
+    .callout{border-left:3px solid var(--accent);background:rgba(185,28,28,.06);border-radius:0 8px 8px 0;padding:.9rem 1.1rem;margin:1rem 0;}
+    .callout.green{border-color:var(--green);background:var(--green-bg);}
+    .callout.amber{border-color:var(--amber);background:var(--amber-bg);}
+    .callout.blue{border-color:var(--blue);background:var(--blue-bg);}
+    .callout p{margin:0;color:var(--text);font-size:.88rem;line-height:1.6;}
+    /* PIPELINE */
+    .pipeline{display:flex;align-items:stretch;justify-content:center;gap:0;flex-wrap:nowrap;margin:1.5rem 0;}
+    .pipe-box{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;text-align:center;min-width:120px;display:flex;flex-direction:column;justify-content:center;gap:4px;}
+    .pipe-box.hl{border-color:var(--accent);background:rgba(185,28,28,.08);}
+    .pipe-box .pb-l{font-weight:600;color:var(--text);font-size:.85rem;}
+    .pipe-box .pb-s{font-size:.7rem;color:var(--text2);}
+    .pipe-box.hl .pb-l{color:var(--accent);}
+    .pipe-arrow{font-size:1.2rem;color:var(--text2);padding:0 .4rem;display:flex;align-items:center;flex-shrink:0;}
+    /* STEPS */
+    .steps{list-style:none;padding:0;counter-reset:step;}
+    .steps li{counter-increment:step;display:flex;gap:12px;padding:.75rem 0;border-bottom:1px solid var(--border);font-size:.9rem;color:var(--text2);}
+    .steps li:last-child{border-bottom:none;}
+    .steps li::before{content:counter(step);width:26px;height:26px;border-radius:50%;background:rgba(185,28,28,.15);color:var(--accent);font-weight:700;font-size:.78rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+    .steps li strong{color:var(--text);}
+    /* OS TABS */
+    .os-tabs{display:flex;gap:.5rem;margin-bottom:0;}
+    .os-tab{padding:6px 16px;border:1px solid var(--border);border-radius:7px 7px 0 0;border-bottom:none;cursor:pointer;font-size:.8rem;font-weight:500;background:var(--bg3);color:var(--text2);transition:all .15s;font-family:inherit;}
+    .os-tab.active{background:var(--bg2);color:var(--text);border-bottom:1px solid var(--bg2);}
+    .os-panel{display:none;}
+    .os-panel.active{display:block;}
+    .os-wrap{border:1px solid var(--border);border-radius:0 8px 8px 8px;overflow:hidden;margin-bottom:1rem;}
+    .os-wrap pre{border:none;border-radius:0;margin:0;}
+    /* DOWNLOAD */
+    .dl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem;margin:1rem 0;}
+    .dl-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.9rem 1rem;display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;transition:border-color .2s,transform .15s;}
+    .dl-card:hover{border-color:var(--accent);transform:translateY(-2px);}
+    .dl-icon{font-size:1.3rem;flex-shrink:0;}
+    .dl-info .dl-n{font-size:.85rem;font-weight:600;color:var(--text);}
+    .dl-info .dl-d{font-size:.72rem;color:var(--text2);margin-top:2px;}
+    .dl-badge{margin-left:auto;font-size:.62rem;font-weight:600;background:var(--green-bg);color:var(--green);border:1px solid var(--green);padding:2px 6px;border-radius:10px;flex-shrink:0;}
+    /* ANATOMY */
+    .anatomy{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:1.25rem;margin:1rem 0;}
+    .anatomy-line{display:flex;gap:12px;align-items:flex-start;padding:.5rem 0;border-bottom:1px solid var(--border);}
+    .anatomy-line:last-child{border-bottom:none;}
+    .al-code{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--accent);min-width:220px;flex-shrink:0;}
+    .al-desc{font-size:.82rem;color:var(--text2);line-height:1.5;}
+    .al-desc strong{color:var(--text);}
+    /* MULTI PRODUCER */
+    .multi-diagram{display:flex;gap:1rem;align-items:center;justify-content:center;margin:1.5rem 0;flex-wrap:wrap;}
+    .md-source{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.75rem 1.1rem;text-align:center;font-size:.82rem;}
+    .md-source .ms-l{font-weight:600;color:var(--text);font-size:.88rem;}
+    .md-source .ms-s{font-size:.7rem;color:var(--text2);margin-top:2px;}
+    .md-arrow{font-size:1.1rem;color:var(--text2);}
+    .md-topic{background:rgba(185,28,28,.08);border:1px solid var(--accent);border-radius:8px;padding:1rem 1.5rem;text-align:center;}
+    .md-topic .mt-l{font-weight:700;color:var(--accent);font-size:1rem;}
+    .md-topic .mt-s{font-size:.72rem;color:var(--text2);margin-top:4px;}
+    /* SYNTAX */
+    .kw{color:#ff7b72;}.st{color:#a5d6ff;}.cm{color:#8b949e;font-style:italic;}.fn{color:#d2a8ff;}.num{color:#79c0ff;}.var{color:#ffa657;}
+    /* NAV BOTTOM */
+    .slide-nav{position:fixed;bottom:1.5rem;right:1.5rem;display:flex;gap:.5rem;z-index:50;}
+    .slide-nav button{background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:.85rem;font-family:inherit;transition:all .15s;}
+    .slide-nav button:hover{border-color:var(--accent);}
+    .slide-counter{background:var(--bg2);border:1px solid var(--border);color:var(--text2);border-radius:8px;padding:8px 14px;font-size:.78rem;display:flex;align-items:center;font-family:'JetBrains Mono',monospace;}
+    @media(max-width:640px){.slide{padding:1.5rem 1.25rem;}.pipeline{flex-direction:column;gap:.4rem;}.pipe-arrow{transform:rotate(90deg);padding:.2rem 0;}.os-tabs{flex-wrap:wrap;}.al-code{min-width:160px;}}
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-left">
+    <a href="../index.html" class="nav-home">← Course Home</a>
+    <span class="nav-sep">/</span>
+    <span class="nav-title">Lecture 6 — Your First Producer</span>
+  </div>
+  <div class="nav-right">
+    <span class="nav-badge">Module 1</span>
+    <button class="theme-btn" onclick="toggleTheme()"><span id="ti">☀️</span><span id="tl">Light</span></button>
+  </div>
+</nav>
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<div class="slides-wrap" id="slides">
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 1 — TITLE -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide title-slide" id="s1" data-slide="1">
+    <div class="lec-label">Lecture 06 · Module 1 — Foundations</div>
+    <h1>Your First <span>Producer</span></h1>
+    <p class="subtitle">Python env setup · Streaming stock data · yFinance · Live BTC · Multi-producer pipelines</p>
+    <div class="title-meta">
+      <div class="meta-item">⏱ <strong>90 min</strong></div>
+      <div class="meta-item">🐍 <strong>Python 3.x</strong></div>
+      <div class="meta-item">📦 <strong>kafka-python · yfinance</strong></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 2 — AGENDA -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s2" data-slide="2">
+    <div class="slide-header"><span class="slide-num">02 / 14</span><span class="slide-tag tag-title">Agenda</span></div>
+    <h2>Today's <span>90 Minutes</span></h2>
+    <table>
+      <thead><tr><th>Time</th><th>Topic</th><th>Format</th></tr></thead>
+      <tbody>
+        <tr><td>0 – 10</td><td>Recap — Kafka architecture from Lecture 5</td><td>Q&amp;A</td></tr>
+        <tr><td>10 – 20</td><td>What is a producer? Anatomy of producer.py</td><td>Theory</td></tr>
+        <tr><td>20 – 35</td><td>Python env setup — venv on Mac &amp; Windows</td><td>Setup</td></tr>
+        <tr><td>35 – 50</td><td>Lab 1 — Stream stock_data.csv to Kafka</td><td>Lab</td></tr>
+        <tr><td>50 – 65</td><td>Lab 2 — TCS live data via yFinance</td><td>Lab</td></tr>
+        <tr><td>65 – 75</td><td>Lab 3 — BTC-USD real-time 24×7 stream</td><td>Lab</td></tr>
+        <tr><td>75 – 85</td><td>Lab 4 — Two producers, one topic (TCS + INFY)</td><td>Lab</td></tr>
+        <tr><td>85 – 90</td><td>Key takeaways + preview of Lecture 7</td><td>Wrap-up</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 3 — WHAT IS A PRODUCER -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s3" data-slide="3">
+    <div class="slide-header"><span class="slide-num">03 / 14</span><span class="slide-tag tag-theory">Theory</span></div>
+    <h2>What Is a <span>Producer?</span></h2>
+    <p>A producer is any application that <strong>publishes events to a Kafka topic</strong>. It doesn't know or care who reads the data — it just sends.</p>
+    <div class="pipeline">
+      <div class="pipe-box hl"><div class="pb-l">producer.py</div><div class="pb-s">YOUR CODE</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box"><div class="pb-l">Kafka Topic</div><div class="pb-s">stock-topic</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box"><div class="pb-l">Consumer(s)</div><div class="pb-s">analytics, alerts...</div></div>
+    </div>
+    <h3>What a producer does in 3 steps</h3>
+    <ol class="steps">
+      <li><strong>Connect</strong> — establishes a TCP connection to the Kafka broker (your Docker container)</li>
+      <li><strong>Serialize</strong> — converts your Python dict → bytes (usually JSON) so Kafka can store it</li>
+      <li><strong>Send</strong> — publishes the message to a named topic; Kafka acknowledges receipt</li>
+    </ol>
+    <div class="callout">
+      <p><strong>Business framing:</strong> The producer is the "reporter on the ground". It records what's happening right now and files it with the newswire (Kafka). It doesn't know who will read the story.</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 4 — ANATOMY OF PRODUCER.PY -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s4" data-slide="4">
+    <div class="slide-header"><span class="slide-num">04 / 14</span><span class="slide-tag tag-theory">Theory</span></div>
+    <h2>Anatomy of <span>producer.py</span></h2>
+    <p>Let's break down every line and why it exists.</p>
+    <div class="anatomy">
+      <div class="anatomy-line">
+        <span class="al-code">KafkaProducer(...)</span>
+        <span class="al-desc"><strong>Creates the connection</strong> to the broker. Holds an internal buffer and background thread for sending.</span>
+      </div>
+      <div class="anatomy-line">
+        <span class="al-code">bootstrap_servers</span>
+        <span class="al-desc"><strong>Address of at least one broker</strong> — Kafka uses it to discover the full cluster. <code>localhost:9092</code> is your Docker container.</span>
+      </div>
+      <div class="anatomy-line">
+        <span class="al-code">value_serializer</span>
+        <span class="al-desc"><strong>Converts your dict → bytes</strong> before sending. JSON is human-readable and easy to debug. Avro (Lecture 8) is smaller and faster.</span>
+      </div>
+      <div class="anatomy-line">
+        <span class="al-code">retries=5</span>
+        <span class="al-desc"><strong>Retry failed sends up to 5 times</strong> — handles transient network hiccups automatically. Without this, a 1-second network blip drops the message.</span>
+      </div>
+      <div class="anatomy-line">
+        <span class="al-code">producer.partitions_for(TOPIC)</span>
+        <span class="al-desc"><strong>Validates the broker is reachable</strong> before starting the loop. Fails fast with a clear error instead of silently dropping messages.</span>
+      </div>
+      <div class="anatomy-line">
+        <span class="al-code">producer.send(TOPIC, value=row)</span>
+        <span class="al-desc"><strong>Non-blocking publish</strong> — returns a Future. The message goes into an internal buffer and is flushed in the background.</span>
+      </div>
+      <div class="anatomy-line">
+        <span class="al-code">producer.flush()</span>
+        <span class="al-desc"><strong>Waits until all buffered messages are sent</strong>. Always call this before exiting — without it, the last few messages may be silently dropped.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 5 — PYTHON ENV SETUP -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s5" data-slide="5">
+    <div class="slide-header"><span class="slide-num">05 / 14</span><span class="slide-tag tag-setup">Setup</span></div>
+    <h2>Python Environment <span>Setup</span></h2>
+    <p>A <strong>virtual environment (venv)</strong> keeps your project's libraries separate from your system Python — no version conflicts between projects.</p>
+    <div class="callout blue">
+      <p><strong>Do this once per project.</strong> All students should work inside a venv named <code>venv</code> inside their <code>SDA</code> folder.</p>
+    </div>
+    <h3>Step 1 — Create the SDA project folder</h3>
+    <div class="os-tabs">
+      <button class="os-tab active" onclick="switchOS(this,'mac-s1')">🍎 macOS / Linux</button>
+      <button class="os-tab" onclick="switchOS(this,'win-s1')">🪟 Windows</button>
+    </div>
+    <div class="os-wrap">
+      <div class="os-panel active" id="mac-s1">
+        <pre><code><span class="cm"># Open Terminal and run:</span>
+mkdir ~/SDA
+cd ~/SDA</code></pre>
+      </div>
+      <div class="os-panel" id="win-s1">
+        <pre><code><span class="cm">:: Open Command Prompt (cmd) and run:</span>
+mkdir %USERPROFILE%\SDA
+cd %USERPROFILE%\SDA</code></pre>
+      </div>
+    </div>
+    <h3>Step 2 — Create the virtual environment</h3>
+    <div class="os-tabs">
+      <button class="os-tab active" onclick="switchOS(this,'mac-s2')">🍎 macOS / Linux</button>
+      <button class="os-tab" onclick="switchOS(this,'win-s2')">🪟 Windows</button>
+    </div>
+    <div class="os-wrap">
+      <div class="os-panel active" id="mac-s2">
+        <pre><code>python3 -m venv venv</code></pre>
+      </div>
+      <div class="os-panel" id="win-s2">
+        <pre><code>python -m venv venv</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 6 — ACTIVATE + INSTALL -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s6" data-slide="6">
+    <div class="slide-header"><span class="slide-num">06 / 14</span><span class="slide-tag tag-setup">Setup</span></div>
+    <h2>Activate &amp; <span>Install Packages</span></h2>
+    <p>You must <strong>activate</strong> the venv every time you open a new terminal before running any Python files.</p>
+    <h3>Activate the venv</h3>
+    <div class="os-tabs">
+      <button class="os-tab active" onclick="switchOS(this,'mac-act')">🍎 macOS / Linux</button>
+      <button class="os-tab" onclick="switchOS(this,'win-act')">🪟 Windows</button>
+    </div>
+    <div class="os-wrap">
+      <div class="os-panel active" id="mac-act">
+        <pre><code>cd ~/SDA
+source venv/bin/activate
+<span class="cm"># Your prompt changes to: (venv) $</span></code></pre>
+      </div>
+      <div class="os-panel" id="win-act">
+        <pre><code>cd %USERPROFILE%\SDA
+venv\Scripts\activate
+<span class="cm">:: Your prompt changes to: (venv) C:\...></span></code></pre>
+      </div>
+    </div>
+    <h3>Install required libraries</h3>
+    <div class="code-header"><span class="code-lang">bash (inside activated venv)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code>pip install kafka-python yfinance</code></pre>
+    <h3>Verify installation</h3>
+    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code>python -c "from kafka import KafkaProducer; import yfinance; print('✅ All good')"</code></pre>
+    <div class="callout amber">
+      <p><strong>Common issue:</strong> If you see <code>ModuleNotFoundError</code>, the venv is not activated. Run the activate command above first.</p>
+    </div>
+    <div class="callout green">
+      <p><strong>Deactivate</strong> when done: just type <code>deactivate</code></p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 7 — LAB 1: CSV PRODUCER -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s7" data-slide="7">
+    <div class="slide-header"><span class="slide-num">07 / 14</span><span class="slide-tag tag-lab">Lab 1</span></div>
+    <h2>Stream <span>stock_data.csv</span> to Kafka</h2>
+    <p>Our first producer reads a CSV file row by row and streams each row as a JSON message, simulating a live tick feed.</p>
+    <div class="code-header"><span class="code-lang">python · producer.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="kw">import</span> csv, time, json, sys
+<span class="kw">from</span> kafka <span class="kw">import</span> KafkaProducer, errors
+
+KAFKA_BROKER = <span class="st">'localhost:9092'</span>
+TOPIC        = <span class="st">'stock-topic'</span>
+
+<span class="kw">try</span>:
+    producer = <span class="fn">KafkaProducer</span>(
+        bootstrap_servers=KAFKA_BROKER,
+        value_serializer=<span class="kw">lambda</span> v: json.<span class="fn">dumps</span>(v).<span class="fn">encode</span>(<span class="st">'utf-8'</span>),
+        retries=<span class="num">5</span>
+    )
+    producer.<span class="fn">partitions_for</span>(TOPIC)
+    <span class="fn">print</span>(<span class="st">"✅ Connected to Kafka at"</span>, KAFKA_BROKER)
+<span class="kw">except</span> errors.NoBrokersAvailable:
+    <span class="fn">print</span>(<span class="st">"❌ Kafka not running — docker-compose up -d"</span>)
+    sys.<span class="fn">exit</span>(<span class="num">1</span>)
+
+<span class="kw">with</span> <span class="fn">open</span>(<span class="st">'stock_data.csv'</span>, <span class="st">'r'</span>) <span class="kw">as</span> f:
+    reader = csv.<span class="fn">DictReader</span>(f)
+    <span class="kw">for</span> row <span class="kw">in</span> reader:
+        producer.<span class="fn">send</span>(TOPIC, value=row)
+        <span class="fn">print</span>(<span class="st">f"Produced: {row}"</span>)
+        time.<span class="fn">sleep</span>(<span class="num">1</span>)
+
+producer.<span class="fn">flush</span>()</code></pre>
+    <h3>Run it</h3>
+    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="cm"># Make sure docker-compose is up and venv is activated</span>
+python producer.py</code></pre>
+    <div class="dl-grid" style="margin-top:1.25rem;">
+      <a href="producer.py" download class="dl-card"><span class="dl-icon">🐍</span><div class="dl-info"><div class="dl-n">producer.py</div><div class="dl-d">CSV → Kafka stream</div></div><span class="dl-badge">↓ .py</span></a>
+      <a href="stock_data.csv" download class="dl-card"><span class="dl-icon">📄</span><div class="dl-info"><div class="dl-n">stock_data.csv</div><div class="dl-d">Sample stock tick data</div></div><span class="dl-badge">↓ .csv</span></a>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 8 — WHAT IS YFINANCE -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s8" data-slide="8">
+    <div class="slide-header"><span class="slide-num">08 / 14</span><span class="slide-tag tag-theory">Theory</span></div>
+    <h2>Fetching Real Data with <span>yFinance</span></h2>
+    <p>Instead of a static CSV, we can pull <strong>real historical and live market data</strong> directly from Yahoo Finance using the <code>yfinance</code> Python library.</p>
+    <h3>What it gives you</h3>
+    <table>
+      <thead><tr><th>Method</th><th>Data</th><th>Use Case</th></tr></thead>
+      <tbody>
+        <tr><td><code>ticker.history(period, interval)</code></td><td>OHLCV bars for a time range</td><td>Historical backtesting, streaming replays</td></tr>
+        <tr><td><code>ticker.fast_info</code></td><td>Latest price &amp; basic stats</td><td>Live price polling every N seconds</td></tr>
+        <tr><td><code>ticker.info</code></td><td>Full company profile</td><td>Enriching events with company metadata</td></tr>
+      </tbody>
+    </table>
+    <h3>Quick test</h3>
+    <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="kw">import</span> yfinance <span class="kw">as</span> yf
+tcs = yf.<span class="fn">Ticker</span>(<span class="st">"TCS.NS"</span>)
+df  = tcs.<span class="fn">history</span>(period=<span class="st">"1d"</span>, interval=<span class="st">"1m"</span>)
+<span class="fn">print</span>(df.<span class="fn">tail</span>(<span class="num">3</span>))</code></pre>
+    <div class="callout blue">
+      <p><strong>Ticker formats:</strong> Indian NSE stocks use <code>.NS</code> suffix — <code>TCS.NS</code>, <code>INFY.NS</code>, <code>RELIANCE.NS</code>. US stocks are just the ticker: <code>AAPL</code>, <code>MSFT</code>. Crypto uses <code>BTC-USD</code>, <code>ETH-USD</code>.</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 9 — LAB 2: TCS PRODUCER -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s9" data-slide="9">
+    <div class="slide-header"><span class="slide-num">09 / 14</span><span class="slide-tag tag-lab">Lab 2</span></div>
+    <h2>TCS Live Data — <span>tcs_producer.py</span></h2>
+    <p>Fetches 5 days of 1-minute OHLCV bars for <strong>TCS.NS</strong> from Yahoo Finance and streams them to Kafka.</p>
+    <div class="code-header"><span class="code-lang">python · tcs_producer.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="kw">import</span> json, time, sys
+<span class="kw">import</span> yfinance <span class="kw">as</span> yf
+<span class="kw">from</span> kafka <span class="kw">import</span> KafkaProducer, errors
+
+producer = <span class="fn">KafkaProducer</span>(
+    bootstrap_servers=<span class="st">'localhost:9092'</span>,
+    value_serializer=<span class="kw">lambda</span> v: json.<span class="fn">dumps</span>(v).<span class="fn">encode</span>(<span class="st">'utf-8'</span>)
+)
+
+tcs = yf.<span class="fn">Ticker</span>(<span class="st">"TCS.NS"</span>)
+df  = tcs.<span class="fn">history</span>(period=<span class="st">"5d"</span>, interval=<span class="st">"1m"</span>).<span class="fn">reset_index</span>()
+
+<span class="kw">for</span> _, row <span class="kw">in</span> df.<span class="fn">iterrows</span>():
+    record = {
+        <span class="st">"symbol"</span>:    <span class="st">"TCS.NS"</span>,
+        <span class="st">"timestamp"</span>: <span class="fn">str</span>(row[<span class="st">"Datetime"</span>]),
+        <span class="st">"close"</span>:     <span class="fn">round</span>(<span class="fn">float</span>(row[<span class="st">"Close"</span>]), <span class="num">2</span>),
+        <span class="st">"volume"</span>:    <span class="fn">int</span>(row[<span class="st">"Volume"</span>])
+    }
+    producer.<span class="fn">send</span>(<span class="st">"stock-topic"</span>, value=record)
+    <span class="fn">print</span>(<span class="st">f"TCS | {record['timestamp']} | ₹{record['close']}"</span>)
+    time.<span class="fn">sleep</span>(<span class="num">0.5</span>)
+
+producer.<span class="fn">flush</span>()</code></pre>
+    <div class="callout green">
+      <p><strong>What you'll see:</strong> 5 days × ~375 bars/day ≈ ~1,875 TCS price points flowing into Kafka, one every 0.5 seconds.</p>
+    </div>
+    <div class="dl-grid" style="margin-top:1.25rem;">
+      <a href="tcs_producer.py" download class="dl-card"><span class="dl-icon">📈</span><div class="dl-info"><div class="dl-n">tcs_producer.py</div><div class="dl-d">TCS.NS → Kafka (yFinance)</div></div><span class="dl-badge">↓ .py</span></a>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 10 — LAB 3: BTC REAL-TIME -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s10" data-slide="10">
+    <div class="slide-header"><span class="slide-num">10 / 14</span><span class="slide-tag tag-lab">Lab 3</span></div>
+    <h2>BTC-USD — <span>Real-Time 24×7</span></h2>
+    <p>Bitcoin trades every second of every day. This producer <strong>polls the live price every 10 seconds</strong> and never stops — until you press Ctrl+C.</p>
+    <div class="code-header"><span class="code-lang">python · btc_producer.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="kw">import</span> json, time, sys
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime
+<span class="kw">import</span> yfinance <span class="kw">as</span> yf
+<span class="kw">from</span> kafka <span class="kw">import</span> KafkaProducer
+
+producer = <span class="fn">KafkaProducer</span>(
+    bootstrap_servers=<span class="st">'localhost:9092'</span>,
+    value_serializer=<span class="kw">lambda</span> v: json.<span class="fn">dumps</span>(v).<span class="fn">encode</span>(<span class="st">'utf-8'</span>)
+)
+
+<span class="fn">print</span>(<span class="st">"₿ BTC-USD live stream — Ctrl+C to stop\n"</span>)
+count = <span class="num">0</span>
+<span class="kw">while</span> <span class="kw">True</span>:
+    btc    = yf.<span class="fn">Ticker</span>(<span class="st">"BTC-USD"</span>)
+    record = {
+        <span class="st">"symbol"</span>:    <span class="st">"BTC-USD"</span>,
+        <span class="st">"timestamp"</span>: datetime.<span class="fn">utcnow</span>().<span class="fn">isoformat</span>(),
+        <span class="st">"price"</span>:     <span class="fn">round</span>(<span class="fn">float</span>(btc.fast_info.last_price), <span class="num">2</span>),
+        <span class="st">"market"</span>:    <span class="st">"crypto"</span>
+    }
+    producer.<span class="fn">send</span>(<span class="st">"stock-topic"</span>, value=record)
+    count += <span class="num">1</span>
+    <span class="fn">print</span>(<span class="st">f"[{count}] BTC: ${record['price']:,.2f}"</span>)
+    time.<span class="fn">sleep</span>(<span class="num">10</span>)   <span class="cm"># poll every 10 seconds</span></code></pre>
+    <div class="callout amber">
+      <p><strong>Why is this different from TCS?</strong> TCS used historical data (a replay). BTC is truly live — the price changes every poll and the loop never ends. This is what a <em>real-time streaming source</em> looks like.</p>
+    </div>
+    <div class="dl-grid" style="margin-top:1.25rem;">
+      <a href="btc_producer.py" download class="dl-card"><span class="dl-icon">₿</span><div class="dl-info"><div class="dl-n">btc_producer.py</div><div class="dl-d">Live BTC-USD 24×7 stream</div></div><span class="dl-badge">↓ .py</span></a>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 11 — MULTI PRODUCER CONCEPT -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s11" data-slide="11">
+    <div class="slide-header"><span class="slide-num">11 / 14</span><span class="slide-tag tag-theory">Theory</span></div>
+    <h2>Multiple Producers, <span>One Topic</span></h2>
+    <p>Kafka topics can receive events from <strong>many producers simultaneously</strong>. Each producer writes independently — Kafka merges all messages into a single ordered stream.</p>
+    <div class="multi-diagram">
+      <div class="md-source"><div class="ms-l">tcs_producer.py</div><div class="ms-s">TCS.NS price bars</div></div>
+      <div class="md-arrow">→</div>
+      <div class="md-topic"><div class="mt-l">stock-topic</div><div class="mt-s">all symbols, interleaved</div></div>
+      <div class="md-arrow">←</div>
+      <div class="md-source"><div class="ms-l">infy_producer.py</div><div class="ms-s">INFY.NS price bars</div></div>
+    </div>
+    <p>A consumer reading <code>stock-topic</code> receives <strong>both TCS and INFY messages</strong> interleaved, identified by the <code>symbol</code> field.</p>
+    <h3>Why this is powerful</h3>
+    <ul>
+      <li><strong>Single pipeline, multiple sources</strong> — one consumer can analyse a whole portfolio</li>
+      <li><strong>Independent producers</strong> — TCS and INFY teams can deploy separately, no coordination needed</li>
+      <li><strong>Easy to add more</strong> — want RELIANCE? Add <code>reliance_producer.py</code>, zero changes to the consumer</li>
+    </ul>
+    <div class="callout green">
+      <p><strong>Real-world parallel:</strong> Bloomberg Terminal aggregates price feeds from hundreds of exchanges into a single stream. Each exchange is a producer. Traders consume one unified topic.</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 12 — LAB 4: INFY + MULTI PRODUCER -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s12" data-slide="12">
+    <div class="slide-header"><span class="slide-num">12 / 14</span><span class="slide-tag tag-lab">Lab 4</span></div>
+    <h2>TCS + INFY — <span>Same Topic</span></h2>
+    <p>Open <strong>two terminals</strong>. Run one producer in each. Both stream to <code>stock-topic</code> simultaneously.</p>
+    <div class="code-header"><span class="code-lang">python · infy_producer.py (key lines)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="cm"># Only change vs tcs_producer.py: symbol and ticker</span>
+infy = yf.<span class="fn">Ticker</span>(<span class="st">"INFY.NS"</span>)         <span class="cm"># ← Infosys</span>
+df   = infy.<span class="fn">history</span>(period=<span class="st">"5d"</span>, interval=<span class="st">"1m"</span>).<span class="fn">reset_index</span>()
+
+<span class="kw">for</span> _, row <span class="kw">in</span> df.<span class="fn">iterrows</span>():
+    record = {
+        <span class="st">"symbol"</span>:    <span class="st">"INFY.NS"</span>,     <span class="cm"># ← Infosys symbol</span>
+        <span class="st">"timestamp"</span>: <span class="fn">str</span>(row[<span class="st">"Datetime"</span>]),
+        <span class="st">"close"</span>:     <span class="fn">round</span>(<span class="fn">float</span>(row[<span class="st">"Close"</span>]), <span class="num">2</span>),
+        <span class="st">"volume"</span>:    <span class="fn">int</span>(row[<span class="st">"Volume"</span>])
+    }
+    producer.<span class="fn">send</span>(<span class="st">"stock-topic"</span>, value=record)</code></pre>
+    <h3>Run both at the same time</h3>
+    <div class="code-header"><span class="code-lang">bash — Terminal A</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code>python tcs_producer.py</code></pre>
+    <div class="code-header"><span class="code-lang">bash — Terminal B</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code>python infy_producer.py</code></pre>
+    <p style="margin-top:.75rem;">Now open the Kafka console consumer in a <strong>third terminal</strong> to see both streams interleaved:</p>
+    <div class="code-header"><span class="code-lang">bash — Terminal C</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code>docker exec -it kafka kafka-console-consumer.sh \
+  --bootstrap-server localhost:9092 \
+  --topic stock-topic --from-beginning</code></pre>
+    <div class="dl-grid" style="margin-top:1.25rem;">
+      <a href="tcs_producer.py" download class="dl-card"><span class="dl-icon">📈</span><div class="dl-info"><div class="dl-n">tcs_producer.py</div><div class="dl-d">TCS.NS stream</div></div><span class="dl-badge">↓ .py</span></a>
+      <a href="infy_producer.py" download class="dl-card"><span class="dl-icon">📊</span><div class="dl-info"><div class="dl-n">infy_producer.py</div><div class="dl-d">INFY.NS stream</div></div><span class="dl-badge">↓ .py</span></a>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 13 — ALL DOWNLOADS -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s13" data-slide="13">
+    <div class="slide-header"><span class="slide-num">13 / 14</span><span class="slide-tag tag-lab">Downloads</span></div>
+    <h2>All Lab <span>Files</span></h2>
+    <p>Download all files for today's lab. Place them in your <code>~/SDA</code> folder and run with your activated venv.</p>
+    <div class="dl-grid">
+      <a href="producer.py" download class="dl-card"><span class="dl-icon">🐍</span><div class="dl-info"><div class="dl-n">producer.py</div><div class="dl-d">Lab 1 — CSV to Kafka</div></div><span class="dl-badge">↓ .py</span></a>
+      <a href="stock_data.csv" download class="dl-card"><span class="dl-icon">📄</span><div class="dl-info"><div class="dl-n">stock_data.csv</div><div class="dl-d">Sample tick data (10 rows)</div></div><span class="dl-badge">↓ .csv</span></a>
+      <a href="tcs_producer.py" download class="dl-card"><span class="dl-icon">📈</span><div class="dl-info"><div class="dl-n">tcs_producer.py</div><div class="dl-d">Lab 2 — TCS via yFinance</div></div><span class="dl-badge">↓ .py</span></a>
+      <a href="btc_producer.py" download class="dl-card"><span class="dl-icon">₿</span><div class="dl-info"><div class="dl-n">btc_producer.py</div><div class="dl-d">Lab 3 — Live BTC 24×7</div></div><span class="dl-badge">↓ .py</span></a>
+      <a href="infy_producer.py" download class="dl-card"><span class="dl-icon">📊</span><div class="dl-info"><div class="dl-n">infy_producer.py</div><div class="dl-d">Lab 4 — INFY.NS stream</div></div><span class="dl-badge">↓ .py</span></a>
+    </div>
+    <div class="callout blue" style="margin-top:1.25rem;">
+      <p><strong>Install all at once:</strong></p>
+      <pre style="margin:.5rem 0 0;background:transparent;border:none;padding:0;"><code>pip install kafka-python yfinance</code></pre>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 14 — TAKEAWAYS -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s14" data-slide="14">
+    <div class="slide-header"><span class="slide-num">14 / 14</span><span class="slide-tag tag-title">Wrap-Up</span></div>
+    <h2>Key <span>Takeaways</span></h2>
+    <ul>
+      <li><strong>A producer publishes events — it doesn't know who reads them.</strong> Decoupling is the point.</li>
+      <li><strong>Always call <code>producer.flush()</code></strong> before exiting — without it, the last messages may be silently dropped.</li>
+      <li><strong>Virtual environments prevent dependency conflicts</strong> — activate before every session.</li>
+      <li><strong>yFinance gives you real stock and crypto data</strong> — history for replays, <code>fast_info</code> for live polling.</li>
+      <li><strong>Multiple producers → one topic is normal.</strong> Each source adds its <code>symbol</code> field so consumers can filter.</li>
+      <li><strong>BTC-USD is the simplest real-time source</strong> — 24×7, no market hours, always moving.</li>
+    </ul>
+    <div class="callout green" style="margin-top:1.5rem;">
+      <p><strong>Next — Lecture 7:</strong> We build the consumer. You'll read your own <code>stock-topic</code> stream in Python, track live portfolio value, and trigger alerts when a stock moves more than 2%.</p>
+    </div>
+  </div>
+
+</div><!-- /slides-wrap -->
+
+<div class="slide-nav">
+  <button onclick="prevSlide()">← Prev</button>
+  <span class="slide-counter" id="counter">1 / 14</span>
+  <button onclick="nextSlide()">Next →</button>
+</div>
+
+<script>
+  const TOTAL = 14;
+  let current = 1;
+  function goTo(n){
+    if(n<1||n>TOTAL)return;
+    current=n;
+    document.getElementById('counter').textContent=current+' / '+TOTAL;
+    document.getElementById('progress').style.width=((current/TOTAL)*100)+'%';
+    const el=document.getElementById('s'+current);
+    if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+    document.querySelectorAll('.slide').forEach(s=>s.classList.remove('active'));
+    if(el)el.classList.add('active');
+  }
+  function nextSlide(){goTo(current+1);}
+  function prevSlide(){goTo(current-1);}
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='ArrowDown')nextSlide();
+    if(e.key==='ArrowLeft'||e.key==='ArrowUp')prevSlide();
+  });
+  const obs=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        const n=parseInt(e.target.getAttribute('data-slide'));
+        if(!isNaN(n)){current=n;document.getElementById('counter').textContent=current+' / '+TOTAL;document.getElementById('progress').style.width=((current/TOTAL)*100)+'%';}
+      }
+    });
+  },{threshold:0.5});
+  document.querySelectorAll('.slide[data-slide]').forEach(s=>obs.observe(s));
+
+  function copyCode(btn){
+    const pre=btn.closest('.code-header').nextElementSibling;
+    navigator.clipboard.writeText(pre.innerText).then(()=>{
+      btn.textContent='Copied!';setTimeout(()=>btn.textContent='Copy',1800);
+    });
+  }
+
+  // OS tabs
+  function switchOS(btn, panelId){
+    const wrap=btn.closest('.os-tabs');
+    wrap.querySelectorAll('.os-tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+    // find next .os-wrap sibling
+    let next=wrap.nextElementSibling;
+    while(next&&!next.classList.contains('os-wrap'))next=next.nextElementSibling;
+    if(next){next.querySelectorAll('.os-panel').forEach(p=>p.classList.remove('active'));const t=next.querySelector('#'+panelId);if(t)t.classList.add('active');}
+  }
+
+  // Theme
+  function toggleTheme(){
+    const html=document.documentElement;
+    const dark=html.getAttribute('data-theme')==='dark';
+    html.setAttribute('data-theme',dark?'light':'dark');
+    document.getElementById('ti').textContent=dark?'🌙':'☀️';
+    document.getElementById('tl').textContent=dark?'Dark':'Light';
+    localStorage.setItem('sda-theme',dark?'light':'dark');
+  }
+  (function(){
+    const saved=localStorage.getItem('sda-theme')||'dark';
+    document.documentElement.setAttribute('data-theme',saved);
+    if(saved==='light'){document.getElementById('ti').textContent='🌙';document.getElementById('tl').textContent='Dark';}
+  })();
+</script>
+</body>
+</html>
