@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lecture 10 — Fraud Detection Capstone | Streaming Data Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:       #0d1117; --bg2: #161b22; --bg3: #1c2128;
+      --border:   #30363d; --text: #e6edf3; --text2: #8b949e;
+      --accent:   #b91c1c; --accent2: #dc2626;
+      --green:    #16a34a; --green-bg: rgba(22,163,74,0.12);
+      --code-bg:  #161b22; --code-border: #30363d;
+    }
+    [data-theme="light"] {
+      --bg:       #f6f8fa; --bg2: #ffffff; --bg3: #eaeef2;
+      --border:   #d0d7de; --text: #1a1a2e; --text2: #57606a;
+      --accent:   #8C1515; --accent2: #b91c1c;
+      --green:    #166534; --green-bg: rgba(22,101,52,0.08);
+      --code-bg:  #f6f8fa; --code-border: #d0d7de;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); transition: background 0.3s, color 0.3s; }
+
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      padding: 0 1.5rem; display: flex; align-items: center;
+      justify-content: space-between; height: 52px;
+      backdrop-filter: blur(12px);
+    }
+    .nav-left { display: flex; align-items: center; gap: 12px; }
+    .nav-home { font-size: 0.82rem; color: var(--text2); text-decoration: none; display: flex; align-items: center; gap: 6px; }
+    .nav-home:hover { color: var(--text); }
+    .nav-sep { color: var(--border); }
+    .nav-title { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+    .nav-right { display: flex; align-items: center; gap: 0.75rem; }
+    .nav-badge { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; background: var(--green-bg); color: var(--green); border: 1px solid var(--green); }
+    .theme-btn { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); border-radius: 7px; padding: 5px 10px; cursor: pointer; font-size: 0.78rem; font-family: inherit; display: flex; align-items: center; gap: 5px; transition: all 0.2s; }
+    .theme-btn:hover { border-color: var(--accent); color: var(--text); }
+
+    .progress-bar { position: fixed; top: 52px; left: 0; right: 0; height: 3px; background: var(--border); z-index: 99; }
+    .progress-fill { height: 100%; background: var(--accent); transition: width 0.3s ease; width: 0%; }
+
+    .slides-wrap { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+
+    .slide { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 2.5rem 3rem; margin-bottom: 1.25rem; scroll-margin-top: 72px; transition: border-color 0.2s; }
+    .slide:hover { border-color: #444c56; }
+    .slide.active { border-color: var(--accent); }
+    .slide-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+    .slide-num { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text2); letter-spacing: 0.05em; }
+    .slide-tag { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; padding: 3px 9px; border-radius: 20px; }
+    .slide-tag.theory  { background: rgba(185,28,28,0.1);  color: var(--accent); border: 1px solid var(--accent); }
+    .slide-tag.lab     { background: rgba(22,163,74,0.1);   color: var(--green);  border: 1px solid var(--green); }
+    .slide-tag.title   { background: rgba(139,148,158,0.1); color: var(--text2);  border: 1px solid var(--border); }
+    .slide-tag.discuss { background: rgba(217,119,6,0.1);   color: #d97706;       border: 1px solid #d97706; }
+    .slide-tag.arch    { background: rgba(56,189,248,0.1);  color: #38bdf8;       border: 1px solid #38bdf8; }
+
+    .slide.title-slide { background: linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%); text-align: center; padding: 4rem 3rem; }
+    .title-slide .lec-label { display: inline-block; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent); padding: 4px 14px; border-radius: 20px; margin-bottom: 1.5rem; }
+    .title-slide h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 700; line-height: 1.2; margin-bottom: 0.75rem; letter-spacing: -0.02em; }
+    .title-slide h1 span { color: var(--accent); }
+    .title-slide .subtitle { font-size: 1rem; color: var(--text2); margin-bottom: 2.5rem; }
+    .title-meta { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; }
+    .meta-item { font-size: 0.8rem; color: var(--text2); display: flex; align-items: center; gap: 6px; }
+    .meta-item strong { color: var(--text); }
+
+    .slide h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; letter-spacing: -0.01em; }
+    .slide h2 span { color: var(--accent); }
+    .slide h3 { font-size: 1.05rem; font-weight: 600; margin: 1.5rem 0 0.6rem; color: var(--text); }
+    .slide p  { font-size: 0.95rem; line-height: 1.7; color: var(--text2); margin-bottom: 0.75rem; }
+    .slide p strong { color: var(--text); }
+    .slide ul, .slide ol { padding-left: 1.4rem; margin-bottom: 0.75rem; }
+    .slide li { font-size: 0.93rem; line-height: 1.7; color: var(--text2); margin-bottom: 0.3rem; }
+    .slide li strong { color: var(--text); }
+
+    /* PIPELINE DIAGRAM */
+    .arch-box {
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: 10px; padding: 1.5rem; margin: 1rem 0; font-size: 0.82rem;
+    }
+    .arch-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.6rem; flex-wrap: wrap; }
+    .arch-node {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 7px; padding: 0.5rem 0.9rem; text-align: center; min-width: 130px;
+    }
+    .arch-node .an-label { font-weight: 600; color: var(--text); font-size: 0.82rem; }
+    .arch-node .an-sub   { font-size: 0.7rem; color: var(--text2); margin-top: 2px; }
+    .arch-node.highlight { border-color: var(--accent); background: rgba(185,28,28,0.08); }
+    .arch-node.highlight .an-label { color: var(--accent); }
+    .arch-node.green { border-color: var(--green); background: var(--green-bg); }
+    .arch-node.green .an-label { color: var(--green); }
+    .arch-arrow { font-size: 1.1rem; color: var(--text2); flex-shrink: 0; }
+
+    .slide table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85rem; }
+    .slide th { background: var(--bg3); text-align: left; padding: 0.6rem 0.9rem; font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text2); border: 1px solid var(--border); }
+    .slide td { padding: 0.6rem 0.9rem; border: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+    .slide td strong { color: var(--text); }
+    .slide tr:hover td { background: var(--bg3); }
+
+    pre { background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 8px; padding: 1.1rem 1.25rem; overflow-x: auto; margin: 1rem 0; position: relative; }
+    pre code { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; line-height: 1.65; color: var(--text); background: none; }
+    .code-header { display: flex; align-items: center; justify-content: space-between; background: var(--bg3); border: 1px solid var(--border); border-bottom: none; border-radius: 8px 8px 0 0; padding: 0.5rem 1.1rem; }
+    .code-header + pre { border-radius: 0 0 8px 8px; margin-top: 0; }
+    .code-lang { font-size: 0.7rem; color: var(--text2); font-family: 'JetBrains Mono', monospace; }
+    .copy-btn { font-size: 0.7rem; background: var(--bg2); border: 1px solid var(--border); color: var(--text2); padding: 3px 10px; border-radius: 5px; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .copy-btn:hover { border-color: var(--accent); color: var(--text); }
+
+    .callout { border-left: 3px solid var(--accent); background: rgba(185,28,28,0.06); border-radius: 0 8px 8px 0; padding: 0.9rem 1.1rem; margin: 1rem 0; }
+    .callout.green { border-color: var(--green); background: var(--green-bg); }
+    .callout p { margin: 0; color: var(--text); font-size: 0.9rem; }
+    .callout strong { color: var(--accent); }
+    .callout.green strong { color: var(--green); }
+
+    /* RULE CARDS */
+    .rule-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin: 1rem 0; }
+    .rule-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.1rem; }
+    .rule-card .rc-num  { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 5px; }
+    .rule-card .rc-name { font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .rule-card .rc-cond { font-size: 0.78rem; color: var(--text2); line-height: 1.5; }
+    .rule-card .rc-sig  { font-size: 0.72rem; color: var(--green); margin-top: 6px; font-style: italic; }
+
+    /* STEP BADGES */
+    .step-badge { display: inline-block; background: var(--accent); color: #fff; font-size: 0.7rem; font-weight: 700; padding: 2px 9px; border-radius: 10px; margin-right: 8px; vertical-align: middle; }
+
+    .objectives-list { list-style: none; padding: 0; margin: 0; }
+    .objectives-list li { display: flex; align-items: flex-start; gap: 10px; padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-size: 0.93rem; color: var(--text2); }
+    .objectives-list li:last-child { border-bottom: none; }
+    .objectives-list .check { color: var(--green); font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+    .download-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; margin: 1rem 0; }
+    .download-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.1rem; display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; transition: border-color 0.2s, transform 0.15s; }
+    .download-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .dl-icon { font-size: 1.4rem; flex-shrink: 0; }
+    .dl-info .dl-name { font-size: 0.88rem; font-weight: 600; color: var(--text); }
+    .dl-info .dl-desc { font-size: 0.75rem; color: var(--text2); margin-top: 2px; }
+    .dl-badge { margin-left: auto; font-size: 0.65rem; font-weight: 600; background: var(--green-bg); color: var(--green); border: 1px solid var(--green); padding: 2px 7px; border-radius: 10px; flex-shrink: 0; }
+
+    .timeline { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    .timeline th { background: var(--bg3); padding: 0.5rem 0.9rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text2); border: 1px solid var(--border); text-align: left; }
+    .timeline td { padding: 0.55rem 0.9rem; border: 1px solid var(--border); font-size: 0.83rem; color: var(--text2); }
+    .timeline td:first-child { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--accent); white-space: nowrap; }
+    .timeline tr:hover td { background: var(--bg3); }
+
+    .slide-nav { position: fixed; bottom: 1.5rem; right: 1.5rem; display: flex; gap: 0.5rem; z-index: 50; }
+    .slide-nav button { background: var(--bg2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 0.85rem; font-family: inherit; transition: all 0.15s; }
+    .slide-nav button:hover { border-color: var(--accent); }
+    .slide-counter { background: var(--bg2); border: 1px solid var(--border); color: var(--text2); border-radius: 8px; padding: 8px 14px; font-size: 0.78rem; display: flex; align-items: center; font-family: 'JetBrains Mono', monospace; }
+
+    .kw  { color: #ff7b72; }
+    .st  { color: #a5d6ff; }
+    .cm  { color: #8b949e; font-style: italic; }
+    .fn  { color: #d2a8ff; }
+    .num { color: #79c0ff; }
+    .var { color: #ffa657; }
+
+    .terminal-out { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 1rem 1.25rem; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.7; margin: 1rem 0; }
+    .t-ok    { color: #3fb950; }
+    .t-alert { color: #f85149; }
+    .t-info  { color: #79c0ff; }
+    .t-dim   { color: #8b949e; }
+
+    @media (max-width: 640px) {
+      .slide { padding: 1.5rem 1.25rem; }
+      .rule-grid { grid-template-columns: 1fr; }
+      .slide-nav { bottom: 1rem; right: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-left">
+      <a href="../index.html" class="nav-home">← Course Home</a>
+      <span class="nav-sep">/</span>
+      <span class="nav-title">Lecture 10</span>
+    </div>
+    <div class="nav-right">
+      <a href="../commands.html" style="font-size:.78rem;font-weight:600;color:var(--text2);text-decoration:none;border:1px solid var(--border);padding:4px 10px;border-radius:6px;">⌨️ Commands</a>
+      <a href="../submissions.html" style="font-size:.78rem;font-weight:600;color:var(--accent);text-decoration:none;border:1px solid var(--accent);padding:4px 10px;border-radius:6px;">Submissions</a>
+      <span class="nav-badge">Module 2 Capstone</span>
+      <button class="theme-btn" onclick="toggleTheme()">
+        <span id="ti">☀️</span><span id="tl">Light</span>
+      </button>
+    </div>
+  </nav>
+
+  <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+  <div class="slides-wrap" id="slides">
+
+    <!-- SLIDE 1: TITLE -->
+    <div class="slide title-slide" id="s1" data-slide="1">
+      <div class="lec-label">Lecture 10 · Module 2 Capstone</div>
+      <h1>Banking <span>Fraud Detection</span><br>End-to-End</h1>
+      <p class="subtitle">Multi-Producer · Kafka · MongoDB · Enrichment · 3 Fraud Rules · Live Alerts</p>
+      <div class="title-meta">
+        <div class="meta-item">📅 <strong>Module 2</strong> — Making Kafka Work</div>
+        <div class="meta-item">⏱ <strong>90 min</strong> Workshop</div>
+        <div class="meta-item">🏦 We build it live, together</div>
+      </div>
+    </div>
+
+    <!-- SLIDE 2: AGENDA -->
+    <div class="slide" id="s2" data-slide="2">
+      <div class="slide-header">
+        <span class="slide-num">02 / 10</span>
+        <span class="slide-tag title">Agenda</span>
+      </div>
+      <h2>Today's <span>90 Minutes</span></h2>
+      <table class="timeline">
+        <thead><tr><th>Time</th><th>What We Do</th><th>Format</th></tr></thead>
+        <tbody>
+          <tr><td>0 – 10</td><td>Module 2 recap — full path from L6 → L9</td><td>Discussion</td></tr>
+          <tr><td>10 – 20</td><td>Why fraud detection? Architecture overview</td><td>Lecture</td></tr>
+          <tr><td>20 – 30</td><td>The dataset — 2000 synthetic transactions, 3 fraud patterns planted</td><td>Demo</td></tr>
+          <tr><td>30 – 45</td><td>Step 1 — Generate data + Run producer</td><td>Live build</td></tr>
+          <tr><td>45 – 60</td><td>Step 2 — consumer_store.py (save + user profiles)</td><td>Live build</td></tr>
+          <tr><td>60 – 80</td><td>Step 3 — consumer_fraud.py (3 rules + MongoDB enrichment)</td><td>Live build</td></tr>
+          <tr><td>80 – 90</td><td>See fraud alerts fire, discuss extensions, module wrap-up</td><td>Discussion</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SLIDE 3: WHY FRAUD DETECTION -->
+    <div class="slide" id="s3" data-slide="3">
+      <div class="slide-header">
+        <span class="slide-num">03 / 10</span>
+        <span class="slide-tag theory">Context</span>
+      </div>
+      <h2>Why <span>Fraud Detection?</span></h2>
+      <p>Every card swipe triggers a real-time decision. Banks have <strong>milliseconds</strong> — not hours — to approve or hold.</p>
+
+      <table>
+        <thead><tr><th>Batch System (Old)</th><th>Streaming System (Now)</th></tr></thead>
+        <tbody>
+          <tr><td>Check transactions overnight</td><td>Check every transaction as it arrives</td></tr>
+          <tr><td>Fraud flagged next morning</td><td>Fraud flagged before transaction clears</td></tr>
+          <tr><td>Customer already abroad, card maxed</td><td>Transaction held, customer called instantly</td></tr>
+          <tr><td>No geographic context</td><td>Knows where card was used 3 minutes ago</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <p><strong>The pattern we use today:</strong> Kafka brings the <em>current</em> signal (this transaction). MongoDB holds the <em>historical</em> context (last known location, average spend). The consumer combines both to decide.</p>
+      </div>
+
+      <h3>Scale Reference</h3>
+      <table>
+        <thead><tr><th>Network</th><th>Peak Transactions/sec</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Visa</strong></td><td>65,000</td></tr>
+          <tr><td><strong>Mastercard</strong></td><td>50,000+</td></tr>
+          <tr><td><strong>NPCI / UPI</strong></td><td>10,000+</td></tr>
+        </tbody>
+      </table>
+      <p>None of these run on batch. All use streaming architectures similar to what you're building today.</p>
+    </div>
+
+    <!-- SLIDE 4: ARCHITECTURE -->
+    <div class="slide" id="s4" data-slide="4">
+      <div class="slide-header">
+        <span class="slide-num">04 / 10</span>
+        <span class="slide-tag arch">Architecture</span>
+      </div>
+      <h2>What We <span>Build Today</span></h2>
+
+      <div class="arch-box">
+        <div class="arch-row">
+          <div class="arch-node"><div class="an-label">generate_transactions.py</div><div class="an-sub">2000 rows · 3 fraud patterns</div></div>
+          <span class="arch-arrow">→</span>
+          <div class="arch-node"><div class="an-label">transactions.csv</div><div class="an-sub">synthetic dataset</div></div>
+          <span class="arch-arrow">→</span>
+          <div class="arch-node highlight"><div class="an-label">transaction_producer.py</div><div class="an-sub">0.3s per message</div></div>
+          <span class="arch-arrow">→</span>
+          <div class="arch-node highlight"><div class="an-label">transactions-topic</div><div class="an-sub">Kafka</div></div>
+        </div>
+        <div class="arch-row" style="margin-top:0.5rem;padding-left:18rem;">
+          <span class="arch-arrow">↙</span>
+          <span style="width:2rem"></span>
+          <span class="arch-arrow">↘</span>
+        </div>
+        <div class="arch-row" style="gap:3rem;">
+          <div class="arch-node green"><div class="an-label">consumer_store.py</div><div class="an-sub">saves every transaction<br>updates user_profiles</div></div>
+          <div class="arch-node highlight"><div class="an-label">consumer_fraud.py</div><div class="an-sub">queries MongoDB<br>applies 3 fraud rules</div></div>
+        </div>
+        <div class="arch-row" style="margin-top:0.5rem;gap:3rem;">
+          <div class="arch-node green"><div class="an-label">MongoDB</div><div class="an-sub">transactions<br>user_profiles</div></div>
+          <div class="arch-node highlight"><div class="an-label">🚨 Fraud Alerts</div><div class="an-sub">Impossible Travel<br>Unusual Amount · Rapid Fire</div></div>
+        </div>
+      </div>
+
+      <div class="callout green">
+        <p><strong>Key insight:</strong> <code>consumer_store.py</code> runs first — it builds the historical record that <code>consumer_fraud.py</code> relies on. Storage and enrichment are inseparable.</p>
+      </div>
+    </div>
+
+    <!-- SLIDE 5: THE DATASET -->
+    <div class="slide" id="s5" data-slide="5">
+      <div class="slide-header">
+        <span class="slide-num">05 / 10</span>
+        <span class="slide-tag theory">Dataset</span>
+      </div>
+      <h2>The <span>Synthetic Dataset</span></h2>
+      <p>Run <code>generate_transactions.py</code> to create <code>transactions.csv</code> — 2000 rows, 50 fake users, 8 Indian cities.</p>
+
+      <table>
+        <thead><tr><th>Field</th><th>Example</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><code>transaction_id</code></td><td>TXN-00847</td><td>Unique per row</td></tr>
+          <tr><td><code>user_id</code></td><td>USR-042</td><td>50 synthetic users</td></tr>
+          <tr><td><code>user_name</code></td><td>Bhavna Thakur</td><td>Realistic Indian names</td></tr>
+          <tr><td><code>amount</code></td><td>4500.00</td><td>INR, varies by merchant type</td></tr>
+          <tr><td><code>merchant</code></td><td>Swiggy</td><td>30 merchant types</td></tr>
+          <tr><td><code>city</code> / <code>lat</code> / <code>lon</code></td><td>Mumbai / 19.076 / 72.877</td><td>Real GPS coordinates</td></tr>
+          <tr><td><code>timestamp</code></td><td>2025-08-01 10:00:00</td><td>Spread over 30 days</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Planted Fraud Patterns (~5% of rows)</h3>
+      <div class="rule-grid">
+        <div class="rule-card">
+          <div class="rc-num">Pattern 1</div>
+          <div class="rc-name">Impossible Travel</div>
+          <div class="rc-cond">Mumbai 10:00 → London 10:45 (7,189 km in 45 min)</div>
+          <div class="rc-sig">10 users affected</div>
+        </div>
+        <div class="rule-card">
+          <div class="rc-num">Pattern 2</div>
+          <div class="rc-name">Amount Spike</div>
+          <div class="rc-cond">User avg ₹800 → single txn ₹92,000 at jeweller</div>
+          <div class="rc-sig">15 users affected</div>
+        </div>
+        <div class="rule-card">
+          <div class="rc-num">Pattern 3</div>
+          <div class="rc-name">Rapid Fire</div>
+          <div class="rc-cond">4 transactions in 88 seconds (card cloning test)</div>
+          <div class="rc-sig">17 users affected</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 6: STEP 1 — PRODUCER -->
+    <div class="slide" id="s6" data-slide="6">
+      <div class="slide-header">
+        <span class="slide-num">06 / 10</span>
+        <span class="slide-tag lab">Step 1 — Terminal 1</span>
+      </div>
+      <h2>Generate Data &amp; <span>Run Producer</span></h2>
+
+      <div class="code-header"><span class="code-lang">bash · Terminal 1</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><code>python generate_transactions.py
+<span class="t-ok cm"># ✅ Generated 2000 transactions → transactions.csv
+#    Legitimate: 1903  |  Fraud planted: 97</span>
+
+python transaction_producer.py</code></pre>
+
+      <p>You'll see the live feed:</p>
+      <div class="terminal-out">
+<span class="t-dim">→  [0001] Aarav Sharma           Mumbai       ₹    4,500.00  Swiggy</span>
+<span class="t-dim">→  [0002] Priya Mehta            Delhi        ₹    1,250.00  Amazon</span>
+<span class="t-alert">🚨 [0847] Bhavna Thakur          London       ₹   38,200.00  Duty Free</span>
+<span class="t-dim">→  [0848] Aarav Sharma           Bengaluru    ₹      890.00  Zomato</span>
+      </div>
+
+      <div class="callout">
+        <p><strong>Notice:</strong> The producer marks fraud rows with 🚨 in its own output — but the <em>consumer</em> doesn't know this yet. It's discovering fraud independently from Kafka + MongoDB. Leave this running and open Terminal 2.</p>
+      </div>
+    </div>
+
+    <!-- SLIDE 7: STEP 2 — STORAGE CONSUMER -->
+    <div class="slide" id="s7" data-slide="7">
+      <div class="slide-header">
+        <span class="slide-num">07 / 10</span>
+        <span class="slide-tag lab">Step 2 — Terminal 2</span>
+      </div>
+      <h2>consumer_store.py — <span>Persist &amp; Profile</span></h2>
+      <p>Two MongoDB writes on every message:</p>
+
+      <div class="code-header"><span class="code-lang">python · consumer_store.py — key logic</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><code><span class="cm"># 1. Append raw transaction to audit log</span>
+txns.<span class="fn">insert_one</span>({**txn, <span class="st">"ingested_at"</span>: datetime.<span class="fn">utcnow</span>()})
+
+<span class="cm"># 2. Upsert user_profiles — freshest location + running totals</span>
+profiles.<span class="fn">update_one</span>(
+    {<span class="st">"user_id"</span>: txn[<span class="st">"user_id"</span>]},
+    {
+        <span class="st">"$set"</span>: {<span class="st">"last_city"</span>: txn[<span class="st">"city"</span>], <span class="st">"last_lat"</span>: lat, <span class="st">"last_lon"</span>: lon, ...},
+        <span class="st">"$inc"</span>: {<span class="st">"total_spend"</span>: amount, <span class="st">"txn_count"</span>: <span class="num">1</span>}
+    },
+    upsert=<span class="kw">True</span>
+)</code></pre>
+
+      <h3>What <code>upsert=True</code> means</h3>
+      <table>
+        <thead><tr><th>Situation</th><th>Behaviour</th></tr></thead>
+        <tbody>
+          <tr><td>User seen for the first time</td><td><strong>Creates</strong> a new document in user_profiles</td></tr>
+          <tr><td>User seen before</td><td><strong>Updates</strong> only the specified fields — no duplicate</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout green">
+        <p><strong>Check Atlas:</strong> After 30 seconds, open MongoDB Atlas → Browse Collections → <code>sda_course</code>. You'll see <code>user_profiles</code> filling up with one document per user, each showing their latest city and cumulative spend.</p>
+      </div>
+    </div>
+
+    <!-- SLIDE 8: STEP 3 — FRAUD CONSUMER -->
+    <div class="slide" id="s8" data-slide="8">
+      <div class="slide-header">
+        <span class="slide-num">08 / 10</span>
+        <span class="slide-tag lab">Step 3 — Terminal 3</span>
+      </div>
+      <h2>consumer_fraud.py — <span>3 Fraud Rules</span></h2>
+      <p>For every Kafka message, query MongoDB for the user's history — then apply rules:</p>
+
+      <div class="rule-grid">
+        <div class="rule-card">
+          <div class="rc-num">Rule 1</div>
+          <div class="rc-name">🌍 Impossible Travel</div>
+          <div class="rc-cond">Haversine distance from <code>last_lat/lon</code> (MongoDB) to current &gt; 500 km <strong>AND</strong> time diff &lt; 60 min</div>
+          <div class="rc-sig">Enrichment from MongoDB required</div>
+        </div>
+        <div class="rule-card">
+          <div class="rc-num">Rule 2</div>
+          <div class="rc-name">💸 Unusual Amount</div>
+          <div class="rc-cond">Current amount &gt; 3× (total_spend ÷ txn_count) — requires at least 5 prior transactions</div>
+          <div class="rc-sig">Historical avg from MongoDB required</div>
+        </div>
+        <div class="rule-card">
+          <div class="rc-num">Rule 3</div>
+          <div class="rc-name">⚡ Rapid Fire</div>
+          <div class="rc-cond">3+ transactions from same user in last 60 seconds — query <code>transactions</code> collection by timestamp</div>
+          <div class="rc-sig">Recent history from MongoDB required</div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <p><strong>All three rules need MongoDB.</strong> None of them can fire on Kafka data alone — they need context that only the storage consumer has been building.</p>
+      </div>
+    </div>
+
+    <!-- SLIDE 9: SEE IT WORK -->
+    <div class="slide" id="s9" data-slide="9">
+      <div class="slide-header">
+        <span class="slide-num">09 / 10</span>
+        <span class="slide-tag discuss">Discussion</span>
+      </div>
+      <h2>What <span>Good Output</span> Looks Like</h2>
+
+      <h3>Legitimate transactions</h3>
+      <div class="terminal-out">
+<span class="t-ok">✅ [0001] APPROVED  TXN-00001  Aarav Sharma           Mumbai       ₹    4,500.00</span>
+<span class="t-ok">✅ [0002] APPROVED  TXN-00002  Priya Mehta            Delhi        ₹    1,250.00</span>
+      </div>
+
+      <h3>Impossible Travel alert</h3>
+      <div class="terminal-out">
+<span class="t-alert">🚨 IMPOSSIBLE TRAVEL</span>
+<span class="t-info">   Transaction : TXN-00847</span>
+<span class="t-info">   User        : Bhavna Thakur (USR-042) · card ···5530</span>
+<span class="t-info">   Amount      : ₹38,200.00  at  Duty Free</span>
+<span class="t-dim">   [IMPOSSIBLE TRAVEL]</span>
+<span class="t-dim">        Last seen in Mumbai (19.07°, 72.87°) at 2025-08-14 10:00:22</span>
+<span class="t-dim">        Now at    London (51.50°, -0.12°) at 2025-08-14 10:45:18</span>
+<span class="t-dim">        Distance  7,189 km in 44 min</span>
+<span class="t-alert">   ⛔ ACTION : HOLD TRANSACTION</span>
+      </div>
+
+      <h3>Discussion Questions</h3>
+      <ol style="margin-top:.75rem;">
+        <li>Change <code>IMPOSSIBLE_TRAVEL_KM = 100</code>. What new alerts fire? Are any of them false positives?</li>
+        <li>A customer genuinely flies Mumbai → Dubai (2,200 km, 3.5 hr flight). Your rule would have blocked their arrival transaction. How do you solve this?</li>
+        <li>Rule 2 requires 5+ past transactions. A customer's first big purchase is always suspicious. What would you do for new users?</li>
+      </ol>
+    </div>
+
+    <!-- SLIDE 10: TAKEAWAYS + DOWNLOADS -->
+    <div class="slide" id="s10" data-slide="10">
+      <div class="slide-header">
+        <span class="slide-num">10 / 10</span>
+        <span class="slide-tag title">Takeaways</span>
+      </div>
+      <h2>Module 2 <span>Complete</span></h2>
+
+      <ul class="objectives-list">
+        <li><span class="check">✓</span><span><strong>Enrich → Decide → Act</strong> is the core pattern — Kafka brings now, MongoDB brings history, the consumer decides</span></li>
+        <li><span class="check">✓</span><span><strong>Two consumers, one topic</strong> — store and fraud run simultaneously, each getting a full independent copy of every message</span></li>
+        <li><span class="check">✓</span><span><strong>upsert is your state store</strong> — streaming systems need memory; MongoDB + upsert gives you that without extra infrastructure</span></li>
+        <li><span class="check">✓</span><span><strong>Fraud rules are business rules</strong> — 500 km, 3× average, 60 seconds are <em>management decisions</em>, not engineering ones</span></li>
+        <li><span class="check">✓</span><span><strong>Module 3 preview:</strong> when these hand-written consumers are not enough (scale, windowing, joins) — Spark &amp; Flink take over</span></li>
+      </ul>
+
+      <h3>Downloads</h3>
+      <div class="download-grid">
+        <a href="generate_transactions.py" download class="download-card">
+          <span class="dl-icon">🗄️</span>
+          <div class="dl-info"><div class="dl-name">generate_transactions.py</div><div class="dl-desc">Creates 2000-row synthetic CSV with planted fraud</div></div>
+          <span class="dl-badge">.py</span>
+        </a>
+        <a href="transaction_producer.py" download class="download-card">
+          <span class="dl-icon">📡</span>
+          <div class="dl-info"><div class="dl-name">transaction_producer.py</div><div class="dl-desc">Streams CSV rows to transactions-topic</div></div>
+          <span class="dl-badge">.py</span>
+        </a>
+        <a href="consumer_store.py" download class="download-card">
+          <span class="dl-icon">💾</span>
+          <div class="dl-info"><div class="dl-name">consumer_store.py</div><div class="dl-desc">Saves to MongoDB + updates user_profiles</div></div>
+          <span class="dl-badge">.py</span>
+        </a>
+        <a href="consumer_fraud.py" download class="download-card">
+          <span class="dl-icon">🔍</span>
+          <div class="dl-info"><div class="dl-name">consumer_fraud.py</div><div class="dl-desc">3 fraud rules with MongoDB enrichment</div></div>
+          <span class="dl-badge">.py</span>
+        </a>
+      </div>
+    </div>
+
+  </div><!-- slides-wrap -->
+
+  <div class="slide-nav">
+    <button onclick="prevSlide()">←</button>
+    <span class="slide-counter" id="counter">1 / 10</span>
+    <button onclick="nextSlide()">→</button>
+  </div>
+
+  <script>
+    const TOTAL = 10;
+    let current = 1;
+
+    function getTheme() { return localStorage.getItem('sda-theme') || 'dark'; }
+    function applyTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      document.getElementById('ti').textContent = t === 'dark' ? '☀️' : '🌙';
+      document.getElementById('tl').textContent = t === 'dark' ? 'Light' : 'Dark';
+    }
+    function toggleTheme() {
+      const t = getTheme() === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('sda-theme', t); applyTheme(t);
+    }
+    applyTheme(getTheme());
+
+    function goTo(n) {
+      current = Math.max(1, Math.min(TOTAL, n));
+      document.getElementById('counter').textContent = current + ' / ' + TOTAL;
+      document.getElementById('progress').style.width = (current / TOTAL * 100) + '%';
+      const el = document.getElementById('s' + current);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+      if (el) el.classList.add('active');
+    }
+    function nextSlide() { goTo(current + 1); }
+    function prevSlide() { goTo(current - 1); }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
+      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   prevSlide();
+    });
+
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting && e.intersectionRatio >= 0.5) {
+          const n = parseInt(e.target.dataset.slide);
+          if (n !== current) { current = n; document.getElementById('counter').textContent = n + ' / ' + TOTAL; document.getElementById('progress').style.width = (n / TOTAL * 100) + '%'; }
+          document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+          e.target.classList.add('active');
+        }
+      });
+    }, { threshold: 0.5 });
+    document.querySelectorAll('.slide[data-slide]').forEach(s => obs.observe(s));
+
+    function copyCode(btn) {
+      const pre = btn.closest('.code-header').nextElementSibling;
+      navigator.clipboard.writeText(pre.innerText).then(() => {
+        btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 1500);
+      });
+    }
+  </script>
+</body>
+</html>
