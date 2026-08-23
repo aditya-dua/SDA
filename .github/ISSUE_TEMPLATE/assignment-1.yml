@@ -1,6 +1,6 @@
 name: "📝 Assignment 1 — Industry, Data Sources & Pipeline Design"
 description: "Submit Assignment 1 (10 Marks) — Identify your industry, data sources, and data pipeline. Due: 16 August"
-title: "[A1][SDA-?] <Your Full Name> — Industry & Data Pipeline"
+title: "[A1][SDA-?] <Your Full Name> — Industry, Data Sources & Pipeline"
 labels: ["assignment-1"]
 body:
   - type: markdown

@@ -1,12 +1,12 @@
-name: "📊 Assignment 3 — Streaming Analytics Dashboard"
-description: "Submit Assignment 3 (15 Marks) — Build a dashboard for analysis of consumed streaming data. Due: 1 October"
-title: "[A3][SDA-?] <Your Full Name> — Streaming Analytics Dashboard"
+name: "📊 Assignment 3 — Dashboard for Analysis of Consumed Data"
+description: "Submit Assignment 3 (15 Marks) — Create a dashboard for the analysis of the consumed streaming data. Due: 1 October"
+title: "[A3][SDA-?] <Your Full Name> — Dashboard for Analysis of Consumed Data"
 labels: ["assignment-3"]
 body:
   - type: markdown
     attributes:
       value: |
-        ## Assignment 3 — Streaming Analytics Dashboard
+        ## Assignment 3 — Dashboard for Analysis of Consumed Data
         **Due:** 1 October &nbsp;|&nbsp; **Marks:** 15 &nbsp;|&nbsp; **Replace SDA-? in the title with your section: SDA-1, SDA-2, or SDA-G**
         
         Create a dashboard for the analysis of the consumed streaming data from your Kafka topic.
