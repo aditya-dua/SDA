@@ -1,13 +1,27 @@
 name: "📊 Assignment 3 — Streaming Analytics Dashboard"
-description: "Submit Assignment 3 — Live dashboard for consumed streaming data (15 Marks)"
-title: "[A3] <Your Full Name> — Assignment 3"
+description: "Submit Assignment 3 (15 Marks) — Build a dashboard for analysis of consumed streaming data. Due: 1 October"
+title: "[A3][SDA-?] <Your Full Name> — Streaming Analytics Dashboard"
 labels: ["assignment-3"]
 body:
   - type: markdown
     attributes:
       value: |
         ## Assignment 3 — Streaming Analytics Dashboard
-        **Due:** 1 October 2026 &nbsp;|&nbsp; **Marks:** 15 &nbsp;|&nbsp; Build a live dashboard that consumes and visualises your Kafka data.
+        **Due:** 1 October &nbsp;|&nbsp; **Marks:** 15 &nbsp;|&nbsp; **Replace SDA-? in the title with your section: SDA-1, SDA-2, or SDA-G**
+        
+        Create a dashboard for the analysis of the consumed streaming data from your Kafka topic.
+
+  - type: dropdown
+    id: section
+    attributes:
+      label: "Section"
+      description: "Which section are you enrolled in?"
+      options:
+        - "SDA-1"
+        - "SDA-2"
+        - "SDA-G"
+    validations:
+      required: true
 
   - type: input
     id: student_name
@@ -38,23 +52,23 @@ body:
     id: dashboard_description
     attributes:
       label: "Dashboard Description"
-      description: "What does your dashboard show? List the charts/metrics displayed and the library used (matplotlib, streamlit, dash, plotly, etc.)"
+      description: "What does your dashboard show? List the charts/metrics and the tool used (MongoDB Atlas Charts, Grafana, Streamlit, Plotly, etc.)"
       placeholder: |
-        Library: Streamlit
+        Tool: MongoDB Atlas Charts / Grafana
         Charts:
         1. Line chart — Revenue per minute (last 10 mins)
         2. Bar chart — Top 5 products by sales count
         3. Gauge — Current transactions per second
-        Metric cards: Total revenue today, Active stores, Alert count
+        Metric cards: Total revenue today, Alert count
     validations:
       required: true
 
   - type: textarea
     id: consumer_description
     attributes:
-      label: "Consumer Code Description"
-      description: "Explain how your consumer.py reads from Kafka and feeds data to the dashboard."
-      placeholder: "consumer.py uses confluent_kafka Consumer to subscribe to 'retail-transactions', deserialises JSON messages, updates in-memory DataFrames, and Streamlit auto-refreshes every 2 seconds..."
+      label: "Consumer / Data Flow Description"
+      description: "Explain how data flows from Kafka into your dashboard — consumer logic, storage (MongoDB etc.), and how the dashboard reads it."
+      placeholder: "consumer.py subscribes to 'retail-transactions', saves each message to MongoDB Atlas. Atlas Charts reads from the collection and auto-refreshes every 60 seconds..."
     validations:
       required: true
 
@@ -62,7 +76,7 @@ body:
     id: dashboard_screenshot
     attributes:
       label: "Dashboard Screenshot"
-      description: "Attach or drag-and-drop a screenshot of your live running dashboard. This is required for grading."
+      description: "Drag-and-drop a screenshot of your live running dashboard. Required for grading."
       placeholder: "Drag and drop your dashboard screenshot here..."
     validations:
       required: true
@@ -71,21 +85,8 @@ body:
     id: business_insight
     attributes:
       label: "Business Insight Write-up"
-      description: "What are 2–3 business insights a manager can act on from your dashboard? How does real-time visibility change the decision they would make? (minimum 100 words)"
+      description: "What are 2–3 business insights a manager can act on from your dashboard? How does real-time visibility change their decision? (minimum 100 words)"
       placeholder: "Write your business insight here..."
-    validations:
-      required: true
-
-  - type: dropdown
-    id: difficulty
-    attributes:
-      label: "Overall Difficulty Rating"
-      options:
-        - "1 — Very easy"
-        - "2 — Easy"
-        - "3 — Moderate"
-        - "4 — Hard"
-        - "5 — Very hard"
     validations:
       required: true
 
@@ -94,13 +95,15 @@ body:
     attributes:
       label: "Submission Checklist"
       options:
-        - label: "consumer.py runs and reads from Kafka without errors"
+        - label: "I have selected my section (SDA-1 / SDA-2 / SDA-G) above and updated the issue title"
+          required: true
+        - label: "consumer.py (or equivalent) runs and reads from Kafka without errors"
           required: true
         - label: "Dashboard has at least 3 charts or metrics"
           required: true
         - label: "Dashboard screenshot is attached"
           required: true
-        - label: "Business insight write-up is included"
+        - label: "Business insight write-up is included (min 100 words)"
           required: true
         - label: "My repo is public (or I have shared access with faculty)"
           required: true

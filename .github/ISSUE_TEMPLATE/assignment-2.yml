@@ -1,13 +1,27 @@
 name: "🐍 Assignment 2 — Sample Data & Kafka Producer"
-description: "Submit Assignment 2 — Create sample data and stream it to Kafka (10 Marks)"
-title: "[A2] <Your Full Name> — Assignment 2"
+description: "Submit Assignment 2 (10 Marks) — Create sample data from Assignment 1 sources and stream it to Kafka. Due: 1 September"
+title: "[A2][SDA-?] <Your Full Name> — Sample Data & Kafka Producer"
 labels: ["assignment-2"]
 body:
   - type: markdown
     attributes:
       value: |
         ## Assignment 2 — Sample Data & Kafka Producer
-        **Due:** 1 September 2026 &nbsp;|&nbsp; **Marks:** 10 &nbsp;|&nbsp; Based on the data sources from Assignment 1.
+        **Due:** 1 September &nbsp;|&nbsp; **Marks:** 10 &nbsp;|&nbsp; **Replace SDA-? in the title with your section: SDA-1, SDA-2, or SDA-G**
+        
+        Based on the data sources identified in Assignment 1, create sample data and configure it to send data to Kafka.
+
+  - type: dropdown
+    id: section
+    attributes:
+      label: "Section"
+      description: "Which section are you enrolled in?"
+      options:
+        - "SDA-1"
+        - "SDA-2"
+        - "SDA-G"
+    validations:
+      required: true
 
   - type: input
     id: student_name
@@ -22,6 +36,15 @@ body:
     attributes:
       label: "Student ID / Roll Number"
       placeholder: "e.g. MBA2025-042"
+    validations:
+      required: true
+
+  - type: input
+    id: a1_issue_link
+    attributes:
+      label: "Link to Your Assignment 1 Submission"
+      description: "Paste the URL of your Assignment 1 GitHub issue"
+      placeholder: "https://github.com/aditya-dua/SDA/issues/XX"
     validations:
       required: true
 
@@ -46,7 +69,7 @@ body:
     id: sample_data
     attributes:
       label: "Sample Data Description"
-      description: "Describe your sample data: format (CSV/JSON), fields included, how many rows, and how you generated it (manual, CSV file, Python faker, yFinance, etc.)"
+      description: "Describe your sample data: format (CSV/JSON), fields included, how many rows, and how you generated it (manual, CSV file, Python Faker, yFinance, etc.)"
       placeholder: |
         Format: JSON
         Fields: transaction_id, store_id, product_sku, quantity, price, timestamp
@@ -59,7 +82,7 @@ body:
     id: producer_description
     attributes:
       label: "Producer Code Description"
-      description: "Briefly explain what your producer.py does — how it reads data, what message format it sends, and at what frequency."
+      description: "Explain what your producer.py does — how it reads data, message format, and frequency."
       placeholder: "producer.py reads from retail_data.csv row by row, serialises each row as JSON, and sends to the 'retail-transactions' topic at 1 message per second..."
     validations:
       required: true
@@ -67,10 +90,10 @@ body:
   - type: textarea
     id: screenshot
     attributes:
-      label: "Terminal Screenshot / Output"
-      description: "Paste your producer terminal output showing at least 10 messages sent successfully, or attach a screenshot."
+      label: "Terminal Output (at least 10 messages)"
+      description: "Paste your producer terminal output showing messages sent successfully, or drag-and-drop a screenshot."
       placeholder: |
-        Sent: {"transaction_id": "T001", "store_id": "S01", "product_sku": "SKU123", "quantity": 2, "price": 499.0, "timestamp": "2026-09-01T10:00:00"}
+        Sent: {"transaction_id": "T001", "store_id": "S01", "quantity": 2, "price": 499.0}
         Sent: {"transaction_id": "T002", ...}
         ...
     validations:
@@ -88,6 +111,8 @@ body:
     attributes:
       label: "Submission Checklist"
       options:
+        - label: "I have selected my section (SDA-1 / SDA-2 / SDA-G) above and updated the issue title"
+          required: true
         - label: "My producer.py runs without errors and sends data to Kafka"
           required: true
         - label: "I have included sample data (CSV or JSON file) in my repo"

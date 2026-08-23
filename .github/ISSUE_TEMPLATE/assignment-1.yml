@@ -1,13 +1,25 @@
-name: "📝 Assignment 1 — Industry & Data Pipeline"
-description: "Submit Assignment 1 — Industry identification, data sources, and pipeline design (10 Marks)"
-title: "[A1] <Your Full Name> — Assignment 1"
+name: "📝 Assignment 1 — Industry, Data Sources & Pipeline Design"
+description: "Submit Assignment 1 (10 Marks) — Identify your industry, data sources, and data pipeline. Due: 16 August"
+title: "[A1][SDA-?] <Your Full Name> — Industry & Data Pipeline"
 labels: ["assignment-1"]
 body:
   - type: markdown
     attributes:
       value: |
-        ## Assignment 1 — Industry & Data Pipeline Identification
-        **Due:** 16 August 2026 &nbsp;|&nbsp; **Marks:** 10 &nbsp;|&nbsp; Fill in every section before submitting.
+        ## Assignment 1 — Industry, Data Sources & Pipeline Design
+        **Due:** 16 August &nbsp;|&nbsp; **Marks:** 10 &nbsp;|&nbsp; **Replace SDA-? in the title with your section: SDA-1, SDA-2, or SDA-G**
+
+  - type: dropdown
+    id: section
+    attributes:
+      label: "Section"
+      description: "Which section are you enrolled in?"
+      options:
+        - "SDA-1"
+        - "SDA-2"
+        - "SDA-G"
+    validations:
+      required: true
 
   - type: input
     id: student_name
@@ -68,7 +80,7 @@ body:
     id: pipeline_design
     attributes:
       label: "Data Pipeline Design"
-      description: "Describe the pipeline you plan to use: source → Kafka topic(s) → consumer/processing → output/dashboard. Include topic names and what each consumer will do."
+      description: "Describe the pipeline: source → Kafka topic(s) → consumer/processing → output. Include topic names and what each consumer will do."
       placeholder: |
         Source: POS system → Producer: pos_producer.py → Topic: transactions
         Consumer 1: real_time_revenue.py → aggregates revenue per minute
@@ -91,11 +103,13 @@ body:
     attributes:
       label: "Submission Checklist"
       options:
+        - label: "I have selected my section (SDA-1 / SDA-2 / SDA-G) above and updated the issue title"
+          required: true
         - label: "I have identified at least 3 data sources with justification"
           required: true
         - label: "I have described my pipeline end-to-end (producer → topic → consumer → output)"
           required: true
-        - label: "I have written the business decision rationale"
+        - label: "I have written the business decision rationale (min 75 words)"
           required: true
         - label: "I have read and followed academic honesty guidelines"
           required: true
