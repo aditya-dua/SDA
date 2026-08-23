@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lecture 13 — Apache Flink: Notes | Streaming Data Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--border:#30363d;--text:#e6edf3;--text2:#8b949e;--accent:#b91c1c;--green:#16a34a;--green-bg:rgba(22,163,74,0.12);--amber:#d97706;}
+    [data-theme="light"]{--bg:#f6f8fa;--bg2:#ffffff;--bg3:#eaeef2;--border:#d0d7de;--text:#1a1a2e;--text2:#57606a;--accent:#8C1515;--green:#166534;--green-bg:rgba(22,101,52,0.08);--amber:#92400e;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;}
+    nav{position:sticky;top:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:52px;}
+    .nav-left{display:flex;align-items:center;gap:12px;}
+    .nav-home{font-size:.82rem;color:var(--text2);text-decoration:none;}
+    .nav-home:hover{color:var(--text);}
+    .nav-sep{color:var(--border);}
+    .nav-title{font-size:.88rem;font-weight:600;}
+    .nav-badge{font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:4px;background:var(--green-bg);color:var(--green);border:1px solid var(--green);}
+    .theme-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:7px;padding:5px 10px;cursor:pointer;font-size:.78rem;font-family:inherit;}
+    .wrap{max-width:820px;margin:0 auto;padding:2.5rem 1.5rem 4rem;}
+    .lec-label{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:4px 14px;border-radius:20px;margin-bottom:1rem;}
+    h1{font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:700;line-height:1.2;margin-bottom:.5rem;}
+    .subtitle{font-size:.95rem;color:var(--text2);margin-bottom:.5rem;}
+    .meta-row{display:flex;gap:1.5rem;flex-wrap:wrap;font-size:.82rem;color:var(--text2);margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);}
+    .meta-row span strong{color:var(--text);}
+    h2{font-size:1.35rem;font-weight:700;color:var(--text);margin:2.5rem 0 .75rem;padding-bottom:.4rem;border-bottom:2px solid var(--accent);}
+    h3{font-size:1.05rem;font-weight:600;color:var(--text);margin:1.5rem 0 .5rem;}
+    p{font-size:.95rem;color:var(--text2);margin-bottom:.75rem;}
+    p strong{color:var(--text);}
+    ul,ol{padding-left:1.4rem;margin-bottom:.75rem;}
+    li{font-size:.93rem;color:var(--text2);margin-bottom:.3rem;line-height:1.6;}
+    li strong{color:var(--text);}
+    table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.84rem;}
+    th{background:var(--bg3);text-align:left;padding:.55rem .9rem;font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);border:1px solid var(--border);}
+    td{padding:.55rem .9rem;border:1px solid var(--border);color:var(--text2);vertical-align:top;}
+    td strong{color:var(--text);}
+    tr:hover td{background:var(--bg3);}
+    .callout{border-left:3px solid var(--accent);background:rgba(185,28,28,.06);border-radius:0 8px 8px 0;padding:.85rem 1.1rem;margin:1rem 0;}
+    .callout.green{border-color:var(--green);background:var(--green-bg);}
+    .callout.amber{border-color:var(--amber);background:rgba(217,119,6,.06);}
+    .callout p{margin:0;font-size:.9rem;color:var(--text);}
+    pre{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;overflow-x:auto;margin:1rem 0;font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:1.6;color:var(--text2);}
+    .obj-list{list-style:none;padding:0;}
+    .obj-list li{display:flex;align-items:flex-start;gap:10px;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.92rem;color:var(--text2);}
+    .obj-list li:last-child{border-bottom:none;}
+    .obj-list .check{color:var(--green);flex-shrink:0;}
+    .toc{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.5rem;margin-bottom:2rem;}
+    .toc h4{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:.75rem;}
+    .toc ol{padding-left:1.2rem;margin:0;}
+    .toc li{font-size:.88rem;margin-bottom:.3rem;}
+    .toc a{color:var(--accent);text-decoration:none;}
+    .toc a:hover{text-decoration:underline;}
+    .takeaway-box{background:var(--green-bg);border:1px solid var(--green);border-radius:10px;padding:1.25rem 1.5rem;margin:1.5rem 0;}
+    .takeaway-box h3{color:var(--green);font-size:.95rem;margin:0 0 .75rem;}
+    .takeaway-box ol{padding-left:1.4rem;margin:0;}
+    .takeaway-box li{font-size:.9rem;color:var(--text2);margin-bottom:.4rem;}
+    .module-summary{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.5rem;margin:1.5rem 0;}
+    .module-summary h3{font-size:.95rem;color:var(--text);margin:0 0 1rem;}
+    .preview-box{background:rgba(185,28,28,.04);border:1px solid var(--accent);border-radius:10px;padding:1.25rem 1.5rem;margin-top:2rem;}
+    .preview-box h3{color:var(--accent);font-size:.95rem;margin:0 0 .5rem;}
+    .preview-box p{margin:0;font-size:.9rem;}
+    .debate-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin:1rem 0;}
+    .debate-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:1rem;}
+    .debate-card .side{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem;}
+    .debate-card.for .side{color:var(--green);}
+    .debate-card.against .side{color:var(--accent);}
+    .debate-card p{font-size:.88rem;margin:0;}
+    @media(max-width:600px){.debate-grid{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-left">
+    <a href="../index.html" class="nav-home">← Course Home</a>
+    <span class="nav-sep">/</span>
+    <span class="nav-title">Lecture 13 — Notes</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:.75rem;">
+    <span class="nav-badge">Module 3</span>
+    <button class="theme-btn" onclick="toggleTheme()">🌙 Dark</button>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <div class="lec-label">Module 3 · Lecture 13</div>
+  <h1>Apache Flink &amp; True Streaming</h1>
+  <p class="subtitle">Conceptual · Decision frameworks · No hands-on lab</p>
+  <div class="meta-row">
+    <span>⏱ <strong>90 minutes</strong></span>
+    <span>📍 <strong>Prerequisites:</strong> Lecture 12 (Spark)</span>
+    <span>🎓 <strong>Approach:</strong> Conceptual — no installation required</span>
+  </div>
+
+  <div class="toc">
+    <h4>Contents</h4>
+    <ol>
+      <li><a href="#objectives">Learning Objectives</a></li>
+      <li><a href="#timeline">Session Timeline</a></li>
+      <li><a href="#difference">Micro-Batch vs True Streaming</a></li>
+      <li><a href="#exactlyonce">Exactly-Once Processing</a></li>
+      <li><a href="#latency">Latency in Business Context</a></li>
+      <li><a href="#framework">The Complete Decision Framework</a></li>
+      <li><a href="#casestudy">Case Study: UPI Fraud Detection</a></li>
+      <li><a href="#debate">Group Debate</a></li>
+      <li><a href="#summary">Module 3 Summary</a></li>
+      <li><a href="#takeaways">Key Takeaways</a></li>
+    </ol>
+  </div>
+
+  <h2 id="objectives">Learning Objectives</h2>
+  <ul class="obj-list">
+    <li><span class="check">✓</span> Explain in plain language the difference between micro-batch and true streaming</li>
+    <li><span class="check">✓</span> Define exactly-once processing and explain why it matters for financial systems</li>
+    <li><span class="check">✓</span> Articulate what "low latency" means in concrete business terms (ms → business impact)</li>
+    <li><span class="check">✓</span> Apply the Flink vs Spark vs ksqlDB decision framework to real scenarios</li>
+    <li><span class="check">✓</span> Complete the Module 3 framework: understand where each tool belongs in a data stack</li>
+  </ul>
+
+  <h2 id="timeline">Session Timeline</h2>
+  <table>
+    <tr><th>Time</th><th>Segment</th><th>Activity</th></tr>
+    <tr><td>0–10 min</td><td>Recap</td><td>L12 Spark — what is the micro-batch model in one sentence?</td></tr>
+    <tr><td>10–25 min</td><td>The Core Difference</td><td>What true streaming actually means</td></tr>
+    <tr><td>25–40 min</td><td>Exactly-Once Semantics</td><td>Why it exists, why banks care, why most don't need it</td></tr>
+    <tr><td>40–55 min</td><td>Latency in Business Context</td><td>When does 200ms vs 10ms change the outcome?</td></tr>
+    <tr><td>55–70 min</td><td>Full Decision Framework</td><td>Spark vs Flink vs ksqlDB vs Python — the complete map</td></tr>
+    <tr><td>70–82 min</td><td>Case Study: UPI Fraud</td><td>Walk through the real-time fraud architecture decision</td></tr>
+    <tr><td>82–88 min</td><td>Group Debate</td><td>"Spark is good enough for everything" — argue for or against</td></tr>
+    <tr><td>88–90 min</td><td>Module 3 Wrap-Up</td><td>The streaming landscape + preview of Module 4 (Grafana)</td></tr>
+  </table>
+
+  <h2 id="difference">Section 1: Micro-Batch vs True Streaming</h2>
+
+  <h3>The Mental Model</h3>
+  <p><strong>Spark (micro-batch):</strong> Imagine a factory where a bell rings every 200 milliseconds. Workers grab everything in front of them, sort it, and send results forward — then wait for the next bell. The minimum time from arrival to processing: anywhere from 1ms (just after the bell) to 199ms (just before the next one).</p>
+
+  <p><strong>Flink (true streaming):</strong> The same factory, but each worker processes an item the instant it arrives — no bell, no waiting. Processing time: 1–10 milliseconds from arrival.</p>
+
+  <pre>Spark: →→→ [--200ms--] [--200ms--] [--200ms--]
+                ↓            ↓            ↓
+            run batch    run batch    run batch
+
+Flink: →→→ ↓ ↓ ↓ ↓ ↓ ↓ ↓ ↓
+           (each event processed individually, within ~10ms)</pre>
+
+  <h3>Why This Architecture Difference Exists</h3>
+  <p>Spark was designed first as a <strong>batch processing system</strong> — streaming was added later as "fast batching." Flink was designed <strong>from day one as a streaming system</strong> — batch processing was added as a special case. Neither is "better" — they made different primary trade-offs.</p>
+
+  <h3>Latency in Business Terms</h3>
+  <table>
+    <tr><th>Latency</th><th>Roughly Equivalent To</th><th>Business Example</th></tr>
+    <tr><td>1ms</td><td>Blink of an eye ÷ 300</td><td>High-frequency trading signal</td></tr>
+    <tr><td>10ms</td><td>Blink of an eye ÷ 30</td><td>Payment fraud check (Flink typical)</td></tr>
+    <tr><td>100ms</td><td>Just perceptible as a pause</td><td>User feels slight lag</td></tr>
+    <tr><td>200ms</td><td>Noticeable delay</td><td>Spark micro-batch typical</td></tr>
+    <tr><td>500ms</td><td>Clearly slow</td><td>Google reports this hurts search usage</td></tr>
+    <tr><td>2,000ms</td><td>Very slow</td><td>User considers abandoning the page</td></tr>
+  </table>
+
+  <div class="callout amber">
+    <p><strong>The key business question</strong> is not "what latency does Flink provide?" — it is "what latency does <em>my use case</em> require?" For 90% of business applications, anything under 2 seconds is fine. That is Spark's territory. Flink is needed for the remaining 10%.</p>
+  </div>
+
+  <h2 id="exactlyonce">Section 2: Exactly-Once Processing</h2>
+
+  <h3>The Three Processing Guarantees</h3>
+  <table>
+    <tr><th>Guarantee</th><th>Risk</th><th>Acceptable For</th><th>Not Acceptable For</th></tr>
+    <tr><td><strong>At-most-once</strong></td><td>Events may be lost on crash</td><td>Social media likes, page views</td><td>Financial transactions, medical records</td></tr>
+    <tr><td><strong>At-least-once</strong></td><td>Events may be double-counted on crash/replay</td><td>Analytics approximations, event logs</td><td>Billing, banking, inventory allocation</td></tr>
+    <tr><td><strong>Exactly-once</strong></td><td>No loss, no duplication — guaranteed</td><td>All financial and compliance cases</td><td>—</td></tr>
+  </table>
+
+  <h3>Why Exactly-Once Is Hard</h3>
+  <p>When a system crashes mid-processing, it must answer on recovery: "Did I already write this result to the database before I crashed?" Achieving exactly-once requires coordinating the database write AND the Kafka offset confirmation as a single atomic operation.</p>
+
+  <h3>Who Actually Needs Exactly-Once</h3>
+  <table>
+    <tr><th>Sector</th><th>Use Case</th><th>Need Exactly-Once?</th><th>Why</th></tr>
+    <tr><td>Banking</td><td>Transaction processing</td><td><strong>Yes</strong></td><td>Duplicate = double debit</td></tr>
+    <tr><td>E-commerce</td><td>Order revenue totals</td><td><strong>Yes</strong></td><td>Billing error = legal liability</td></tr>
+    <tr><td>Telecom</td><td>Call data records</td><td><strong>Yes</strong></td><td>Over/under billing customers</td></tr>
+    <tr><td>Marketing</td><td>Ad impression counting</td><td>No</td><td>~1% error is acceptable</td></tr>
+    <tr><td>Social media</td><td>Like/view counts</td><td>No</td><td>Approximate is fine</td></tr>
+    <tr><td>Logistics</td><td>Delivery ETA</td><td>No</td><td>Small error has no consequences</td></tr>
+  </table>
+
+  <div class="callout green">
+    <p><strong>Practical reality:</strong> Most companies use at-least-once processing and manage the "duplicate" problem through <strong>idempotent writes</strong> — designing database operations so that processing the same event twice produces the same result as processing it once. This is simpler than exactly-once and works for most cases.</p>
+  </div>
+
+  <h3>Spark vs Flink on Exactly-Once</h3>
+  <ul>
+    <li><strong>Spark:</strong> Exactly-once at the batch level — if a batch fails and is re-run, the entire batch is re-processed atomically</li>
+    <li><strong>Flink:</strong> Exactly-once at the per-event level — each event's processing and output are coordinated, even mid-batch</li>
+  </ul>
+
+  <h2 id="latency">Section 3: When Latency Actually Matters</h2>
+
+  <h3>Scenario A — Online Payment Fraud Detection</h3>
+  <p>With Spark (~200ms fraud check): user taps "Pay" and experiences essentially zero perceptible delay. With Flink (~10ms): same user experience. <strong>Business verdict: Spark is fine.</strong></p>
+
+  <h3>Scenario B — Payment Gateway at Very High Throughput</h3>
+  <p>At 50,000 TPS, if the fraud pipeline becomes a bottleneck (batch takes longer than its trigger interval), transactions start queuing. Flink's consistent per-event processing avoids this queuing effect under load. <strong>Business verdict: At very high volume, Flink's consistency matters more than raw latency.</strong></p>
+
+  <h3>Scenario C — Financial Market Trading Alert</h3>
+  <p>A 200ms delay means a competitor has already acted on the same signal. Flink at 10ms is competitive. For high-frequency trading, even Flink is often "too slow" — those systems use custom hardware. <strong>Business verdict: Spark is not appropriate here.</strong></p>
+
+  <h2 id="framework">Section 4: The Complete Decision Framework</h2>
+
+  <table>
+    <tr><th>Dimension</th><th>Python Consumer</th><th>Apache Spark</th><th>ksqlDB</th><th>Apache Flink</th></tr>
+    <tr><td>Latency</td><td>&lt; 100ms</td><td>~200ms–2s</td><td>~50ms</td><td>&lt; 10ms</td></tr>
+    <tr><td>Scale limit</td><td>~1K events/sec</td><td>Millions/sec</td><td>Hundreds K/sec</td><td>Millions/sec</td></tr>
+    <tr><td>Exactly-once</td><td>No</td><td>Yes (batch)</td><td>Yes</td><td>Yes (per-event)</td></tr>
+    <tr><td>Infrastructure cost</td><td>None</td><td>Medium–High</td><td>Low</td><td>High</td></tr>
+    <tr><td>Talent cost</td><td>Low</td><td>Medium</td><td>Low</td><td>Very High</td></tr>
+    <tr><td>Best for</td><td>Learning, prototypes</td><td>Batch + streaming teams</td><td>SQL-native teams</td><td>Payments, trading</td></tr>
+  </table>
+
+  <h3>Organisational Cost Comparison</h3>
+  <table>
+    <tr><th>Factor</th><th>Apache Spark</th><th>Apache Flink</th></tr>
+    <tr><td>Monthly infra cost</td><td>₹30K–₹3L (Databricks/EMR)</td><td>₹50K–₹5L (self-managed or Confluent)</td></tr>
+    <tr><td>Time to first production job</td><td>2–4 weeks</td><td>6–12 weeks</td></tr>
+    <tr><td>Hiring difficulty</td><td>Moderate</td><td>Very Hard</td></tr>
+    <tr><td>Salary premium</td><td>40–60% over general engineer</td><td>80–120% over general engineer</td></tr>
+  </table>
+
+  <h2 id="casestudy">Section 5: Case Study — UPI Fraud Detection</h2>
+
+  <h3>The Problem</h3>
+  <p>NPCI processes ~5 billion UPI transactions/month (~1,900 TPS average, much higher at peak). Fraud must be detected and flagged <em>before clearing</em>: &lt;300ms SLA.</p>
+
+  <p>Each transaction must be checked for:</p>
+  <ol>
+    <li>New device/account combination</li>
+    <li>Unusual amount for this user's history</li>
+    <li>Mule account pattern (many small transactions to same payee today)</li>
+    <li>Location consistency with recent transactions</li>
+    <li>Active fraud alert on beneficiary VPA</li>
+  </ol>
+
+  <h3>Architecture Options</h3>
+  <table>
+    <tr><th>Option</th><th>Assessment</th></tr>
+    <tr><td><strong>Manual Python Consumer</strong></td><td>Single-threaded, ~1K events/sec. ❌ Cannot handle 1,900 TPS peak.</td></tr>
+    <tr><td><strong>Apache Spark Streaming</strong></td><td>Handles 1,900 TPS across distributed cluster. Micro-batch 200ms → within 300ms SLA. ✅ Scale sufficient, latency acceptable.</td></tr>
+    <tr><td><strong>Apache Flink</strong></td><td>~10ms per-transaction latency. Stateful per-user history in-memory (no database roundtrip for checks 1–4). ✅ Better latency margin, better for stateful checks. Higher cost.</td></tr>
+  </table>
+
+  <h3>Discussion Questions</h3>
+  <ol>
+    <li><strong>The 300ms SLA:</strong> Spark processes in ~200ms, leaving 100ms buffer. Is that enough margin on peak days when transaction volume is 3× normal?</li>
+    <li><strong>The stateful problem:</strong> Check 3 (mule account pattern) requires knowing all transactions to a payee in the last 24 hours. How do you query 24 hours of UPI history in &lt;10ms?</li>
+    <li><strong>Build vs buy:</strong> Custom streaming fraud pipeline vs licensed SaaS (SAS, NICE Actimize, Featurespace). What are the trade-offs?</li>
+  </ol>
+
+  <h2 id="debate">Group Debate: "Spark Is Good Enough for Everything"</h2>
+
+  <div class="debate-grid">
+    <div class="debate-card for">
+      <div class="side">Group A — Argue FOR</div>
+      <p>"Spark's micro-batch is sufficient for 95% of real business use cases. The additional complexity and cost of Flink is rarely justified."</p>
+    </div>
+    <div class="debate-card against">
+      <div class="side">Group B — Argue AGAINST</div>
+      <p>"As data volumes and latency expectations grow, Flink's true streaming model will become the standard. Companies that invest now will have a competitive advantage."</p>
+    </div>
+  </div>
+
+  <p><strong>Time:</strong> 5 minutes to prepare arguments, 5 minutes of structured debate, 2 minutes for faculty summary.</p>
+  <p><strong>Faculty debrief:</strong> Both positions have merit — context determines correctness. The question is always "what does the business need?" not "what's the best technology?"</p>
+
+  <h2 id="summary">Module 3 Summary</h2>
+  <div class="module-summary">
+    <h3>The Streaming Technology Landscape — Module 3</h3>
+    <table>
+      <tr><th></th><th>L11: Windowing</th><th>L12: Spark</th><th>L13: Flink</th></tr>
+      <tr><td><strong>Core concept</strong></td><td>Slicing infinite streams into measurable chunks</td><td>Distributed micro-batch processing</td><td>True per-event stream processing</td></tr>
+      <tr><td><strong>What you built</strong></td><td>consumer_window.py (tumbling + sliding)</td><td>Observed spark_consumer.py (demo)</td><td>Conceptual understanding</td></tr>
+      <tr><td><strong>Best for</strong></td><td>Any consumer needing time-based aggregations</td><td>Large-scale batch+streaming, SQL teams</td><td>Sub-100ms latency, financial exactly-once</td></tr>
+      <tr><td><strong>Business skill</strong></td><td>Choose the right window type</td><td>Know when to invest in distributed processing</td><td>Know when latency justifies the cost</td></tr>
+    </table>
+  </div>
+
+  <pre>Module 2: We made Kafka work — producers, consumers, MongoDB, alert routing
+Module 3: We learned to aggregate intelligently (windows), and understand the
+          frameworks that handle this at scale (Spark, Flink)
+
+Module 4: We stop building backends and focus on the output — dashboards.
+          All of this data you've been streaming? Now we make it visible.</pre>
+
+  <h2 id="takeaways">Key Takeaways</h2>
+  <div class="takeaway-box">
+    <h3>✓ Key Takeaways — Lecture 13</h3>
+    <ol>
+      <li>True streaming vs micro-batch: Flink processes each event immediately (&lt;10ms); Spark batches every ~200ms. Neither is universally "better."</li>
+      <li>Exactly-once matters for money — financial transactions, billing, and inventory allocation require it. Analytics and approximations do not.</li>
+      <li>200ms vs 10ms in business terms — Spark's latency is invisible to users for 90% of applications. Flink's advantage only materialises in high-frequency trading, payment auth under load, and real-time bidding.</li>
+      <li>Decision order: Python consumer → ksqlDB → Spark → Flink (increasing complexity, cost, and latency capability).</li>
+      <li>Organisational cost is the real constraint — Flink engineers are rare and expensive. The best technical choice your team cannot operate is the wrong choice.</li>
+      <li>Most companies use Spark. A small number — banks, payment networks, trading firms — need Flink. Know which kind of company you're in.</li>
+    </ol>
+  </div>
+
+  <div class="preview-box">
+    <h3>Preview — Module 4: Grafana Dashboards &amp; Alerts</h3>
+    <p>Starting Lecture 14, we shift from building pipelines to making them visible. You will use the same data you have been streaming in Module 2 (transactions, INFY/TCS prices) and turn it into dashboards a business manager can actually use.</p>
+  </div>
+
+</div>
+
+<script>
+function toggleTheme(){
+  const html=document.documentElement;
+  const isDark=html.getAttribute('data-theme')==='dark';
+  html.setAttribute('data-theme',isDark?'light':'dark');
+  document.querySelector('.theme-btn').textContent=isDark?'☀️ Light':'🌙 Dark';
+}
+</script>
+</body>
+</html>
