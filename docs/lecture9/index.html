@@ -3,19 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lecture 9 — Alert Routing with MongoDB | Streaming Data Analytics</title>
+  <title>Lecture 9 — Aggregations & Alert Routing | Streaming Data Analytics</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
-    :root {
-      --bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--border:#30363d;--text:#e6edf3;--text2:#8b949e;
-      --accent:#b91c1c;--accent2:#dc2626;--green:#16a34a;--green-bg:rgba(22,163,74,0.12);
-      --code-bg:#161b22;--code-border:#30363d;
-    }
-    [data-theme="light"] {
-      --bg:#f6f8fa;--bg2:#ffffff;--bg3:#eaeef2;--border:#d0d7de;--text:#1a1a2e;--text2:#57606a;
-      --accent:#8C1515;--accent2:#b91c1c;--green:#166534;--green-bg:rgba(22,101,52,0.08);
-      --code-bg:#f6f8fa;--code-border:#d0d7de;
-    }
+    :root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--border:#30363d;--text:#e6edf3;--text2:#8b949e;--accent:#b91c1c;--accent2:#dc2626;--green:#16a34a;--green-bg:rgba(22,163,74,0.12);--code-bg:#161b22;--code-border:#30363d;}
+    [data-theme="light"]{--bg:#f6f8fa;--bg2:#ffffff;--bg3:#eaeef2;--border:#d0d7de;--text:#1a1a2e;--text2:#57606a;--accent:#8C1515;--accent2:#b91c1c;--green:#166534;--green-bg:rgba(22,101,52,0.08);--code-bg:#f6f8fa;--code-border:#d0d7de;}
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
     body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);transition:background .3s,color .3s;}
     nav{position:sticky;top:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:52px;backdrop-filter:blur(12px);}
@@ -71,25 +63,34 @@
     .copy-btn:hover{border-color:var(--accent);color:var(--text);}
     .callout{border-left:3px solid var(--accent);background:rgba(185,28,28,.06);border-radius:0 8px 8px 0;padding:.9rem 1.1rem;margin:1rem 0;}
     .callout.green{border-color:var(--green);background:var(--green-bg);}
+    .callout.amber{border-color:#d97706;background:rgba(217,119,6,.06);}
     .callout p{margin:0;color:var(--text);font-size:.9rem;}
     .callout strong{color:var(--accent);}
     .callout.green strong{color:var(--green);}
-    .decision-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin:1rem 0;}
-    .decision-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem;}
-    .decision-card .dc-action{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);margin-bottom:5px;}
-    .decision-card .dc-desc{font-size:.82rem;color:var(--text);font-weight:500;margin-bottom:4px;}
-    .decision-card .dc-ex{font-size:.78rem;color:var(--text2);}
-    .rule-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin:1rem 0;}
-    .rule-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem;}
-    .rule-card.stateful{border-color:#d97706;background:rgba(217,119,6,.06);}
-    .rule-card .rc-type{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:4px;}
-    .rule-card.stateful .rc-type{color:#d97706;}
-    .rule-card .rc-rule{font-size:.88rem;font-weight:600;color:var(--text);margin-bottom:6px;}
-    .rule-card .rc-code{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--text2);line-height:1.5;}
-    .objectives-list{list-style:none;padding:0;margin:0;}
-    .objectives-list li{display:flex;align-items:flex-start;gap:10px;padding:.6rem 0;border-bottom:1px solid var(--border);font-size:.93rem;color:var(--text2);}
-    .objectives-list li:last-child{border-bottom:none;}
-    .objectives-list .check{color:var(--green);font-size:1rem;flex-shrink:0;margin-top:1px;}
+    .callout.amber strong{color:#d97706;}
+    .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin:1rem 0;}
+    .stat-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.9rem 1rem;text-align:center;}
+    .stat-card .sc-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:6px;}
+    .stat-card .sc-val{font-size:1.4rem;font-weight:700;color:var(--text);font-family:'JetBrains Mono',monospace;}
+    .stat-card .sc-desc{font-size:.72rem;color:var(--text2);margin-top:4px;}
+    .stat-card.hl{border-color:var(--accent);background:rgba(185,28,28,.06);}
+    .stat-card.hl .sc-val{color:var(--accent);}
+    .step-row{display:flex;align-items:flex-start;gap:1rem;padding:.75rem 0;border-bottom:1px solid var(--border);}
+    .step-row:last-child{border-bottom:none;}
+    .step-num{font-family:'JetBrains Mono',monospace;font-size:.95rem;font-weight:700;color:var(--accent);background:rgba(185,28,28,.1);border:1px solid var(--accent);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+    .step-body .step-title{font-weight:600;color:var(--text);font-size:.95rem;margin-bottom:.25rem;}
+    .step-body .step-desc{font-size:.85rem;color:var(--text2);}
+    .pipe-row{display:flex;align-items:center;gap:.5rem;margin:.5rem 0;flex-wrap:wrap;}
+    .pipe-box{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.6rem 1rem;text-align:center;min-width:110px;}
+    .pipe-box .pb-label{font-weight:600;color:var(--text);font-size:.85rem;}
+    .pipe-box .pb-sub{font-size:.72rem;color:var(--text2);margin-top:3px;}
+    .pipe-box.hl{border-color:var(--accent);background:rgba(185,28,28,.08);}
+    .pipe-box.hl .pb-label{color:var(--accent);}
+    .pipe-box.done{border-color:var(--green);background:rgba(22,163,74,.06);}
+    .pipe-box.done .pb-label{color:var(--green);}
+    .pipe-arrow{font-size:1.2rem;color:var(--text2);padding:0 .25rem;flex-shrink:0;}
+    .terminal-out{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:1rem 1.25rem;margin:1rem 0;font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:1.7;}
+    .t-ok{color:#3fb950;} .t-alert{color:#f85149;} .t-dim{color:#8b949e;} .t-info{color:#79c0ff;} .t-warn{color:#e3b341;}
     .download-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.75rem;margin:1rem 0;}
     .download-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem;display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;transition:border-color .2s,transform .15s;}
     .download-card:hover{border-color:var(--accent);transform:translateY(-2px);}
@@ -102,389 +103,461 @@
     .timeline td{padding:.55rem .9rem;border:1px solid var(--border);font-size:.83rem;color:var(--text2);}
     .timeline td:first-child{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--accent);white-space:nowrap;}
     .timeline tr:hover td{background:var(--bg3);}
-    .terminal-out{background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:1rem 1.25rem;margin:1rem 0;font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:1.7;}
-    .t-ok{color:#3fb950;} .t-alert{color:#f85149;} .t-dim{color:#8b949e;} .t-info{color:#79c0ff;}
-    .pipe-row{display:flex;align-items:center;gap:.5rem;margin:.5rem 0;}
-    .pipe-box{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.6rem 1rem;text-align:center;min-width:110px;}
-    .pipe-box .pb-label{font-weight:600;color:var(--text);font-size:.85rem;}
-    .pipe-box .pb-sub{font-size:.72rem;color:var(--text2);margin-top:3px;}
-    .pipe-box.hl{border-color:var(--accent);background:rgba(185,28,28,.08);}
-    .pipe-box.hl .pb-label{color:var(--accent);}
-    .pipe-box.done{border-color:var(--green);background:rgba(22,163,74,.06);}
-    .pipe-box.done .pb-label{color:var(--green);}
-    .pipe-arrow{font-size:1.2rem;color:var(--text2);padding:0 .5rem;flex-shrink:0;}
-    .slide-nav{position:fixed;bottom:1.5rem;right:1.5rem;display:flex;gap:.5rem;z-index:50;}
-    .slide-nav button{background:var(--bg2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 14px;cursor:pointer;font-size:.85rem;font-family:inherit;transition:all .15s;}
-    .slide-nav button:hover{border-color:var(--accent);}
-    .slide-counter{background:var(--bg2);border:1px solid var(--border);color:var(--text2);border-radius:8px;padding:8px 14px;font-size:.78rem;display:flex;align-items:center;font-family:'JetBrains Mono',monospace;}
     .kw{color:#ff7b72;} .st{color:#a5d6ff;} .cm{color:#8b949e;font-style:italic;} .fn{color:#d2a8ff;} .num{color:#79c0ff;} .var{color:#ffa657;}
-    @media(max-width:640px){.slide{padding:1.5rem 1.25rem;}.decision-grid,.rule-grid{grid-template-columns:1fr;}.slide-nav{bottom:1rem;right:1rem;}}
+    .slide-nav{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:.75rem;background:var(--bg2);border:1px solid var(--border);border-radius:40px;padding:.5rem 1rem;box-shadow:0 4px 20px rgba(0,0,0,.4);z-index:50;}
+    .slide-nav button{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+    .slide-nav button:hover{border-color:var(--accent);color:var(--accent);}
+    .slide-counter{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--text2);min-width:50px;text-align:center;}
+    @media(max-width:640px){.slide{padding:1.5rem 1.25rem;}.stat-grid{grid-template-columns:1fr 1fr;}}
   </style>
 </head>
 <body>
 
-  <nav>
-    <div class="nav-left">
-      <a href="../index.html" class="nav-home">← Course Home</a>
-      <span class="nav-sep">/</span>
-      <span class="nav-title">Lecture 9</span>
+<nav>
+  <div class="nav-left">
+    <a href="../index.html" class="nav-home">← Course Home</a>
+    <span class="nav-sep">/</span>
+    <span class="nav-title">Lecture 9</span>
+  </div>
+  <div class="nav-right">
+    <span class="nav-badge">Module 2</span>
+    <button class="theme-btn" onclick="toggleTheme()">🌙 Dark</button>
+  </div>
+</nav>
+
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<div class="slides-wrap">
+
+  <!-- SLIDE 1 — TITLE -->
+  <div class="slide title-slide" id="s1" data-slide="1">
+    <div class="lec-label">Module 2 · Lecture 9</div>
+    <h1>Smarter Consumers:<br><span>Aggregations & Alert Routing</span></h1>
+    <p class="subtitle">Buffer · Compute Stats · Flag Anomalies · Route to MongoDB</p>
+    <div class="title-meta">
+      <div class="meta-item">⏱ <strong>90 min</strong></div>
+      <div class="meta-item">🎓 MBA Streaming Data Analytics</div>
+      <div class="meta-item">📍 Continues from Lecture 8</div>
     </div>
-    <div class="nav-right">
-      <a href="../commands.html" style="font-size:.78rem;font-weight:600;color:var(--text2);text-decoration:none;border:1px solid var(--border);padding:4px 10px;border-radius:6px;">⌨️ Commands</a>
-      <a href="../submissions.html" style="font-size:.78rem;font-weight:600;color:var(--accent);text-decoration:none;border:1px solid var(--accent);padding:4px 10px;border-radius:6px;">Submissions</a>
-      <span class="nav-badge">Module 2</span>
-      <button class="theme-btn" onclick="toggleTheme()"><span id="ti">☀️</span><span id="tl">Light</span></button>
-    </div>
-  </nav>
-
-  <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
-  <div class="slides-wrap" id="slides">
-
-    <!-- S1 TITLE -->
-    <div class="slide title-slide" id="s1" data-slide="1">
-      <div class="lec-label">Lecture 09 · Module 2</div>
-      <h1>Smarter Consumers: <span>Alert Routing</span></h1>
-      <p class="subtitle">Two Collections · Alert Rules · Content-Based Routing</p>
-      <div class="title-meta">
-        <div class="meta-item">📅 <strong>Module 2</strong> — Making Kafka Work</div>
-        <div class="meta-item">⏱ <strong>90 min</strong></div>
-        <div class="meta-item">🎓 MBA Streaming Data Analytics</div>
-      </div>
-    </div>
-
-    <!-- S2 AGENDA -->
-    <div class="slide" id="s2" data-slide="2">
-      <div class="slide-header"><span class="slide-num">02 / 09</span><span class="slide-tag title">Agenda</span></div>
-      <h2>Today's <span>90 Minutes</span></h2>
-      <table class="timeline">
-        <thead><tr><th>Time</th><th>Segment</th><th>Format</th></tr></thead>
-        <tbody>
-          <tr><td>0 – 10</td><td>Recap — what's in <code>stock_prices</code> right now?</td><td>Q&amp;A</td></tr>
-          <tr><td>10 – 25</td><td>The problem with one collection — two types of users</td><td>Lecture</td></tr>
-          <tr><td>25 – 40</td><td>Alert rules: stateless vs stateful</td><td>Lecture</td></tr>
-          <tr><td>40 – 75</td><td>consumer_alerts.py + check_alerts.py</td><td>Lab</td></tr>
-          <tr><td>75 – 85</td><td>Atlas Explorer — verify both collections</td><td>Demo</td></tr>
-          <tr><td>85 – 90</td><td>Takeaways + Module 3 preview</td><td>Wrap-up</td></tr>
-        </tbody>
-      </table>
-      <div class="callout green">
-        <p><strong>What you need running:</strong> Docker Desktop (Kafka) · MongoDB Atlas from L8 · L6 producer sending to <code>stock-topic</code></p>
-      </div>
-    </div>
-
-    <!-- S3 THE PROBLEM -->
-    <div class="slide" id="s3" data-slide="3">
-      <div class="slide-header"><span class="slide-num">03 / 09</span><span class="slide-tag theory">Concept</span></div>
-      <h2>One Collection Is <span>Not Enough</span></h2>
-      <p>In L8 every stock price went into <code>sda_course.stock_prices</code>. That is exactly right for a data analyst querying trends — but a portfolio manager only wants to see <strong>the moments that matter</strong>.</p>
-
-      <table>
-        <thead><tr><th>User</th><th>What They Need</th><th>How Often They Check</th></tr></thead>
-        <tbody>
-          <tr><td><strong>BI / Data Analyst</strong></td><td>All prices, full history</td><td>Batch queries, once a day</td></tr>
-          <tr><td><strong>Portfolio Manager / Risk</strong></td><td>Only significant moves</td><td>Every few minutes — or instantly</td></tr>
-        </tbody>
-      </table>
-
-      <p>Forcing both users into the same collection means the risk user must <strong>filter thousands of normal ticks every time</strong> to find the 8 that matter.</p>
-
-      <div class="callout">
-        <p><strong>Business Analogy:</strong> <code>stock_prices</code> is a complete call recording library. <code>stock_alerts</code> is the auto-flagged escalations queue. Both exist. Different people action them.</p>
-      </div>
-    </div>
-
-    <!-- S4 TWO COLLECTION PATTERN -->
-    <div class="slide" id="s4" data-slide="4">
-      <div class="slide-header"><span class="slide-num">04 / 09</span><span class="slide-tag theory">Pattern</span></div>
-      <h2>The <span>Two-Collection</span> Pattern</h2>
-      <p>Same Kafka topic. Same consumer process. One extra <code>if</code> block. Two very different use cases unlocked.</p>
-
-      <div style="margin:1.5rem 0;display:flex;flex-direction:column;gap:.5rem;">
-        <div class="pipe-row">
-          <div class="pipe-box done"><div class="pb-label">stock-topic</div><div class="pb-sub">Kafka · L6</div></div>
-          <span class="pipe-arrow">→</span>
-          <div class="pipe-box hl"><div class="pb-label">consumer_alerts.py</div><div class="pb-sub">TODAY</div></div>
-        </div>
-        <div style="margin-left:7.2rem;display:flex;flex-direction:column;gap:.4rem;">
-          <div class="pipe-row">
-            <span class="pipe-arrow" style="padding:0 .3rem">↓</span>
-            <div class="pipe-box done"><div class="pb-label">stock_prices</div><div class="pb-sub">every message · L8</div></div>
-          </div>
-          <div class="pipe-row">
-            <span class="pipe-arrow" style="padding:0 .3rem">↓</span>
-            <div class="pipe-box hl"><div class="pb-label">stock_alerts</div><div class="pb-sub">flagged only · NEW</div></div>
-          </div>
-        </div>
-      </div>
-
-      <table>
-        <thead><tr><th>Collection</th><th>Who Uses It</th><th>For What</th></tr></thead>
-        <tbody>
-          <tr><td><code>stock_prices</code></td><td>BI, ML training, charts</td><td>Full history, trend analysis</td></tr>
-          <tr><td><code>stock_alerts</code></td><td>Portfolio manager, risk team</td><td>Action queue — review now</td></tr>
-        </tbody>
-      </table>
-      <p style="font-size:.84rem;color:var(--text2);margin-top:.5rem;">This has a name: <strong style="color:var(--text)">Content-Based Router</strong> — an Enterprise Integration Pattern used in production by NPCI, Amazon, and Zepto.</p>
-    </div>
-
-    <!-- S5 ALERT RULES -->
-    <div class="slide" id="s5" data-slide="5">
-      <div class="slide-header"><span class="slide-num">05 / 09</span><span class="slide-tag theory">Concept</span></div>
-      <h2>Alert Rules: <span>Stateless vs Stateful</span></h2>
-      <p>All alert logic is an <code>if</code> statement — the question is whether it evaluates one message alone, or needs to remember previous messages.</p>
-
-      <div class="rule-grid">
-        <div class="rule-card">
-          <div class="rc-type">Stateless — no memory needed</div>
-          <div class="rc-rule">📉 Price Below Floor</div>
-          <div class="rc-code">INFY &lt; ₹1,400 → ALERT<br>TCS  &lt; ₹3,200 → ALERT</div>
-          <p style="font-size:.78rem;color:var(--text2);margin-top:.5rem;">Each message evaluated alone. No history required.</p>
-        </div>
-        <div class="rule-card stateful">
-          <div class="rc-type">Stateful — remembers last price</div>
-          <div class="rc-rule">⚡ Rapid Move &gt; 1.5%</div>
-          <div class="rc-code">|Δ from prev price| &gt; 1.5% → ALERT</div>
-          <p style="font-size:.78rem;color:var(--text2);margin-top:.5rem;">Remembers previous price per symbol in a Python dict.</p>
-        </div>
-      </div>
-
-      <div class="code-header"><span class="code-lang">python — stateful in-memory state</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-      <pre><code>last_price = {}   <span class="cm"># {"INFY": 1423.50, "TCS": 3541.00, ...}</span>
-
-<span class="kw">def</span> <span class="fn">check_rapid_move</span>(symbol, price):
-    <span class="kw">if</span> symbol <span class="kw">in</span> last_price:
-        pct = (price - last_price[symbol]) / last_price[symbol] * <span class="num">100</span>
-        <span class="kw">if</span> <span class="fn">abs</span>(pct) > <span class="num">1.5</span>:
-            <span class="kw">return</span> <span class="st">f"RAPID_MOVE:{pct:+.2f}%"</span>
-    last_price[symbol] = price
-    <span class="kw">return</span> <span class="kw">None</span></code></pre>
-
-      <div class="callout">
-        <p><strong>Note:</strong> <code>last_price</code> lives in RAM. A consumer restart loses it until the second message per symbol. Module 3 covers durable state for production.</p>
-      </div>
-    </div>
-
-    <!-- S6 CONSUMER_ALERTS -->
-    <div class="slide" id="s6" data-slide="6">
-      <div class="slide-header"><span class="slide-num">06 / 09</span><span class="slide-tag lab">Lab</span></div>
-      <h2>consumer_alerts.py — <span>Full Code</span></h2>
-      <div class="code-header"><span class="code-lang">python · consumer_alerts.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-      <pre><code><span class="kw">from</span> kafka <span class="kw">import</span> KafkaConsumer
-<span class="kw">from</span> pymongo <span class="kw">import</span> MongoClient
-<span class="kw">from</span> datetime <span class="kw">import</span> datetime
-<span class="kw">import</span> json
-
-MONGO_URI  = <span class="st">"mongodb+srv://&lt;user&gt;:&lt;pass&gt;@cluster0.xxxxx.mongodb.net/"</span>
-client     = <span class="fn">MongoClient</span>(MONGO_URI)
-db         = client[<span class="st">"sda_course"</span>]
-prices_col = db[<span class="st">"stock_prices"</span>]   <span class="cm"># same as L8</span>
-alerts_col = db[<span class="st">"stock_alerts"</span>]   <span class="cm"># new collection — auto-created</span>
-
-last_price   = {}
-PRICE_FLOORS = {<span class="st">"INFY"</span>: <span class="num">1400</span>, <span class="st">"TCS"</span>: <span class="num">3200</span>}
-
-<span class="kw">def</span> <span class="fn">get_alerts</span>(symbol, price):
-    reasons = []
-    <span class="kw">if</span> symbol <span class="kw">in</span> PRICE_FLOORS <span class="kw">and</span> price &lt; PRICE_FLOORS[symbol]:
-        reasons.<span class="fn">append</span>(<span class="st">f"BELOW_FLOOR:{symbol}&lt;{PRICE_FLOORS[symbol]}"</span>)
-    <span class="kw">if</span> symbol <span class="kw">in</span> last_price:
-        pct = (price - last_price[symbol]) / last_price[symbol] * <span class="num">100</span>
-        <span class="kw">if</span> <span class="fn">abs</span>(pct) > <span class="num">1.5</span>:
-            reasons.<span class="fn">append</span>(<span class="st">f"RAPID_MOVE:{pct:+.2f}%"</span>)
-    last_price[symbol] = price
-    <span class="kw">return</span> reasons
-
-consumer = <span class="fn">KafkaConsumer</span>(
-    <span class="st">'stock-topic'</span>, bootstrap_servers=[<span class="st">'localhost:9092'</span>],
-    auto_offset_reset=<span class="st">'latest'</span>,
-    value_deserializer=<span class="kw">lambda</span> x: json.<span class="fn">loads</span>(x.<span class="fn">decode</span>(<span class="st">'utf-8'</span>))
-)
-<span class="fn">print</span>(<span class="st">"📡 Listening on stock-topic (Ctrl+C to stop)..."</span>)
-
-<span class="kw">for</span> msg <span class="kw">in</span> consumer:
-    data   = msg.value
-    symbol = data.<span class="fn">get</span>(<span class="st">'symbol'</span>, <span class="st">'?'</span>)
-    price  = <span class="fn">float</span>(data.<span class="fn">get</span>(<span class="st">'price'</span>, data.<span class="fn">get</span>(<span class="st">'Close'</span>, <span class="num">0</span>)))
-
-    <span class="cm"># Step 1 — save every message (same as L8)</span>
-    prices_col.<span class="fn">insert_one</span>({**data, <span class="st">'_saved_at'</span>: datetime.<span class="fn">utcnow</span>()})
-    <span class="cm"># Step 2 — evaluate and route alerts</span>
-    reasons = <span class="fn">get_alerts</span>(symbol, price)
-    <span class="kw">if</span> reasons:
-        alerts_col.<span class="fn">insert_one</span>({
-            <span class="st">'symbol'</span>: symbol, <span class="st">'price'</span>: price,
-            <span class="st">'alert_reasons'</span>: reasons,
-            <span class="st">'alert_at'</span>: datetime.<span class="fn">utcnow</span>(), <span class="st">'status'</span>: <span class="st">'open'</span>
-        })
-        <span class="fn">print</span>(<span class="st">f"🚨 [{symbol}] ₹{price} → {', '.join(reasons)}"</span>)
-    <span class="kw">else</span>:
-        <span class="fn">print</span>(<span class="st">f"💾 [{symbol}] ₹{price}"</span>)</code></pre>
-    </div>
-
-    <!-- S7 OUTPUT + CHECK -->
-    <div class="slide" id="s7" data-slide="7">
-      <div class="slide-header"><span class="slide-num">07 / 09</span><span class="slide-tag lab">Lab</span></div>
-      <h2>Expected Output &amp; <span>check_alerts.py</span></h2>
-
-      <h3>Terminal — consumer_alerts.py</h3>
-      <div class="terminal-out">
-        <div class="t-ok">📡 Listening on stock-topic (Ctrl+C to stop)...</div>
-        <div class="t-ok">💾 [INFY] ₹1423.50</div>
-        <div class="t-ok">💾 [TCS]  ₹3541.00</div>
-        <div class="t-alert">🚨 [INFY] ₹1398.20 → BELOW_FLOOR:INFY&lt;1400</div>
-        <div class="t-ok">💾 [TCS]  ₹3552.00</div>
-        <div class="t-alert">🚨 [TCS]  ₹3498.00 → RAPID_MOVE:-1.52%</div>
-      </div>
-
-      <h3>check_alerts.py — run anytime in a second terminal</h3>
-      <div class="code-header"><span class="code-lang">python · check_alerts.py</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
-      <pre><code><span class="kw">from</span> pymongo <span class="kw">import</span> MongoClient, DESCENDING
-MONGO_URI = <span class="st">"mongodb+srv://..."</span>
-client = <span class="fn">MongoClient</span>(MONGO_URI)
-db     = client[<span class="st">"sda_course"</span>]
-
-total   = db[<span class="st">"stock_prices"</span>].<span class="fn">count_documents</span>({})
-alerted = db[<span class="st">"stock_alerts"</span>].<span class="fn">count_documents</span>({})
-<span class="fn">print</span>(<span class="st">f"stock_prices: {total:,}  |  stock_alerts: {alerted:,}  ({alerted/total*100:.1f}%)"</span>)
-
-<span class="fn">print</span>(<span class="st">"\nRecent Alerts:"</span>)
-<span class="kw">for</span> doc <span class="kw">in</span> db[<span class="st">"stock_alerts"</span>].<span class="fn">find</span>({},{<span class="st">"_id"</span>:<span class="num">0</span>}).<span class="fn">sort</span>(<span class="st">"alert_at"</span>,DESCENDING).<span class="fn">limit</span>(<span class="num">5</span>):
-    <span class="fn">print</span>(<span class="st">f"  [{doc['symbol']}] ₹{doc['price']} — {', '.join(doc['alert_reasons'])}"</span>)</code></pre>
-
-      <div class="terminal-out" style="margin-top:.75rem;">
-        <div class="t-info">stock_prices: 312  |  stock_alerts: 18  (5.8%)</div>
-        <div class="t-dim">Recent Alerts:</div>
-        <div class="t-alert">  [INFY] ₹1398.20 — BELOW_FLOOR:INFY&lt;1400</div>
-        <div class="t-alert">  [TCS]  ₹3498.00 — RAPID_MOVE:-1.52%</div>
-      </div>
-    </div>
-
-    <!-- S8 ATLAS EXPLORER -->
-    <div class="slide" id="s8" data-slide="8">
-      <div class="slide-header"><span class="slide-num">08 / 09</span><span class="slide-tag lab">Demo</span></div>
-      <h2>Verify in <span>Atlas Explorer</span></h2>
-      <p>After running the lab, open Atlas and confirm both collections are populated.</p>
-
-      <ol style="padding-left:1.4rem;display:flex;flex-direction:column;gap:.6rem;margin:1rem 0;">
-        <li style="font-size:.9rem;color:var(--text2);line-height:1.6;">Go to <strong style="color:var(--text)">cloud.mongodb.com</strong> → your cluster → <strong style="color:var(--text)">Browse Collections</strong></li>
-        <li style="font-size:.9rem;color:var(--text2);line-height:1.6;">Open <strong style="color:var(--text)">sda_course</strong> — you should see <strong style="color:var(--text)">two</strong> collections: <code>stock_prices</code> and <code>stock_alerts</code></li>
-        <li style="font-size:.9rem;color:var(--text2);line-height:1.6;">Click any <code>stock_alerts</code> document — verify it has <code>alert_reasons</code> array and <code>status: "open"</code></li>
-      </ol>
-
-      <h3>A Preview — Atlas Charts in Module 4</h3>
-      <table>
-        <thead><tr><th>Collection</th><th>Chart You Can Build</th></tr></thead>
-        <tbody>
-          <tr><td><code>stock_prices</code></td><td>Line: price over time per symbol</td></tr>
-          <tr><td><code>stock_prices</code></td><td>Bar: average price by hour of day</td></tr>
-          <tr><td><code>stock_alerts</code></td><td>Table: open alerts — live action queue</td></tr>
-          <tr><td><code>stock_alerts</code></td><td>Bar: alert count by reason type</td></tr>
-        </tbody>
-      </table>
-
-      <div class="callout green">
-        <p><strong>The data you are inserting right now</strong> is the exact data source for your Module 4 dashboards. No extra work needed — just keep the consumer running.</p>
-      </div>
-    </div>
-
-    <!-- S9 TAKEAWAYS -->
-    <div class="slide" id="s9" data-slide="9">
-      <div class="slide-header"><span class="slide-num">09 / 09</span><span class="slide-tag title">Wrap-Up</span></div>
-      <h2>Key <span>Takeaways</span></h2>
-      <ul class="objectives-list">
-        <li><span class="check">✓</span><span>One Kafka topic → <strong>multiple collections</strong> via a single consumer — no extra producers needed</span></li>
-        <li><span class="check">✓</span><span><strong>Stateless rules</strong> evaluate one message alone; <strong>stateful rules</strong> need in-memory state per symbol</span></li>
-        <li><span class="check">✓</span><span>The <strong>two-collection pattern</strong> serves different business users without duplicating infrastructure</span></li>
-        <li><span class="check">✓</span><span><code>status: "open"</code> in alert docs gives your risk team a structured, queryable action queue</span></li>
-        <li><span class="check">✓</span><span>Both collections are ready for <strong>Atlas Charts</strong> in Module 4 — dashboards on data you already have</span></li>
-      </ul>
-
-      <h3 style="margin-top:1.5rem;">Download Lab Files</h3>
-      <div class="download-grid">
-        <a href="consumer_alerts.py" download class="download-card">
-          <span class="dl-icon">🚨</span>
-          <div class="dl-info"><div class="dl-name">consumer_alerts.py</div><div class="dl-desc">Dual-collection alert routing</div></div>
-          <span class="dl-badge">↓ .py</span>
-        </a>
-        <a href="check_alerts.py" download class="download-card">
-          <span class="dl-icon">🔍</span>
-          <div class="dl-info"><div class="dl-name">check_alerts.py</div><div class="dl-desc">Query both Atlas collections</div></div>
-          <span class="dl-badge">↓ .py</span>
-        </a>
-        <a href="../lecture8/consumer_mongodb.py" download class="download-card">
-          <span class="dl-icon">📡</span>
-          <div class="dl-info"><div class="dl-name">consumer_mongodb.py</div><div class="dl-desc">From Lecture 8 — reference</div></div>
-          <span class="dl-badge">↓ .py</span>
-        </a>
-      </div>
-
-      <p style="margin-top:1.25rem;color:var(--text2);font-size:.85rem;">
-        <strong style="color:var(--text)">Module 3 →</strong> Single-event rules have limits. Window-based analysis asks: <em>"What happened across the last 5 minutes?"</em> — that is Lecture 11: Windowing &amp; Aggregations.
-      </p>
-    </div>
-
-  </div><!-- /slides-wrap -->
-
-  <div class="slide-nav">
-    <button onclick="prevSlide()">← Prev</button>
-    <span class="slide-counter" id="counter">1 / 9</span>
-    <button onclick="nextSlide()">Next →</button>
   </div>
 
-  <script>
-    const TOTAL = 9;
-    let current = 1;
-    function goTo(n) {
-      if (n < 1 || n > TOTAL) return;
-      current = n;
-      document.getElementById('counter').textContent = current + ' / ' + TOTAL;
-      document.getElementById('progress').style.width = ((current / TOTAL) * 100) + '%';
-      const el = document.getElementById('s' + current);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
-      if (el) el.classList.add('active');
+  <!-- SLIDE 2 — AGENDA & RECAP -->
+  <div class="slide" id="s2" data-slide="2">
+    <div class="slide-header"><span class="slide-num">02 / 09</span><span class="slide-tag title">Overview</span></div>
+    <h2>Where We Are & <span>What We Build</span></h2>
+
+    <div class="pipe-row">
+      <div class="pipe-box done"><div class="pb-label">L6–L7</div><div class="pb-sub">producer → consumer</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box done"><div class="pb-label">L8</div><div class="pb-sub">save to stock_prices</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box hl"><div class="pb-label">L9</div><div class="pb-sub">aggregate + alert routing</div></div>
+    </div>
+
+    <p>In Lecture 8 we saved every tick to MongoDB <code>stock_prices</code>. Today we make the consumer <em>smarter</em> — it now <strong>computes statistics</strong> on batches of prices and <strong>automatically flags</strong> significant moves.</p>
+
+    <h3>Today's Build — Three Steps</h3>
+    <div class="step-row">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">Buffer & Aggregate</div>
+        <div class="step-desc">Collect N ticks per symbol, compute <code>sum / mean / min / max</code> when buffer is full</div>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">Alert Rule — 5% Deviation</div>
+        <div class="step-desc">Alert if <code>min</code> or <code>max</code> in this batch deviates &gt;5% from the previous close</div>
+      </div>
+    </div>
+    <div class="step-row">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">Route to MongoDB</div>
+        <div class="step-desc">All messages → <code>stock_prices</code> · Alerts only → <code>stock_alerts</code></div>
+      </div>
+    </div>
+
+    <table class="timeline" style="margin-top:1.25rem;">
+      <tr><th>Time</th><th>Activity</th><th>Type</th></tr>
+      <tr><td>0–15</td><td>Recap L8 + why aggregate in the consumer</td><td>Discussion</td></tr>
+      <tr><td>15–45</td><td>Step 1 — buffer logic &amp; stats code walkthrough</td><td>Theory + Code</td></tr>
+      <tr><td>45–75</td><td>Steps 2 &amp; 3 — alert rule + MongoDB routing</td><td>Theory + Code</td></tr>
+      <tr><td>75–90</td><td>Hands-on: run consumer_alerts.py, check Atlas</td><td>Lab</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 3 — WHY AGGREGATE? -->
+  <div class="slide" id="s3" data-slide="3">
+    <div class="slide-header"><span class="slide-num">03 / 09</span><span class="slide-tag theory">Theory</span></div>
+    <h2>Why Aggregate <span>in the Consumer?</span></h2>
+
+    <p>Raw tick data is noisy. A single bad tick — a data quality issue, a momentary spike — can trigger false alerts. Aggregating over a small window gives you a <strong>more stable signal</strong>.</p>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="sc-label">Sum</div>
+        <div class="sc-val">Σ</div>
+        <div class="sc-desc">Total value traded in the batch — useful for volume-weighted logic</div>
+      </div>
+      <div class="stat-card">
+        <div class="sc-label">Mean</div>
+        <div class="sc-val">x̄</div>
+        <div class="sc-desc">Average price across the batch — becomes the new "close" reference</div>
+      </div>
+      <div class="stat-card hl">
+        <div class="sc-label">Min</div>
+        <div class="sc-val">↓</div>
+        <div class="sc-desc">Lowest price — used to detect downside breaks vs previous close</div>
+      </div>
+      <div class="stat-card hl">
+        <div class="sc-label">Max</div>
+        <div class="sc-val">↑</div>
+        <div class="sc-desc">Highest price — used to detect upside breaks vs previous close</div>
+      </div>
+    </div>
+
+    <div class="callout amber">
+      <p><strong>Decision Rule:</strong> If <code>min</code> or <code>max</code> moves more than <strong>5%</strong> away from where prices were before this batch (<code>prev_close</code>), something significant has happened — raise an alert.</p>
+    </div>
+
+    <p>The mean of each completed batch becomes the <strong>new <code>prev_close</code></strong> for the next batch. This rolling reference prevents alerts from chasing price after a large move.</p>
+  </div>
+
+  <!-- SLIDE 4 — STEP 1: BUFFER & STATS CODE -->
+  <div class="slide" id="s4" data-slide="4">
+    <div class="slide-header"><span class="slide-num">04 / 09</span><span class="slide-tag theory">Step 1 — Code</span></div>
+    <h2>Buffer &amp; <span>Compute Stats</span></h2>
+
+    <p>We accumulate incoming prices in a per-symbol list. When the buffer reaches <code>BUFFER_SIZE</code>, we compute stats and reset.</p>
+
+    <div class="code-header"><span class="code-lang">python · buffer + stats setup</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="kw">from</span> collections <span class="kw">import</span> defaultdict
+<span class="kw">import</span> statistics
+
+<span class="var">BUFFER_SIZE</span> = <span class="num">5</span>   <span class="cm"># compute stats after every 5 ticks per symbol</span>
+
+<span class="cm"># State: one buffer and one prev_close entry per symbol</span>
+<span class="var">price_buffer</span> = defaultdict(list)  <span class="cm"># {"INFY": [1410, 1415, 1408, 1420, 1412]}</span>
+<span class="var">prev_close</span>   = {}                  <span class="cm"># {"INFY": 1413.0}  — updated each batch</span>
+
+<span class="kw">def</span> <span class="fn">compute_stats</span>(prices):
+    <span class="kw">return</span> {
+        <span class="st">"count"</span>: len(prices),
+        <span class="st">"sum"</span>:   round(sum(prices), <span class="num">2</span>),
+        <span class="st">"mean"</span>:  round(statistics.mean(prices), <span class="num">2</span>),
+        <span class="st">"min"</span>:   round(min(prices), <span class="num">2</span>),
+        <span class="st">"max"</span>:   round(max(prices), <span class="num">2</span>),
     }
-    function nextSlide() { goTo(current + 1); }
-    function prevSlide() { goTo(current - 1); }
-    document.addEventListener('keydown', e => {
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
-      if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   prevSlide();
+
+<span class="cm"># Inside the consumer loop:</span>
+<span class="var">price_buffer</span>[<span class="var">symbol</span>].append(<span class="var">price</span>)
+
+<span class="kw">if</span> len(<span class="var">price_buffer</span>[<span class="var">symbol</span>]) &gt;= <span class="var">BUFFER_SIZE</span>:
+    <span class="var">stats</span> = <span class="fn">compute_stats</span>(<span class="var">price_buffer</span>[<span class="var">symbol</span>])
+    print(<span class="st">f"sum={stats['sum']}  mean={stats['mean']}  min={stats['min']}  max={stats['max']}"</span>)
+    <span class="var">price_buffer</span>[<span class="var">symbol</span>] = []   <span class="cm"># reset buffer</span></code></pre>
+
+    <h3>Sample Output — Step 1 Only</h3>
+    <div class="terminal-out">
+      <div class="t-dim">📡 Listening on stock-topic...</div>
+      <div class="t-dim">   ↳ [INFY]  ₹1410.20  buffer 1/5</div>
+      <div class="t-dim">   ↳ [INFY]  ₹1415.80  buffer 2/5</div>
+      <div class="t-dim">   ↳ [INFY]  ₹1408.50  buffer 3/5</div>
+      <div class="t-dim">   ↳ [INFY]  ₹1420.00  buffer 4/5</div>
+      <div class="t-dim">   ↳ [INFY]  ₹1412.30  buffer 5/5</div>
+      <div class="t-info">📊 [INFY] Batch stats — sum=7066.80  mean=1413.36  min=1408.50  max=1420.00</div>
+      <div class="t-dim">   ↳ [INFY]  ₹1401.10  buffer 1/5  ← next batch starts</div>
+    </div>
+
+    <div class="callout green">
+      <p><strong>Teaching point:</strong> The consumer now "thinks" in batches, not individual ticks. This is the foundation of all stream processing systems — micro-batching reduces noise before decision logic runs.</p>
+    </div>
+  </div>
+
+  <!-- SLIDE 5 — STEP 2: ALERT RULE -->
+  <div class="slide" id="s5" data-slide="5">
+    <div class="slide-header"><span class="slide-num">05 / 09</span><span class="slide-tag theory">Step 2 — Alert Rule</span></div>
+    <h2>From Stats to <span>Alerts — the 5% Rule</span></h2>
+
+    <p>After every completed batch, compare the batch's <code>min</code> and <code>max</code> against <code>prev_close</code> — the mean from the <em>previous</em> batch.</p>
+
+    <div class="callout amber">
+      <p><strong>Alert condition:</strong> <code>|min − prev_close| / prev_close &gt; 5%</code>  OR  <code>|max − prev_close| / prev_close &gt; 5%</code></p>
+    </div>
+
+    <div class="code-header"><span class="code-lang">python · check_alert()</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="var">ALERT_PCT</span> = <span class="num">5.0</span>   <span class="cm"># alert threshold in percent</span>
+
+<span class="kw">def</span> <span class="fn">check_alert</span>(symbol, stats):
+    <span class="kw">if</span> symbol <span class="kw">not in</span> <span class="var">prev_close</span>:
+        <span class="kw">return</span> []  <span class="cm"># first batch — no reference yet</span>
+
+    <span class="var">pc</span>      = <span class="var">prev_close</span>[<span class="var">symbol</span>]
+    <span class="var">reasons</span> = []
+
+    <span class="var">min_dev</span> = abs(<span class="var">stats</span>[<span class="st">"min"</span>] - <span class="var">pc</span>) / <span class="var">pc</span> * <span class="num">100</span>
+    <span class="var">max_dev</span> = abs(<span class="var">stats</span>[<span class="st">"max"</span>] - <span class="var">pc</span>) / <span class="var">pc</span> * <span class="num">100</span>
+
+    <span class="kw">if</span> <span class="var">min_dev</span> &gt; <span class="var">ALERT_PCT</span>:
+        <span class="var">reasons</span>.append(<span class="st">f"MIN_DEV {stats['min']:.2f} ({-min_dev:.1f}% vs close {pc:.2f})"</span>)
+    <span class="kw">if</span> <span class="var">max_dev</span> &gt; <span class="var">ALERT_PCT</span>:
+        <span class="var">reasons</span>.append(<span class="st">f"MAX_DEV {stats['max']:.2f} (+{max_dev:.1f}% vs close {pc:.2f})"</span>)
+
+    <span class="kw">return</span> <span class="var">reasons</span>  <span class="cm"># empty list = no alert</span>
+
+<span class="cm"># After batch is full:</span>
+<span class="var">reasons</span> = <span class="fn">check_alert</span>(<span class="var">symbol</span>, <span class="var">stats</span>)
+<span class="var">prev_close</span>[<span class="var">symbol</span>] = <span class="var">stats</span>[<span class="st">"mean"</span>]  <span class="cm"># update reference for next batch</span></code></pre>
+
+    <table>
+      <tr><th>Scenario</th><th>prev_close</th><th>Batch min</th><th>Deviation</th><th>Result</th></tr>
+      <tr><td>Normal market</td><td>₹1,413</td><td>₹1,405</td><td>−0.6%</td><td>✅ No alert</td></tr>
+      <tr><td>Modest drop</td><td>₹1,413</td><td>₹1,375</td><td>−2.7%</td><td>✅ No alert</td></tr>
+      <tr><td><strong>Sharp fall</strong></td><td>₹1,413</td><td>₹1,330</td><td>−5.9%</td><td><strong>🚨 ALERT</strong></td></tr>
+      <tr><td><strong>Spike up</strong></td><td>₹3,220</td><td>max ₹3,420</td><td>+6.2%</td><td><strong>🚨 ALERT</strong></td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 6 — STEP 3: MONGODB ROUTING -->
+  <div class="slide" id="s6" data-slide="6">
+    <div class="slide-header"><span class="slide-num">06 / 09</span><span class="slide-tag theory">Step 3 — Routing</span></div>
+    <h2>Two Collections, <span>One Consumer</span></h2>
+
+    <p>The routing logic is a single <code>if</code>. Same consumer, same Kafka topic — two very different use cases served.</p>
+
+    <div class="code-header"><span class="code-lang">python · step 3 routing logic</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="cm"># Every message → stock_prices (unchanged from L8)</span>
+<span class="var">prices_col</span>.<span class="fn">insert_one</span>({**<span class="var">data</span>, <span class="st">"_saved_at"</span>: datetime.<span class="fn">utcnow</span>().<span class="fn">isoformat</span>()})
+
+<span class="cm"># When buffer full — route alert to stock_alerts if triggered</span>
+<span class="kw">if</span> <span class="var">reasons</span>:
+    <span class="var">alerts_col</span>.<span class="fn">insert_one</span>({
+        <span class="st">"symbol"</span>:        <span class="var">symbol</span>,
+        <span class="st">"stats"</span>:         <span class="var">stats</span>,          <span class="cm"># full sum/mean/min/max of the batch</span>
+        <span class="st">"prev_close"</span>:    <span class="var">prev_close</span>.get(<span class="var">symbol</span>),
+        <span class="st">"alert_reasons"</span>: <span class="var">reasons</span>,
+        <span class="st">"alert_at"</span>:      datetime.<span class="fn">utcnow</span>(),
+        <span class="st">"status"</span>:        <span class="st">"open"</span>,          <span class="cm"># open | reviewed | resolved</span>
+    })</code></pre>
+
+    <h3>What Each Collection Contains</h3>
+    <table>
+      <tr><th>Collection</th><th>Contents</th><th>Who Uses It</th></tr>
+      <tr><td><code>stock_prices</code></td><td>Every raw tick from Kafka — one document per message</td><td>All users, Atlas Charts dashboards</td></tr>
+      <tr><td><code>stock_alerts</code></td><td>Only batches where min/max broke 5% — with full stats + reason</td><td>Risk team, portfolio managers, A2 dashboard</td></tr>
+    </table>
+
+    <div class="callout green">
+      <p><strong>Key insight:</strong> <code>stock_alerts</code> never needs querying for "did anything happen?" — <em>existence in the collection</em> is the signal. No filter required. Perfect for Atlas Charts "total open alerts" widgets.</p>
+    </div>
+
+    <div class="pipe-row" style="margin-top:1.25rem;justify-content:center;">
+      <div class="pipe-box done"><div class="pb-label">stock-topic</div><div class="pb-sub">Kafka (L6 producer)</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box hl"><div class="pb-label">consumer_alerts.py</div><div class="pb-sub">buffer → stats → route</div></div>
+      <div class="pipe-arrow">→</div>
+      <div class="pipe-box done"><div class="pb-label">stock_prices</div><div class="pb-sub">every message</div></div>
+    </div>
+    <div class="pipe-row" style="justify-content:flex-end;padding-right:1rem;">
+      <div class="pipe-arrow">↘</div>
+      <div class="pipe-box hl"><div class="pb-label">stock_alerts</div><div class="pb-sub">if &gt;5% deviation</div></div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7 — FULL CODE -->
+  <div class="slide" id="s7" data-slide="7">
+    <div class="slide-header"><span class="slide-num">07 / 09</span><span class="slide-tag lab">Full Code</span></div>
+    <h2>consumer_alerts.py — <span>Complete File</span></h2>
+
+    <div class="download-grid" style="margin-bottom:1.25rem;">
+      <a href="consumer_alerts.py" download class="download-card">
+        <div class="dl-icon">🐍</div>
+        <div class="dl-info">
+          <div class="dl-name">consumer_alerts.py</div>
+          <div class="dl-desc">Buffer · stats · alert · dual MongoDB</div>
+        </div>
+        <span class="dl-badge">Download</span>
+      </a>
+      <a href="check_alerts.py" download class="download-card">
+        <div class="dl-icon">🔍</div>
+        <div class="dl-info">
+          <div class="dl-name">check_alerts.py</div>
+          <div class="dl-desc">Query both collections from terminal</div>
+        </div>
+        <span class="dl-badge">Download</span>
+      </a>
+    </div>
+
+    <div class="code-header"><span class="code-lang">python · consumer_alerts.py (key sections)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+    <pre><code><span class="kw">from</span> kafka <span class="kw">import</span> KafkaConsumer
+<span class="kw">from</span> pymongo <span class="kw">import</span> MongoClient
+<span class="kw">from</span> collections <span class="kw">import</span> defaultdict
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime
+<span class="kw">import</span> json, statistics
+
+<span class="var">BUFFER_SIZE</span> = <span class="num">5</span>    <span class="cm"># ticks per batch</span>
+<span class="var">ALERT_PCT</span>   = <span class="num">5.0</span>  <span class="cm"># deviation threshold %</span>
+
+<span class="var">prices_col</span> = db[<span class="st">"stock_prices"</span>]   <span class="cm"># every message</span>
+<span class="var">alerts_col</span> = db[<span class="st">"stock_alerts"</span>]   <span class="cm"># flagged batches</span>
+
+<span class="var">price_buffer</span> = defaultdict(list)
+<span class="var">prev_close</span>   = {}
+
+<span class="kw">for</span> msg <span class="kw">in</span> consumer:
+    <span class="var">symbol</span>, <span class="var">price</span> = data[<span class="st">"symbol"</span>], float(data[<span class="st">"price"</span>])
+
+    <span class="cm"># Step 1: save every tick</span>
+    <span class="var">prices_col</span>.<span class="fn">insert_one</span>({**<span class="var">data</span>, <span class="st">"_saved_at"</span>: datetime.<span class="fn">utcnow</span>().<span class="fn">isoformat</span>()})
+
+    <span class="cm"># Step 2: buffer</span>
+    <span class="var">price_buffer</span>[<span class="var">symbol</span>].append(<span class="var">price</span>)
+
+    <span class="kw">if</span> len(<span class="var">price_buffer</span>[<span class="var">symbol</span>]) &gt;= <span class="var">BUFFER_SIZE</span>:
+        <span class="var">stats</span>   = <span class="fn">compute_stats</span>(<span class="var">price_buffer</span>[<span class="var">symbol</span>])
+        <span class="var">reasons</span> = <span class="fn">check_alert</span>(<span class="var">symbol</span>, <span class="var">stats</span>)
+
+        <span class="kw">if</span> <span class="var">reasons</span>:
+            <span class="var">alerts_col</span>.<span class="fn">insert_one</span>({
+                <span class="st">"symbol"</span>: <span class="var">symbol</span>, <span class="st">"stats"</span>: <span class="var">stats</span>,
+                <span class="st">"prev_close"</span>: <span class="var">prev_close</span>.get(<span class="var">symbol</span>),
+                <span class="st">"alert_reasons"</span>: <span class="var">reasons</span>,
+                <span class="st">"alert_at"</span>: datetime.<span class="fn">utcnow</span>(), <span class="st">"status"</span>: <span class="st">"open"</span>
+            })
+            print(<span class="st">f"🚨 ALERT [{symbol}] → {', '.join(reasons)}"</span>)
+
+        <span class="var">prev_close</span>[<span class="var">symbol</span>] = <span class="var">stats</span>[<span class="st">"mean"</span>]
+        <span class="var">price_buffer</span>[<span class="var">symbol</span>] = []</code></pre>
+  </div>
+
+  <!-- SLIDE 8 — HANDS-ON LAB -->
+  <div class="slide" id="s8" data-slide="8">
+    <div class="slide-header"><span class="slide-num">08 / 09</span><span class="slide-tag lab">Hands-On Lab</span></div>
+    <h2>Lab — Run &amp; <span>Observe</span></h2>
+
+    <h3>What Must Be Running</h3>
+    <table>
+      <tr><th>Terminal</th><th>Command</th><th>Status</th></tr>
+      <tr><td>1</td><td><code>docker compose up -d</code></td><td>Zookeeper + Kafka</td></tr>
+      <tr><td>2</td><td><code>python producer.py</code></td><td>Streaming stock-topic</td></tr>
+      <tr><td>3</td><td><code>python consumer_alerts.py</code></td><td>← Today's file</td></tr>
+      <tr><td>4 (optional)</td><td><code>python check_alerts.py</code></td><td>Query both collections</td></tr>
+    </table>
+
+    <h3>Expected Terminal Output</h3>
+    <div class="terminal-out">
+      <div class="t-ok">✅ Connected to MongoDB Atlas</div>
+      <div class="t-ok">   Prices → sda_course.stock_prices</div>
+      <div class="t-ok">   Alerts → sda_course.stock_alerts</div>
+      <div class="t-dim">📡 Listening on stock-topic (Ctrl+C to stop)...</div>
+      <div>&nbsp;</div>
+      <div class="t-dim">   ↳ [INFY]  ₹1410.20  buffer 1/5</div>
+      <div class="t-dim">   ↳ [INFY]  ₹1415.80  buffer 2/5</div>
+      <div class="t-dim">   ↳ [TCS]   ₹3280.00  buffer 1/5</div>
+      <div class="t-dim">   ↳ [INFY]  ₹1408.50  buffer 3/5</div>
+      <div class="t-dim">   ↳ [INFY]  ₹1420.00  buffer 4/5</div>
+      <div class="t-dim">   ↳ [INFY]  ₹1412.30  buffer 5/5</div>
+      <div class="t-info">📊 [INFY] Batch stats — sum=7066.80  mean=1413.36  min=1408.50  max=1420.00</div>
+      <div class="t-ok">✅ [INFY] No alert — within ±5.0% of close N/A  ← first batch has no ref</div>
+      <div>&nbsp;</div>
+      <div class="t-dim">   ↳ [INFY]  ₹1340.00  buffer 1/5</div>
+      <div class="t-dim">   ...  (4 more ticks)</div>
+      <div class="t-info">📊 [INFY] Batch stats — sum=6720.00  mean=1344.00  min=1330.00  max=1360.00</div>
+      <div class="t-alert">🚨 ALERT [INFY] → MIN_DEV 1330.00 (-5.9% vs close 1413.36)</div>
+    </div>
+
+    <h3>Check Atlas After 2–3 Minutes</h3>
+    <ul>
+      <li><strong>stock_prices</strong> — should show all tick documents (same as L8)</li>
+      <li><strong>stock_alerts</strong> — documents only appear when 5% threshold is breached</li>
+      <li>Each alert document includes <code>stats</code> (full batch), <code>prev_close</code>, <code>alert_reasons</code>, <code>status: "open"</code></li>
+    </ul>
+  </div>
+
+  <!-- SLIDE 9 — A2 / WHAT'S NEXT -->
+  <div class="slide" id="s9" data-slide="9">
+    <div class="slide-header"><span class="slide-num">09 / 09</span><span class="slide-tag discuss">Assignment + Next</span></div>
+    <h2>Assignment 2 &amp; <span>What's Next</span></h2>
+
+    <h3>Assignment 2 — Due 1 September</h3>
+    <div class="callout green">
+      <p>Based on your A1 industry/data source selection, create <strong>sample data</strong> and configure it to send to Kafka. The two-collection pattern from today (raw + alerts) is a good architecture reference for your submission.</p>
+    </div>
+    <table>
+      <tr><th>Deliverable</th><th>Description</th></tr>
+      <tr><td>Producer script</td><td>Generates and streams your domain data to a Kafka topic</td></tr>
+      <tr><td>Consumer script</td><td>Reads from the topic, saves to MongoDB (minimum one collection)</td></tr>
+      <tr><td>Atlas screenshot</td><td>Show at least one collection with 5+ documents saved</td></tr>
+    </table>
+    <p style="font-size:.82rem;color:var(--text2);margin-top:.5rem;">Tag your GitHub submission: <code>[A2][SDA-1]</code>, <code>[A2][SDA-2]</code>, or <code>[A2][SDA-G]</code> based on your section.</p>
+
+    <h3>Coming Up</h3>
+    <table>
+      <tr><th>Lecture</th><th>Topic</th><th>Builds On</th></tr>
+      <tr><td><strong>L10</strong></td><td>Real Dataset — Banking Transactions</td><td>Fresh <code>transactions-topic</code>, fraud detection producer</td></tr>
+      <tr><td><strong>L11</strong></td><td>Windowing &amp; Aggregations</td><td>Tumbling / sliding / session windows on <code>transactions-topic</code></td></tr>
+      <tr><td><strong>L12–L13</strong></td><td>Spark &amp; Flink Overview</td><td>Where today's consumer logic fits at scale</td></tr>
+    </table>
+  </div>
+
+</div><!-- /slides-wrap -->
+
+<div class="slide-nav">
+  <button onclick="prevSlide()">←</button>
+  <span class="slide-counter" id="counter">1 / 9</span>
+  <button onclick="nextSlide()">→</button>
+</div>
+
+<script>
+  const TOTAL = 9;
+  let current = 1;
+
+  function goTo(n) {
+    document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+    current = Math.max(1, Math.min(n, TOTAL));
+    const el = document.getElementById('s' + current);
+    if (el) { el.classList.add('active'); el.scrollIntoView({behavior:'smooth',block:'start'}); }
+    document.getElementById('counter').textContent = current + ' / ' + TOTAL;
+    document.getElementById('progress').style.width = (current / TOTAL * 100) + '%';
+  }
+
+  function nextSlide() { goTo(current + 1); }
+  function prevSlide() { goTo(current - 1); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   prevSlide();
+  });
+
+  function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    document.querySelector('.theme-btn').textContent = isDark ? '☀️ Light' : '🌙 Dark';
+  }
+
+  function copyCode(btn) {
+    const pre = btn.closest('.code-header').nextElementSibling;
+    navigator.clipboard.writeText(pre.textContent).then(() => {
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 1500);
     });
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const n = parseInt(entry.target.getAttribute('data-slide'));
-          if (!isNaN(n)) {
-            current = n;
-            document.getElementById('counter').textContent = current + ' / ' + TOTAL;
-            document.getElementById('progress').style.width = ((current / TOTAL) * 100) + '%';
-          }
-        }
-      });
-    }, { threshold: 0.5 });
-    document.querySelectorAll('.slide[data-slide]').forEach(s => observer.observe(s));
-    function copyCode(btn) {
-      const pre = btn.closest('.code-header').nextElementSibling;
-      navigator.clipboard.writeText(pre.innerText).then(() => {
-        btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 1800);
-      });
-    }
-    function toggleTheme() {
-      const html = document.documentElement;
-      const dark = html.getAttribute('data-theme') === 'dark';
-      html.setAttribute('data-theme', dark ? 'light' : 'dark');
-      document.getElementById('ti').textContent = dark ? '🌙' : '☀️';
-      document.getElementById('tl').textContent = dark ? 'Dark' : 'Light';
-      localStorage.setItem('sda-theme', dark ? 'light' : 'dark');
-    }
-    (function() {
-      const saved = localStorage.getItem('sda-theme') || 'dark';
-      document.documentElement.setAttribute('data-theme', saved);
-      if (saved === 'light') {
-        document.getElementById('ti').textContent = '🌙';
-        document.getElementById('tl').textContent = 'Dark';
+  }
+
+  // Intersection observer to track active slide
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting && e.intersectionRatio > 0.4) {
+        const n = parseInt(e.target.dataset.slide);
+        if (n !== current) { current = n; document.getElementById('counter').textContent = n + ' / ' + TOTAL; document.getElementById('progress').style.width = (n / TOTAL * 100) + '%'; }
       }
-    })();
-  </script>
+    });
+  }, {threshold: 0.4});
+
+  document.querySelectorAll('.slide').forEach(s => observer.observe(s));
+  goTo(1);
+</script>
 </body>
 </html>

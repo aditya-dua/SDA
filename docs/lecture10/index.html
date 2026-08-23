@@ -143,10 +143,10 @@
     .timeline td:first-child { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--accent); white-space: nowrap; }
     .timeline tr:hover td { background: var(--bg3); }
 
-    .slide-nav { position: fixed; bottom: 1.5rem; right: 1.5rem; display: flex; gap: 0.5rem; z-index: 50; }
-    .slide-nav button { background: var(--bg2); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 0.85rem; font-family: inherit; transition: all 0.15s; }
-    .slide-nav button:hover { border-color: var(--accent); }
-    .slide-counter { background: var(--bg2); border: 1px solid var(--border); color: var(--text2); border-radius: 8px; padding: 8px 14px; font-size: 0.78rem; display: flex; align-items: center; font-family: 'JetBrains Mono', monospace; }
+    .slide-nav{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:.75rem;background:var(--bg2);border:1px solid var(--border);border-radius:40px;padding:.5rem 1rem;box-shadow:0 4px 20px rgba(0,0,0,.4);z-index:50;}
+    .slide-nav button{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+    .slide-nav button:hover{border-color:var(--accent);color:var(--accent);}
+    .slide-counter{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--text2);min-width:50px;text-align:center;}
 
     .kw  { color: #ff7b72; }
     .st  { color: #a5d6ff; }
@@ -164,7 +164,6 @@
     @media (max-width: 640px) {
       .slide { padding: 1.5rem 1.25rem; }
       .rule-grid { grid-template-columns: 1fr; }
-      .slide-nav { bottom: 1rem; right: 1rem; }
     }
   </style>
 </head>
@@ -520,10 +519,10 @@ profiles.<span class="fn">update_one</span>(
   </div><!-- slides-wrap -->
 
   <div class="slide-nav">
-    <button onclick="prevSlide()">←</button>
-    <span class="slide-counter" id="counter">1 / 10</span>
-    <button onclick="nextSlide()">→</button>
-  </div>
+  <button onclick="prevSlide()">←</button>
+  <span class="slide-counter" id="counter">1 / 10</span>
+  <button onclick="nextSlide()">→</button>
+</div>
 
   <script>
     const TOTAL = 10;
