@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lecture 11 — Windowing & Aggregations | Streaming Data Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--border:#30363d;
+      --text:#e6edf3;--text2:#8b949e;--accent:#b91c1c;--accent2:#dc2626;
+      --green:#16a34a;--green-bg:rgba(22,163,74,0.12);
+      --amber:#d97706;--amber-bg:rgba(217,119,6,0.1);
+      --blue:#38bdf8;--blue-bg:rgba(56,189,248,0.1);
+      --code-bg:#161b22;--code-border:#30363d;
+    }
+    [data-theme="light"] {
+      --bg:#f6f8fa;--bg2:#ffffff;--bg3:#eaeef2;--border:#d0d7de;
+      --text:#1a1a2e;--text2:#57606a;--accent:#8C1515;--accent2:#b91c1c;
+      --green:#166534;--green-bg:rgba(22,101,52,0.08);
+      --amber:#92400e;--amber-bg:rgba(146,64,14,0.08);
+      --blue:#0369a1;--blue-bg:rgba(3,105,161,0.08);
+      --code-bg:#f6f8fa;--code-border:#d0d7de;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);transition:background .3s,color .3s;}
+
+    nav{position:sticky;top:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:52px;backdrop-filter:blur(12px);}
+    .nav-left{display:flex;align-items:center;gap:12px;}
+    .nav-home{font-size:.82rem;color:var(--text2);text-decoration:none;display:flex;align-items:center;gap:6px;}
+    .nav-home:hover{color:var(--text);}
+    .nav-sep{color:var(--border);}
+    .nav-title{font-size:.88rem;font-weight:600;color:var(--text);}
+    .nav-right{display:flex;align-items:center;gap:.75rem;}
+    .nav-badge{font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:4px;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue);}
+    .theme-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:7px;padding:5px 10px;cursor:pointer;font-size:.78rem;font-family:inherit;display:flex;align-items:center;gap:5px;transition:all .2s;}
+    .theme-btn:hover{border-color:var(--accent);color:var(--text);}
+
+    .progress-bar{position:fixed;top:52px;left:0;right:0;height:3px;background:var(--border);z-index:99;}
+    .progress-fill{height:100%;background:var(--accent);transition:width .3s ease;width:0%;}
+
+    .slides-wrap{max-width:900px;margin:0 auto;padding:2rem 1.5rem 5rem;}
+
+    .slide{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:2.5rem 3rem;margin-bottom:1.25rem;scroll-margin-top:72px;transition:border-color .2s;}
+    .slide:hover{border-color:#444c56;}
+    .slide.active{border-color:var(--accent);}
+    .slide-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:.75rem;border-bottom:1px solid var(--border);}
+    .slide-num{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text2);letter-spacing:.05em;}
+    .slide-tag{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;padding:3px 9px;border-radius:20px;}
+    .slide-tag.theory{background:rgba(185,28,28,.1);color:var(--accent);border:1px solid var(--accent);}
+    .slide-tag.lab{background:rgba(22,163,74,.1);color:var(--green);border:1px solid var(--green);}
+    .slide-tag.title{background:rgba(139,148,158,.1);color:var(--text2);border:1px solid var(--border);}
+    .slide-tag.discuss{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);}
+    .slide-tag.framework{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue);}
+
+    .slide.title-slide{background:linear-gradient(135deg,var(--bg2) 0%,var(--bg3) 100%);text-align:center;padding:4rem 3rem;}
+    .title-slide .lec-label{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--blue);border:1px solid var(--blue);padding:4px 14px;border-radius:20px;margin-bottom:1.5rem;}
+    .title-slide h1{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;line-height:1.2;margin-bottom:.75rem;letter-spacing:-.02em;}
+    .title-slide h1 span{color:var(--accent);}
+    .title-slide .subtitle{font-size:1rem;color:var(--text2);margin-bottom:2.5rem;}
+    .title-meta{display:flex;justify-content:center;gap:2rem;flex-wrap:wrap;}
+    .meta-item{font-size:.8rem;color:var(--text2);display:flex;align-items:center;gap:6px;}
+    .meta-item strong{color:var(--text);}
+
+    .slide h2{font-size:1.5rem;font-weight:700;margin-bottom:1rem;letter-spacing:-.01em;}
+    .slide h2 span{color:var(--accent);}
+    .slide h3{font-size:1.05rem;font-weight:600;margin:1.5rem 0 .6rem;color:var(--text);}
+    .slide p{font-size:.95rem;line-height:1.7;color:var(--text2);margin-bottom:.75rem;}
+    .slide p strong{color:var(--text);}
+    .slide ul,.slide ol{padding-left:1.4rem;margin-bottom:.75rem;}
+    .slide li{font-size:.93rem;line-height:1.7;color:var(--text2);margin-bottom:.3rem;}
+    .slide li strong{color:var(--text);}
+
+    .slide table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.85rem;}
+    .slide th{background:var(--bg3);text-align:left;padding:.6rem .9rem;font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);border:1px solid var(--border);}
+    .slide td{padding:.6rem .9rem;border:1px solid var(--border);color:var(--text2);vertical-align:top;}
+    .slide td strong{color:var(--text);}
+    .slide tr:hover td{background:var(--bg3);}
+
+    /* WINDOW TYPE CARDS */
+    .window-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin:1.25rem 0;}
+    @media(max-width:680px){.window-grid{grid-template-columns:1fr;}}
+    .window-card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1.25rem;transition:border-color .2s;}
+    .window-card.tumbling{border-top:3px solid var(--accent);}
+    .window-card.sliding{border-top:3px solid var(--amber);}
+    .window-card.session{border-top:3px solid var(--green);}
+    .wc-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem;}
+    .tumbling .wc-label{color:var(--accent);}
+    .sliding  .wc-label{color:var(--amber);}
+    .session  .wc-label{color:var(--green);}
+    .wc-name{font-size:1rem;font-weight:700;margin-bottom:.4rem;color:var(--text);}
+    .wc-desc{font-size:.8rem;color:var(--text2);line-height:1.5;margin-bottom:.6rem;}
+    .wc-example{font-size:.75rem;color:var(--text2);font-style:italic;}
+
+    /* DIAGRAM */
+    .window-diagram{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1.25rem;margin:1rem 0;font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--text2);line-height:1.8;overflow-x:auto;white-space:pre;}
+
+    /* CODE BLOCK */
+    .code-wrap{margin:1rem 0;border-radius:10px;overflow:hidden;border:1px solid var(--code-border);}
+    .code-header{background:var(--bg3);padding:.5rem 1rem;display:flex;align-items:center;justify-content:space-between;font-size:.75rem;color:var(--text2);}
+    .code-header span{font-family:'JetBrains Mono',monospace;}
+    .copy-btn{background:transparent;border:1px solid var(--border);color:var(--text2);border-radius:5px;padding:3px 10px;cursor:pointer;font-size:.72rem;font-family:inherit;transition:all .2s;}
+    .copy-btn:hover{border-color:var(--accent);color:var(--text);}
+    pre{background:var(--code-bg);padding:1.25rem;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:1.7;color:var(--text2);}
+    .k{color:#ff7b72;}.s{color:#a5d6ff;}.c{color:#8b949e;font-style:italic;}.n{color:#79c0ff;}.o{color:#e6edf3;}
+
+    /* OBJECTIVES LIST */
+    .objectives-list{list-style:none;padding:0;margin:.5rem 0;}
+    .objectives-list li{display:flex;gap:.75rem;align-items:flex-start;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.9rem;color:var(--text2);}
+    .objectives-list li:last-child{border-bottom:none;}
+    .check{color:var(--green);font-weight:700;flex-shrink:0;margin-top:2px;}
+
+    /* CALLOUT */
+    .callout{background:var(--bg3);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:1rem 1.25rem;margin:1rem 0;font-size:.88rem;color:var(--text2);line-height:1.6;}
+    .callout strong{color:var(--text);}
+    .callout.blue{border-left-color:var(--blue);}
+    .callout.green{border-left-color:var(--green);}
+    .callout.amber{border-left-color:var(--amber);}
+
+    /* TERMINAL OUTPUT */
+    .terminal{background:#0a0d12;border:1px solid #30363d;border-radius:10px;overflow:hidden;margin:1rem 0;}
+    .terminal-header{background:#161b22;padding:.5rem 1rem;display:flex;align-items:center;gap:.5rem;font-size:.72rem;color:var(--text2);}
+    .t-dot{width:10px;height:10px;border-radius:50%;}
+    .t-dot.red{background:#ff5f57;}.t-dot.yellow{background:#ffbd2e;}.t-dot.green{background:#28ca41;}
+    .terminal pre{background:transparent;color:#b3e5fc;padding:1rem 1.25rem;font-size:.79rem;line-height:1.75;}
+    .t-dim{color:#546e7a;}.t-green{color:#81c784;}.t-amber{color:#ffca28;}.t-red{color:#ef9a9a;}
+
+    /* DECISION TREE */
+    .decision-tree{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1.25rem;margin:1rem 0;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--text2);line-height:2;overflow-x:auto;white-space:pre;}
+
+    /* DOWNLOADS */
+    .download-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem;margin-top:1rem;}
+    .download-card{display:flex;align-items:center;gap:.75rem;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.85rem 1rem;text-decoration:none;color:var(--text);transition:all .2s;}
+    .download-card:hover{border-color:var(--accent);background:rgba(185,28,28,.06);}
+    .dl-icon{font-size:1.3rem;flex-shrink:0;}
+    .dl-info{flex:1;min-width:0;}
+    .dl-name{font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .dl-desc{font-size:.72rem;color:var(--text2);margin-top:2px;}
+    .dl-badge{font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:4px;background:rgba(185,28,28,.12);color:var(--accent);border:1px solid var(--accent);flex-shrink:0;}
+
+    /* SLIDE NAV */
+    .slide-nav{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:.75rem;background:var(--bg2);border:1px solid var(--border);border-radius:40px;padding:.5rem 1rem;box-shadow:0 4px 20px rgba(0,0,0,.4);}
+    .slide-nav button{background:var(--bg3);border:1px solid var(--border);color:var(--text);border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:.95rem;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+    .slide-nav button:hover{border-color:var(--accent);color:var(--accent);}
+    .slide-counter{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--text2);min-width:50px;text-align:center;}
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-left">
+    <a href="../index.html" class="nav-home">← Home</a>
+    <span class="nav-sep">/</span>
+    <span class="nav-title">Lecture 11 — Windowing &amp; Aggregations</span>
+  </div>
+  <div class="nav-right">
+    <span class="nav-badge">Module 3</span>
+    <button class="theme-btn" onclick="toggleTheme()"><span id="ti">☀️</span><span id="tl">Light</span></button>
+  </div>
+</nav>
+<div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+
+<div class="slides-wrap">
+
+  <!-- SLIDE 1: TITLE -->
+  <div class="slide title-slide" id="s1" data-slide="1">
+    <div class="slide-header"><span class="slide-num">1 / 10</span><span class="slide-tag title">Module 3</span></div>
+    <div class="lec-label">Lecture 11 · Stream Processing</div>
+    <h1>Windowing &amp; <span>Aggregations</span></h1>
+    <p class="subtitle">Slicing the infinite stream into measurable, actionable chunks</p>
+    <div class="title-meta">
+      <div class="meta-item">📅 <strong>Duration:</strong> 90 minutes</div>
+      <div class="meta-item">📦 <strong>Module 3:</strong> Stream Processing</div>
+      <div class="meta-item">🔑 <strong>Key Skill:</strong> Choosing the right window type</div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: THE PROBLEM -->
+  <div class="slide" id="s2" data-slide="2">
+    <div class="slide-header"><span class="slide-num">2 / 10</span><span class="slide-tag theory">The Problem</span></div>
+    <h2>Why You Can't Aggregate an <span>Infinite Stream</span></h2>
+    <p>In a traditional database: <code>SELECT SUM(revenue) FROM orders WHERE date = '2025-08-23'</code> — the data <strong>already exists in full</strong>.</p>
+    <p>In a streaming system:</p>
+    <ul>
+      <li>Data is <strong>infinite</strong> — it never stops arriving</li>
+      <li>The query runs <strong>continuously</strong> — results change every second</li>
+      <li>You can't do <code>SUM(all revenue)</code> because "all" grows forever</li>
+    </ul>
+    <div class="window-diagram">Infinite stream:  →→→→→→→→→→→→→→→→→→→→→→→→→→→
+Solution — slice into finite windows:
+[  window 1  ][  window 2  ][  window 3  ] ...
+  SUM, COUNT    SUM, COUNT    SUM, COUNT</div>
+    <table>
+      <tr><th>Business Question</th><th>Requires</th></tr>
+      <tr><td>"What were our total sales last quarter?"</td><td>Batch aggregation</td></tr>
+      <tr><td>"What were sales in the <strong>last 5 minutes</strong>?"</td><td><strong>Tumbling window</strong></td></tr>
+      <tr><td>"What's the rolling 1-hour average order value?"</td><td><strong>Sliding window</strong></td></tr>
+      <tr><td>"How long was this user's shopping session?"</td><td><strong>Session window</strong></td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 3: TUMBLING WINDOWS -->
+  <div class="slide" id="s3" data-slide="3">
+    <div class="slide-header"><span class="slide-num">3 / 10</span><span class="slide-tag theory">Window Type 1</span></div>
+    <h2><span>Tumbling</span> Windows</h2>
+    <p><strong>Fixed-size, non-overlapping.</strong> Every event belongs to exactly ONE window.</p>
+    <div class="window-diagram">Stream:  →→→→→→→→→→→→→→→→→→→→→→→→→→→→→
+         |----5 min----|----5 min----|----5 min----|
+         [ Window 1   ][ Window 2   ][ Window 3   ]
+           SUM, COUNT    SUM, COUNT    SUM, COUNT</div>
+    <div class="window-grid">
+      <div>
+        <h3>Best for</h3>
+        <ul>
+          <li>Periodic revenue summaries</li>
+          <li>Hourly / daily billing cycles</li>
+          <li>Regulatory reporting (every 15 min)</li>
+          <li>Flash sale performance per hour</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Key Properties</h3>
+        <ul>
+          <li>No overlap between windows</li>
+          <li>Fixed equal duration</li>
+          <li>Simple — unambiguous which window</li>
+          <li>Closes and resets at interval end</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Real Examples</h3>
+        <ul>
+          <li>Stock exchange: 5-min OHLCV bars</li>
+          <li>Uber: surge recalculated every 3 min</li>
+          <li>Zepto: dark store throughput per 5 min</li>
+          <li>NPCI: UPI volume per hour</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout"><strong>💡 Mental model:</strong> Tumbling windows are like pages in a diary — each page covers exactly one day, and entries never appear on two pages at once.</div>
+  </div>
+
+  <!-- SLIDE 4: SLIDING WINDOWS -->
+  <div class="slide" id="s4" data-slide="4">
+    <div class="slide-header"><span class="slide-num">4 / 10</span><span class="slide-tag theory">Window Type 2</span></div>
+    <h2><span>Sliding</span> Windows</h2>
+    <p><strong>Fixed-size, overlapping.</strong> The window advances by a step smaller than its duration. One event can appear in multiple windows.</p>
+    <div class="window-diagram">Stream:   →→→→→→→→→→→→→→→→→→→→→→→→→→→
+Window 1: [====10 min====]
+Window 2:      [====10 min====]
+Window 3:           [====10 min====]
+          ↑ Step: 5 min (50% overlap)</div>
+    <h3>The Boundary Problem — Why Sliding Beats Tumbling for Fraud</h3>
+    <div class="window-diagram">Tumbling (5-min): T1(2:01) T2(2:04) T3(2:07)
+  Window 1 (2:00–2:05): sees T1, T2 — 2 txns ← looks normal
+  Window 2 (2:05–2:10): sees T3 — 1 txn ← looks normal
+  PROBLEM: cluster split across boundary → fraud missed
+
+Sliding (5-min, 1-min step):
+  Window at 2:06 (2:01–2:06): sees T1, T2, T3 — 3 txns ← DETECTED</div>
+    <div class="callout amber"><strong>💡 Use sliding windows</strong> when events that belong together logically might straddle a fixed boundary — fraud clusters, rate limiting, trend detection.</div>
+  </div>
+
+  <!-- SLIDE 5: SESSION WINDOWS -->
+  <div class="slide" id="s5" data-slide="5">
+    <div class="slide-header"><span class="slide-num">5 / 10</span><span class="slide-tag theory">Window Type 3</span></div>
+    <h2><span>Session</span> Windows</h2>
+    <p><strong>Variable-length, behaviour-driven.</strong> A window opens when a user becomes active; it closes after a configurable period of <strong>inactivity</strong>.</p>
+    <div class="window-diagram">User A: →Event→Event→Event→   (gap > timeout)   →Event→Event→
+         [----Session 1-------]                    [--Session 2--]
+                               ↑ inactivity timeout = window closes</div>
+    <div class="window-grid">
+      <div>
+        <h3>Defined By</h3>
+        <ul>
+          <li>An <strong>inactivity timeout</strong></li>
+          <li>e.g. 30-minute gap = session ends</li>
+          <li>Duration varies per user</li>
+          <li>No artificial clock boundary</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Best for</h3>
+        <ul>
+          <li>User journey / funnel analysis</li>
+          <li>App session duration</li>
+          <li>Customer support grouping</li>
+          <li>IoT device activity periods</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Real Examples</h3>
+        <ul>
+          <li>Netflix: watch session tracking</li>
+          <li>Google Analytics: 30-min timeout</li>
+          <li>Banking: ATM visit grouping</li>
+          <li>Call centre: 2-hr episode window</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout green"><strong>💡 Key insight:</strong> Session window output reveals <em>user behaviour patterns</em> — short session with high spend, or long session with no conversion — that fixed windows would average away.</div>
+  </div>
+
+  <!-- SLIDE 6: EVENT TIME VS PROCESSING TIME -->
+  <div class="slide" id="s6" data-slide="6">
+    <div class="slide-header"><span class="slide-num">6 / 10</span><span class="slide-tag theory">Time Semantics</span></div>
+    <h2>Event Time vs <span>Processing Time</span></h2>
+    <table>
+      <tr><th>Timestamp</th><th>Meaning</th><th>Example</th></tr>
+      <tr><td><strong>Event time</strong></td><td>When it actually happened (logged at source)</td><td>Payment at 2:03:45 PM</td></tr>
+      <tr><td><strong>Processing time</strong></td><td>When the consumer read the event</td><td>Consumer got it at 2:04:12 PM</td></tr>
+    </table>
+    <h3>The Late Data Problem</h3>
+    <p>Mobile app logs a click offline → arrives 45 minutes late. Your 2:00–2:05 window has already closed. What do you do?</p>
+    <ul>
+      <li><strong>Drop it</strong> — simple, may lose data</li>
+      <li><strong>Re-open the window</strong> — complex, delays results</li>
+      <li><strong>Route to side output</strong> — production best practice</li>
+    </ul>
+    <h3>Watermarks — The Late Data Policy</h3>
+    <div class="window-diagram">Watermark = max_event_time_seen − allowed_lateness
+
+Example: Latest event time = 2:05:00, allowed_lateness = 30s
+→ Watermark = 2:04:30
+→ Windows ending before 2:04:30 can safely close
+→ Events with event_time &lt; 2:04:30 are "late"</div>
+    <div class="callout"><strong>Trade-off:</strong> Larger allowed_lateness = more accurate (fewer dropped events) but longer wait before window closes. Tune based on source reliability.</div>
+  </div>
+
+  <!-- SLIDE 7: DECISION FRAMEWORK -->
+  <div class="slide" id="s7" data-slide="7">
+    <div class="slide-header"><span class="slide-num">7 / 10</span><span class="slide-tag framework">Decision Framework</span></div>
+    <h2>Choosing the <span>Right Window</span></h2>
+    <div class="decision-tree">Is the window size fixed (time-based)?
+  NO  → Does window depend on user inactivity?
+            YES → <span style="color:#81c784">Session Window</span>
+            NO  → Count-based (rare, not covered today)
+
+  YES → Do windows overlap?
+            NO  → <span style="color:#ef9a9a">Tumbling Window ✅</span> (clean periodic buckets)
+            YES → <span style="color:#ffca28">Sliding Window ✅</span> (rolling metrics, anomaly detection)</div>
+    <table>
+      <tr><th>Scenario</th><th>Window Type</th><th>Why</th></tr>
+      <tr><td>5-minute revenue summary</td><td><strong>Tumbling 5 min</strong></td><td>Clean buckets, non-overlapping</td></tr>
+      <tr><td>Fraud pattern detection</td><td><strong>Sliding 15 min / 1-min step</strong></td><td>Catches cross-boundary clusters</td></tr>
+      <tr><td>User session duration</td><td><strong>Session 30-min timeout</strong></td><td>Aligns with user behaviour</td></tr>
+      <tr><td>Hourly cloud billing</td><td><strong>Tumbling 60 min</strong></td><td>Non-overlapping billing periods</td></tr>
+      <tr><td>Trending topics</td><td><strong>Sliding 10 min / 2-min step</strong></td><td>Smooth continuous signal</td></tr>
+      <tr><td>App user journey</td><td><strong>Session 30-min timeout</strong></td><td>Funnel analysis per session</td></tr>
+    </table>
+  </div>
+
+  <!-- SLIDE 8: HANDS-ON LAB -->
+  <div class="slide" id="s8" data-slide="8">
+    <div class="slide-header"><span class="slide-num">8 / 10</span><span class="slide-tag lab">Hands-On Lab</span></div>
+    <h2>Lab: <span>consumer_window.py</span></h2>
+    <p>Reads from <code>transactions-topic</code> (L10 dataset) and runs both window types simultaneously.</p>
+    <table>
+      <tr><th>Terminal</th><th>Command</th><th>What It Does</th></tr>
+      <tr><td><strong>1</strong></td><td><code>docker compose up -d</code></td><td>Start Kafka (keep running)</td></tr>
+      <tr><td><strong>2</strong></td><td><code>python consumer_window.py</code></td><td>Start windowed consumer</td></tr>
+      <tr><td><strong>3</strong></td><td><code>python transaction_producer.py</code></td><td>Stream the transactions CSV</td></tr>
+    </table>
+    <h3>Expected Output</h3>
+    <div class="terminal">
+      <div class="terminal-header"><div class="t-dot red"></div><div class="t-dot yellow"></div><div class="t-dot green"></div><span style="margin-left:8px">consumer_window.py</span></div>
+      <pre>=== Windowed Consumer Starting ===
+Tumbling: 60s buckets | Sliding: 180s window / 30s step
+
+<span class="t-green">[SLIDING]</span>  Last 180s:  31 events | Rolling Avg: ₹1,823.45
+<span class="t-green">[SLIDING]</span>  Last 180s:  48 events | Rolling Avg: ₹1,856.80
+<span class="t-amber">[TUMBLING]</span> 29 events | Total: ₹52,840.00 | Avg: ₹1,822.07
+<span class="t-green">[SLIDING]</span>  Last 180s:  71 events | Rolling Avg: ₹2,140.80  <span class="t-dim">← fraud cluster entering</span>
+<span class="t-red">[SLIDING]</span>  Last 180s:  74 events | Rolling Avg: ₹2,380.50  <span class="t-dim">← peak: fraud in window</span>
+<span class="t-amber">[TUMBLING]</span> 34 events | Total: ₹61,200.00 | Avg: ₹1,800.00  <span class="t-dim">← tumbling stays flat!</span>
+<span class="t-green">[SLIDING]</span>  Last 180s:  49 events | Rolling Avg: ₹1,847.33  <span class="t-dim">← fraud aged out</span></pre>
+    </div>
+    <div class="callout blue"><strong>Observe:</strong> Sliding average spikes during the fraud cluster (transactions across window boundaries). Tumbling average stays near ₹1,800 — the fraud is hidden by the bucket boundary. This is exactly the boundary problem in action.</div>
+  </div>
+
+  <!-- SLIDE 9: SCALE -->
+  <div class="slide" id="s9" data-slide="9">
+    <div class="slide-header"><span class="slide-num">9 / 10</span><span class="slide-tag theory">At Scale</span></div>
+    <h2>Manual Windowing <span>vs Production</span></h2>
+    <p>Our <code>consumer_window.py</code> is educational. In production, it has real gaps:</p>
+    <table>
+      <tr><th>Limitation</th><th>Consequence</th></tr>
+      <tr><td>State in Python variables</td><td>Restart wipes all window history</td></tr>
+      <tr><td>Single-threaded</td><td>Can't scale horizontally</td></tr>
+      <tr><td>No late data handling</td><td>Late events silently ignored</td></tr>
+      <tr><td>No fault tolerance</td><td>Crash mid-window = lost aggregation</td></tr>
+    </table>
+    <h3>Production Alternatives</h3>
+    <table>
+      <tr><th>Framework</th><th>Latency</th><th>Throughput</th><th>Best For</th></tr>
+      <tr><td><strong>Manual Python (ours)</strong></td><td>&lt; 100ms</td><td>~1K/sec</td><td>Learning, prototyping</td></tr>
+      <tr><td><strong>Apache Spark</strong></td><td>~200ms–2s</td><td>Millions/sec</td><td>Large scale, SQL teams (L12)</td></tr>
+      <tr><td><strong>Apache Flink</strong></td><td>&lt; 10ms</td><td>Millions/sec</td><td>Financial, exactly-once (L13)</td></tr>
+      <tr><td><strong>ksqlDB</strong></td><td>~50ms</td><td>100K+/sec</td><td>SQL-only teams, Kafka-native</td></tr>
+    </table>
+    <div class="callout"><strong>MBA takeaway:</strong> Manual windowing is a teaching tool. Any system handling &gt; 50,000 events/second needs a framework. L12 and L13 cover how to choose.</div>
+  </div>
+
+  <!-- SLIDE 10: TAKEAWAYS -->
+  <div class="slide" id="s10" data-slide="10">
+    <div class="slide-header"><span class="slide-num">10 / 10</span><span class="slide-tag title">Takeaways</span></div>
+    <h2>Key <span>Takeaways</span></h2>
+    <ul class="objectives-list">
+      <li><span class="check">✓</span><span><strong>Windows slice an infinite stream</strong> into finite, aggregatable chunks — without them, streaming analytics is impossible</span></li>
+      <li><span class="check">✓</span><span><strong>Tumbling</strong> = equal non-overlapping buckets → use for periodic reporting and billing</span></li>
+      <li><span class="check">✓</span><span><strong>Sliding</strong> = overlapping, rolling → use for moving averages, anomaly detection, and fraud patterns that cross boundaries</span></li>
+      <li><span class="check">✓</span><span><strong>Session</strong> = user-behaviour-driven, variable duration → use for journey and funnel analytics</span></li>
+      <li><span class="check">✓</span><span><strong>Event time &gt; processing time</strong> for accuracy — watermarks control how long you wait for late data</span></li>
+      <li><span class="check">✓</span><span><strong>Manual windowing works for prototypes</strong> — Spark, Flink, or ksqlDB for production scale</span></li>
+    </ul>
+    <h3>Downloads</h3>
+    <div class="download-grid">
+      <a href="consumer_window.py" download class="download-card">
+        <span class="dl-icon">📊</span>
+        <div class="dl-info"><div class="dl-name">consumer_window.py</div><div class="dl-desc">Tumbling + sliding windows on transactions-topic</div></div>
+        <span class="dl-badge">.py</span>
+      </a>
+    </div>
+    <p style="margin-top:1rem;font-size:.82rem;color:var(--text2);">
+      Dataset: use <code>generate_transactions.py</code> + <code>transaction_producer.py</code> from Lecture 10.
+    </p>
+  </div>
+
+</div><!-- slides-wrap -->
+
+<div class="slide-nav">
+  <button onclick="prevSlide()">←</button>
+  <span class="slide-counter" id="counter">1 / 10</span>
+  <button onclick="nextSlide()">→</button>
+</div>
+
+<script>
+  const TOTAL = 10;
+  let current = 1;
+
+  function getTheme() { return localStorage.getItem('sda-theme') || 'dark'; }
+  function applyTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    document.getElementById('ti').textContent = t === 'dark' ? '☀️' : '🌙';
+    document.getElementById('tl').textContent = t === 'dark' ? 'Light' : 'Dark';
+  }
+  function toggleTheme() {
+    const t = getTheme() === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('sda-theme', t); applyTheme(t);
+  }
+  applyTheme(getTheme());
+
+  function goTo(n) {
+    current = Math.max(1, Math.min(TOTAL, n));
+    document.getElementById('counter').textContent = current + ' / ' + TOTAL;
+    document.getElementById('progress').style.width = (current / TOTAL * 100) + '%';
+    const el = document.getElementById('s' + current);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+    if (el) el.classList.add('active');
+  }
+  function nextSlide() { goTo(current + 1); }
+  function prevSlide() { goTo(current - 1); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextSlide();
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   prevSlide();
+  });
+
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting && e.intersectionRatio >= 0.5) {
+        const n = parseInt(e.target.dataset.slide);
+        if (n !== current) { current = n; document.getElementById('counter').textContent = n + ' / ' + TOTAL; document.getElementById('progress').style.width = (n / TOTAL * 100) + '%'; }
+        document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+        e.target.classList.add('active');
+      }
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('.slide[data-slide]').forEach(s => obs.observe(s));
+
+  function copyCode(btn) {
+    const pre = btn.closest('.code-header').nextElementSibling;
+    navigator.clipboard.writeText(pre.innerText).then(() => {
+      btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 1500);
+    });
+  }
+</script>
+</body>
+</html>
