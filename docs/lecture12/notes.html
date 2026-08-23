@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lecture 12 — Apache Spark: Notes | Streaming Data Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--border:#30363d;--text:#e6edf3;--text2:#8b949e;--accent:#b91c1c;--green:#16a34a;--green-bg:rgba(22,163,74,0.12);--amber:#d97706;}
+    [data-theme="light"]{--bg:#f6f8fa;--bg2:#ffffff;--bg3:#eaeef2;--border:#d0d7de;--text:#1a1a2e;--text2:#57606a;--accent:#8C1515;--green:#166534;--green-bg:rgba(22,101,52,0.08);--amber:#92400e;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;}
+    nav{position:sticky;top:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:52px;}
+    .nav-left{display:flex;align-items:center;gap:12px;}
+    .nav-home{font-size:.82rem;color:var(--text2);text-decoration:none;}
+    .nav-home:hover{color:var(--text);}
+    .nav-sep{color:var(--border);}
+    .nav-title{font-size:.88rem;font-weight:600;}
+    .nav-badge{font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:4px;background:var(--green-bg);color:var(--green);border:1px solid var(--green);}
+    .theme-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:7px;padding:5px 10px;cursor:pointer;font-size:.78rem;font-family:inherit;}
+    .wrap{max-width:820px;margin:0 auto;padding:2.5rem 1.5rem 4rem;}
+    .lec-label{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:4px 14px;border-radius:20px;margin-bottom:1rem;}
+    h1{font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:700;line-height:1.2;margin-bottom:.5rem;}
+    .subtitle{font-size:.95rem;color:var(--text2);margin-bottom:.5rem;}
+    .meta-row{display:flex;gap:1.5rem;flex-wrap:wrap;font-size:.82rem;color:var(--text2);margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);}
+    .meta-row span strong{color:var(--text);}
+    h2{font-size:1.35rem;font-weight:700;color:var(--text);margin:2.5rem 0 .75rem;padding-bottom:.4rem;border-bottom:2px solid var(--accent);}
+    h3{font-size:1.05rem;font-weight:600;color:var(--text);margin:1.5rem 0 .5rem;}
+    p{font-size:.95rem;color:var(--text2);margin-bottom:.75rem;}
+    p strong{color:var(--text);}
+    ul,ol{padding-left:1.4rem;margin-bottom:.75rem;}
+    li{font-size:.93rem;color:var(--text2);margin-bottom:.3rem;line-height:1.6;}
+    li strong{color:var(--text);}
+    table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.84rem;}
+    th{background:var(--bg3);text-align:left;padding:.55rem .9rem;font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);border:1px solid var(--border);}
+    td{padding:.55rem .9rem;border:1px solid var(--border);color:var(--text2);vertical-align:top;}
+    td strong{color:var(--text);}
+    tr:hover td{background:var(--bg3);}
+    .callout{border-left:3px solid var(--accent);background:rgba(185,28,28,.06);border-radius:0 8px 8px 0;padding:.85rem 1.1rem;margin:1rem 0;}
+    .callout.green{border-color:var(--green);background:var(--green-bg);}
+    .callout.amber{border-color:var(--amber);background:rgba(217,119,6,.06);}
+    .callout p{margin:0;font-size:.9rem;color:var(--text);}
+    pre{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;overflow-x:auto;margin:1rem 0;font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:1.6;color:var(--text2);}
+    .obj-list{list-style:none;padding:0;}
+    .obj-list li{display:flex;align-items:flex-start;gap:10px;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.92rem;color:var(--text2);}
+    .obj-list li:last-child{border-bottom:none;}
+    .obj-list .check{color:var(--green);flex-shrink:0;}
+    .exercise-table input{width:100%;background:transparent;border:none;color:var(--text2);font-size:.82rem;font-family:inherit;}
+    .toc{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.5rem;margin-bottom:2rem;}
+    .toc h4{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:.75rem;}
+    .toc ol{padding-left:1.2rem;margin:0;}
+    .toc li{font-size:.88rem;margin-bottom:.3rem;}
+    .toc a{color:var(--accent);text-decoration:none;}
+    .toc a:hover{text-decoration:underline;}
+    .takeaway-box{background:var(--green-bg);border:1px solid var(--green);border-radius:10px;padding:1.25rem 1.5rem;margin:1.5rem 0;}
+    .takeaway-box h3{color:var(--green);font-size:.95rem;margin:0 0 .75rem;}
+    .takeaway-box ol{padding-left:1.4rem;margin:0;}
+    .takeaway-box li{font-size:.9rem;color:var(--text2);margin-bottom:.4rem;}
+    .preview-box{background:rgba(185,28,28,.04);border:1px solid var(--accent);border-radius:10px;padding:1.25rem 1.5rem;margin-top:2rem;}
+    .preview-box h3{color:var(--accent);font-size:.95rem;margin:0 0 .5rem;}
+    .preview-box p{margin:0;font-size:.9rem;}
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-left">
+    <a href="../index.html" class="nav-home">← Course Home</a>
+    <span class="nav-sep">/</span>
+    <span class="nav-title">Lecture 12 — Notes</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:.75rem;">
+    <span class="nav-badge">Module 3</span>
+    <button class="theme-btn" onclick="toggleTheme()">🌙 Dark</button>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <div class="lec-label">Module 3 · Lecture 12</div>
+  <h1>Apache Spark: The Engine Behind Big Data Streaming</h1>
+  <p class="subtitle">Technology literacy · Decision frameworks · MBA case studies</p>
+  <div class="meta-row">
+    <span>⏱ <strong>90 minutes</strong></span>
+    <span>📍 <strong>Prerequisites:</strong> Lecture 11 (Windowing)</span>
+    <span>🎓 <strong>Approach:</strong> Technology literacy — not Spark development</span>
+  </div>
+
+  <div class="toc">
+    <h4>Contents</h4>
+    <ol>
+      <li><a href="#objectives">Learning Objectives</a></li>
+      <li><a href="#timeline">Session Timeline</a></li>
+      <li><a href="#story">The Story of Apache Spark</a></li>
+      <li><a href="#microbatch">The Micro-Batch Model</a></li>
+      <li><a href="#demo">Faculty Demo — Spark in Action</a></li>
+      <li><a href="#framework">The Decision Framework</a></li>
+      <li><a href="#cases">Case Studies</a></li>
+      <li><a href="#exercise">Group Exercise</a></li>
+      <li><a href="#takeaways">Key Takeaways</a></li>
+    </ol>
+  </div>
+
+  <h2 id="objectives">Learning Objectives</h2>
+  <ul class="obj-list">
+    <li><span class="check">✓</span> Explain in plain language what Apache Spark is and why it replaced Hadoop</li>
+    <li><span class="check">✓</span> Describe the micro-batch model and what it means for latency</li>
+    <li><span class="check">✓</span> Identify scenarios where Spark is the right stream processing tool</li>
+    <li><span class="check">✓</span> Read a Spark job description and understand what it does at a high level</li>
+    <li><span class="check">✓</span> Evaluate the organisational cost of adopting Spark vs simpler alternatives</li>
+  </ul>
+
+  <h2 id="timeline">Session Timeline</h2>
+  <table>
+    <tr><th>Time</th><th>Segment</th><th>Activity</th></tr>
+    <tr><td>0–10 min</td><td>Recap</td><td>L11 windowing — which window type would you use for fraud?</td></tr>
+    <tr><td>10–30 min</td><td>The Story of Spark</td><td>Why it was built, what problem it solved, who uses it</td></tr>
+    <tr><td>30–45 min</td><td>Micro-Batch Model</td><td>How Spark Streaming works — trigger intervals explained</td></tr>
+    <tr><td>45–60 min</td><td>Faculty Demo</td><td>Live spark_consumer.py — observe output, understand structure</td></tr>
+    <tr><td>60–70 min</td><td>Decision Framework</td><td>When Spark is right, when it is overkill</td></tr>
+    <tr><td>70–82 min</td><td>Case Study Discussion</td><td>Flipkart, Swiggy — why did they choose Spark?</td></tr>
+    <tr><td>82–88 min</td><td>Group Exercise</td><td>"Which tool?" — match 5 scenarios to the right framework</td></tr>
+    <tr><td>88–90 min</td><td>Wrap-Up</td><td>Key takeaways + preview of L13 (Flink)</td></tr>
+  </table>
+
+  <h2 id="story">Section 1: The Story of Apache Spark</h2>
+
+  <h3>The Problem Spark Solved</h3>
+  <p>Before Spark, the dominant big data technology was <strong>Hadoop MapReduce</strong> (circa 2006–2012). MapReduce was revolutionary — it let you process petabytes of data across thousands of machines. But it had one painful limitation: it read from disk and wrote back to disk between every step of a multi-step job.</p>
+
+  <pre>MapReduce workflow:
+Step 1: Read from disk → process → write to disk
+Step 2: Read those results from disk → process → write to disk again
+...
+A 10-step ML job = 10 disk reads + 10 disk writes. ~4 hours.
+
+Spark workflow:
+Step 1: Read from disk → keep in memory
+Step 2: Process (in memory) → keep in memory
+...
+Final: Write result to disk
+
+The same 10-step job: 10–100× faster.</pre>
+
+  <h3>Spark's Rise</h3>
+  <table>
+    <tr><th>Year</th><th>Milestone</th></tr>
+    <tr><td>2009</td><td>Created at UC Berkeley AMPLab</td></tr>
+    <tr><td>2013</td><td>Donated to Apache Software Foundation</td></tr>
+    <tr><td>2016</td><td>Spark 2.0: Structured Streaming API (DataFrame-native)</td></tr>
+    <tr><td>2021</td><td>Databricks (Spark's commercial backer) valued at $43 billion</td></tr>
+    <tr><td>2024</td><td>~80% of Fortune 500 companies run Spark workloads</td></tr>
+  </table>
+
+  <div class="callout green">
+    <p><strong>Career context:</strong> Understanding Spark is the difference between being able to read a data architecture diagram and being confused by one. Even if you never write a Spark job yourself, you will encounter it in vendor proposals, system design documents, and hiring decisions throughout your career.</p>
+  </div>
+
+  <h2 id="microbatch">Section 2: How Spark Streaming Works — The Micro-Batch Model</h2>
+
+  <h3>The Fundamental Design</h3>
+  <p>Spark Structured Streaming collects events for a short interval (the <strong>trigger interval</strong>), then processes that chunk as a mini-batch, emits results, and repeats. The trigger interval controls the latency vs cost balance:</p>
+
+  <table>
+    <tr><th>Trigger Interval</th><th>Latency</th><th>Cost</th><th>When to Use</th></tr>
+    <tr><td>50ms</td><td>~50ms</td><td>Very High</td><td>Near-real-time financial systems</td></tr>
+    <tr><td>200ms (default)</td><td>~200ms</td><td>High</td><td>Most production streaming</td></tr>
+    <tr><td>1 second</td><td>~1s</td><td>Medium</td><td>Dashboards, moderate freshness</td></tr>
+    <tr><td>10 seconds</td><td>~10s</td><td>Low</td><td>Aggregations, batch-ish workloads</td></tr>
+    <tr><td>1 minute</td><td>~1min</td><td>Very Low</td><td>Periodic summaries</td></tr>
+  </table>
+
+  <h3>The DataFrame Mental Model</h3>
+  <p>The most important concept: <strong>a stream looks like an infinite table</strong>. You write almost the same code for batch analysis and live streaming. Your team doesn't need to learn a completely different paradigm.</p>
+
+  <pre>Traditional table (static): fixed number of rows, same result every query.
+
+Spark Streaming DataFrame (live):
+Row 1: arrived 10:01:00
+Row 2: arrived 10:01:01
+Row 3: arriving right now...
+Row 4: arriving in 2 seconds...
+  ↳ infinite rows; query result changes every trigger interval</pre>
+
+  <h3>What "Distributed" Actually Means</h3>
+  <p>Spark splits your stream across multiple workers (executors), each handling a portion of the load in parallel. On a laptop: one machine, multiple threads. In production: 10–100 machines, each handling a partition of the Kafka topic.</p>
+
+  <h2 id="demo">Section 3: Faculty Demo — Spark in Action</h2>
+  <p><em>This is an observation exercise. Do not install Spark. The goal is to read and understand the code structure.</em></p>
+
+  <pre>from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, from_json, window, sum as spark_sum, count, avg
+from pyspark.sql.types import StructType, StructField, StringType, DoubleType
+
+# 1. Start the Spark engine
+spark = SparkSession.builder.appName("SDA-Demo").getOrCreate()
+
+# 2. Read a live Kafka topic — creates an "infinite DataFrame"
+raw_stream = spark.readStream \
+    .format("kafka") \
+    .option("kafka.bootstrap.servers", "localhost:9092") \
+    .option("subscribe", "transactions-topic") \
+    .load()
+
+# 3. Parse JSON payload into typed columns
+parsed = raw_stream.select(from_json(col("value").cast("string"), schema).alias("d")).select("d.*")
+
+# 4. Group by 1-minute tumbling windows — same syntax as batch SQL
+windowed = parsed.groupBy(window("timestamp", "1 minute")) \
+    .agg(count("*").alias("transactions"), spark_sum("amount").alias("total_spend"))
+
+# 5. Write results every 10 seconds
+query = windowed.writeStream.outputMode("update").format("console") \
+    .trigger(processingTime="10 seconds").start()
+query.awaitTermination()</pre>
+
+  <p><strong>Discussion questions during demo:</strong></p>
+  <ol>
+    <li>The stream is an "infinite table." Why is that useful to a data engineer?</li>
+    <li>Point at <code>window("timestamp", "1 minute")</code> — What type of window is this? What happens to events that span two windows?</li>
+    <li>Point at <code>outputMode("update")</code> — What's the alternative? When would you use "complete" mode?</li>
+  </ol>
+
+  <h2 id="framework">Section 4: The Spark Decision Framework</h2>
+
+  <h3>Three Questions Before Recommending Spark</h3>
+
+  <p><strong>Question 1 — How much data?</strong></p>
+  <ul>
+    <li>&lt; 1 million events/day → Manual Python consumer (L7–L10) is fine</li>
+    <li>1M–100M events/day → Spark starts to make sense</li>
+    <li>&gt; 100M events/day → Spark (or Flink) is appropriate</li>
+  </ul>
+
+  <p><strong>Question 2 — How fresh must the data be?</strong></p>
+  <ul>
+    <li>"Within 1 hour" → Batch job, no streaming needed</li>
+    <li>"Within 1 minute" → Spark Streaming (default trigger)</li>
+    <li>"Within 1 second" → Spark with fast trigger, or Flink</li>
+    <li>"Within 100ms" → Flink only</li>
+  </ul>
+
+  <p><strong>Question 3 — What does your team know?</strong></p>
+  <ul>
+    <li>Team knows Python/SQL → Spark (PySpark + SparkSQL)</li>
+    <li>Team only knows SQL → ksqlDB (SQL on Kafka, no cluster)</li>
+    <li>Team is 2 engineers → Manual Python consumer, grow into Spark</li>
+  </ul>
+
+  <h3>The Organisational Cost — Often Underestimated</h3>
+  <table>
+    <tr><th>Cost</th><th>What It Means</th></tr>
+    <tr><td><strong>Infrastructure</strong></td><td>Cluster or Databricks/EMR — ₹15,000–₹5,00,000/month</td></tr>
+    <tr><td><strong>Expertise</strong></td><td>Spark engineers are 2–3× more expensive than general Python engineers</td></tr>
+    <tr><td><strong>Complexity</strong></td><td>Debugging a distributed job is harder than debugging a Python script</td></tr>
+    <tr><td><strong>Setup time</strong></td><td>Initial cluster setup + CI/CD integration: 2–6 weeks engineering time</td></tr>
+  </table>
+
+  <h2 id="cases">Section 5: Case Study Discussion</h2>
+
+  <h3>Case A: Flipkart — Big Billion Days</h3>
+  <p>~500 million events/hour during peak. Latency required: &lt;2 minutes for seller dashboards and inventory alerts. Team already Spark-native on Databricks/Azure. Python consumer would be overwhelmed immediately at this scale.</p>
+  <p><strong>Discussion:</strong> At what point in Flipkart's growth would you have made the switch to Spark?</p>
+
+  <h3>Case B: Swiggy — Delivery ETA Prediction</h3>
+  <p>Multiple simultaneous streams: restaurant POS, driver GPS (every 10s), traffic API data. Spark's MLlib lets the prediction model run <em>in the same pipeline</em> as data processing. Latency required: &lt;30 seconds for ETA updates.</p>
+  <p><strong>Discussion:</strong> What window type would you use for the GPS ping stream — tumbling (every 30s) or sliding (rolling 2 min)?</p>
+
+  <h3>Case C: Small FinTech — The Counter-Example</h3>
+  <p>200,000 transactions/day = ~2 events/second. Existing Python consumer handles this at 5% CPU utilisation. Spark would add ₹40,000/month in Databricks costs + 1 engineer to maintain it. Latency requirement: within 5 minutes.</p>
+  <div class="callout amber">
+    <p><strong>The right answer:</strong> Keep the Python consumer. Revisit Spark when volume exceeds 10M events/day. The mistake is copying what large companies do without scaling the context.</p>
+  </div>
+
+  <h2 id="exercise">Group Exercise: "Which Tool?"</h2>
+  <p>Work in pairs. For each scenario, select the right tool and justify in 2 sentences.</p>
+  <p><strong>Options:</strong> Manual Python Consumer | Apache Spark | Apache Flink | ksqlDB</p>
+
+  <table>
+    <tr><th>#</th><th>Scenario</th><th>Your Choice</th><th>Why (2 sentences)</th></tr>
+    <tr><td>1</td><td>EdTech startup, 5,000 students, real-time quiz score aggregation</td><td></td><td></td></tr>
+    <tr><td>2</td><td>HDFC Bank, 10M transactions/hour, fraud must be flagged &lt; 200ms</td><td></td><td></td></tr>
+    <tr><td>3</td><td>Zepto, order fulfilment metrics per dark store per 5-min window</td><td></td><td></td></tr>
+    <tr><td>4</td><td>Small logistics company, "live" delivery dashboard updated every 10 min</td><td></td><td></td></tr>
+    <tr><td>5</td><td>Stock exchange, trade volume per symbol per second for regulatory reporting</td><td></td><td></td></tr>
+  </table>
+
+  <h2 id="takeaways">Key Takeaways</h2>
+  <div class="takeaway-box">
+    <h3>✓ Key Takeaways — Lecture 12</h3>
+    <ol>
+      <li>Spark solved the Hadoop disk I/O problem by keeping data in memory — 10–100× faster for multi-step jobs</li>
+      <li>Structured Streaming = a stream that looks like an infinite DataFrame — same code style as batch SQL</li>
+      <li>Micro-batch model: events collected for a trigger interval (~200ms default), then processed as a mini-batch</li>
+      <li>Spark is right when: volume &gt; 10M events/day, latency &gt; 200ms acceptable, team knows Python/SQL</li>
+      <li>Spark is NOT right when: small scale, latency &lt; 100ms needed, no infra/expertise, simple use case</li>
+      <li>Organisational cost is real — infrastructure, hiring, and complexity are often underestimated</li>
+    </ol>
+  </div>
+
+  <div class="preview-box">
+    <h3>Preview — Lecture 13: Apache Flink &amp; True Streaming</h3>
+    <p>Where Spark's micro-batch model falls short, and when the extra cost of Flink is actually justified. Think about: NPCI processes ~4 billion UPI transactions/month. Fraud must be flagged in &lt;300ms. Is Spark's micro-batch sufficient?</p>
+  </div>
+
+</div>
+
+<script>
+function toggleTheme(){
+  const html=document.documentElement;
+  const isDark=html.getAttribute('data-theme')==='dark';
+  html.setAttribute('data-theme',isDark?'light':'dark');
+  document.querySelector('.theme-btn').textContent=isDark?'☀️ Light':'🌙 Dark';
+}
+</script>
+</body>
+</html>
