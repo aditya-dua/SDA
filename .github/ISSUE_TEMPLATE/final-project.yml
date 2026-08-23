@@ -1,22 +1,35 @@
 name: "🏆 Final Project Submission"
-description: "Submit your Final Project — End-to-end streaming analytics solution (40 Marks)"
-title: "[PROJECT] <Team Name> — Final Project"
+description: "Submit your Final Project (40 Marks) — End-to-end streaming analytics solution. Presented in Lecture 19 & 20."
+title: "[PROJECT][SDA-?] <Team Name> — Final Project"
 labels: ["project"]
 body:
   - type: markdown
     attributes:
       value: |
-        ## Final Project — Streaming Analytics Solution
-        **Presentation:** Lecture 20 &nbsp;|&nbsp; **Marks:** 40 &nbsp;|&nbsp; **Team Size:** 3 members
-        
-        ### Rubric
-        | Component | Weight |
-        |-----------|--------|
-        | Problem Statement | 25% |
-        | Charts & Visualisations | 30% |
-        | Identification of Data | 20% |
-        | Technical Working (live demo) | 15% |
-        | Discussion (Q&A) | 10% |
+        ## Final Project — End-to-End Streaming Analytics Solution
+        **Presentation:** Lectures 19 & 20 &nbsp;|&nbsp; **Marks:** 40 &nbsp;|&nbsp; **Team Size:** up to 3 members
+        **Replace SDA-? in the title with your section: SDA-1, SDA-2, or SDA-G**
+
+        ### Grading Rubric (40 Marks = 100%)
+        | Component | Weight | What We Look For |
+        |-----------|--------|-----------------|
+        | Problem Statement | 25% | Clear problem, why streaming is needed, business impact |
+        | Charts & Visualisations | 30% | Dashboard quality, insights visible, real data shown |
+        | Identification of Data | 20% | Sources justified, schemas defined, Kafka topics named |
+        | Technical Working | 15% | Live demo runs, code is clean and documented |
+        | Discussion (Q&A) | 10% | Team can explain design decisions |
+
+  - type: dropdown
+    id: section
+    attributes:
+      label: "Section"
+      description: "Which section is your team enrolled in?"
+      options:
+        - "SDA-1"
+        - "SDA-2"
+        - "SDA-G"
+    validations:
+      required: true
 
   - type: input
     id: team_name
@@ -29,7 +42,7 @@ body:
   - type: textarea
     id: team_members
     attributes:
-      label: "Team Members (Name + Student ID)"
+      label: "Team Members (Full Name + Student ID)"
       placeholder: |
         1. Priya Sharma — MBA2025-042
         2. Arjun Patel — MBA2025-018
@@ -79,26 +92,27 @@ body:
   - type: textarea
     id: data_identification
     attributes:
-      label: "Data Sources Identified (20% of marks)"
-      description: "List all data sources, their schemas, volume, and frequency. Explain why you chose these sources."
+      label: "Identification of Data (20% of marks)"
+      description: "List all data sources, their schemas, volume, and frequency. Name all Kafka topics and explain their purpose."
       placeholder: |
-        Source 1: [name] — [schema] — [volume/freq]
+        Source 1: [name] — [schema/fields] — [volume/frequency]
         Source 2: ...
-        Kafka topics created: [topic names and purpose]
+        Kafka topics:
+          - [topic-name]: [what it carries]
     validations:
       required: true
 
   - type: textarea
     id: technical_architecture
     attributes:
-      label: "Technical Architecture (15% of marks)"
-      description: "Describe the full pipeline: data sources → producer(s) → Kafka topics → consumer(s) → processing → dashboard. Include any additional tools used."
+      label: "Technical Working — Architecture (15% of marks)"
+      description: "Full pipeline: producer(s) → Kafka → consumer(s) → storage → dashboard. Include file names and tools used."
       placeholder: |
-        Producer(s): [file names and what they do]
+        Producer(s): [file names and what they stream]
         Kafka topics: [names]
         Consumer(s): [file names and processing logic]
-        Dashboard: [library + what it shows]
-        Additional tools: [e.g. SQLite, Redis, Streamlit]
+        Storage: [MongoDB Atlas / InfluxDB / etc.]
+        Dashboard: [Grafana / Atlas Charts / Streamlit + what it shows]
     validations:
       required: true
 
@@ -106,10 +120,11 @@ body:
     id: charts_visualisations
     attributes:
       label: "Charts & Visualisations (30% of marks)"
-      description: "List all dashboard charts/metrics with a brief explanation of the business insight each one provides. Attach screenshots."
+      description: "List every chart/metric with a brief explanation of the business insight it provides. Attach dashboard screenshots."
       placeholder: |
-        1. [Chart type] — [what it shows] — [business decision it enables]
+        1. [Chart type] — [what it shows] — [decision it enables]
         2. ...
+
         [Drag and drop dashboard screenshots here]
     validations:
       required: true
@@ -117,7 +132,7 @@ body:
   - type: textarea
     id: demo_link
     attributes:
-      label: "Demo Video Link (if not presenting live)"
+      label: "Demo Video Link (optional if presenting live)"
       description: "YouTube, Google Drive, or Loom link to a 5-minute demo of the running pipeline and dashboard"
       placeholder: "https://loom.com/share/..."
 
@@ -126,15 +141,17 @@ body:
     attributes:
       label: "Submission Checklist"
       options:
-        - label: "All 3 team members are listed with Student IDs"
+        - label: "Section selected (SDA-1 / SDA-2 / SDA-G) and issue title updated"
+          required: true
+        - label: "All team members listed with Student IDs"
           required: true
         - label: "GitHub repo is public with a clear README and setup instructions"
           required: true
-        - label: "Problem statement clearly explains why streaming is needed"
+        - label: "Problem statement explains why streaming is needed (min 150 words)"
           required: true
         - label: "Dashboard has at least 4 charts or metric visualisations"
           required: true
-        - label: "Live pipeline demo is ready for Lecture 20 presentation"
+        - label: "Live pipeline demo is ready for presentation"
           required: true
         - label: "All team members have read and followed academic honesty guidelines"
           required: true
