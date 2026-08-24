@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lecture 15 — Live Streaming Dashboards | Streaming Data Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--border:#30363d;--text:#e6edf3;--text2:#8b949e;--accent:#b91c1c;--green:#16a34a;--green-bg:rgba(22,163,74,0.12);--amber:#d97706;}
+    [data-theme="light"]{--bg:#f6f8fa;--bg2:#ffffff;--bg3:#eaeef2;--border:#d0d7de;--text:#1a1a2e;--text2:#57606a;--accent:#8C1515;--green:#166534;--green-bg:rgba(22,101,52,0.08);--amber:#92400e;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;}
+    nav{position:sticky;top:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:52px;}
+    .nav-left{display:flex;align-items:center;gap:12px;}
+    .nav-home{font-size:.82rem;color:var(--text2);text-decoration:none;} .nav-home:hover{color:var(--text);}
+    .nav-sep{color:var(--border);}
+    .nav-title{font-size:.88rem;font-weight:600;}
+    .nav-badge{font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:4px;background:var(--green-bg);color:var(--green);border:1px solid var(--green);}
+    .theme-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:7px;padding:5px 10px;cursor:pointer;font-size:.78rem;font-family:inherit;}
+    .wrap{max-width:820px;margin:0 auto;padding:2.5rem 1.5rem 4rem;}
+    .lec-label{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:4px 14px;border-radius:20px;margin-bottom:1rem;}
+    h1{font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:700;line-height:1.2;margin-bottom:.5rem;}
+    .subtitle{font-size:.95rem;color:var(--text2);margin-bottom:.5rem;}
+    .meta-row{display:flex;gap:1.5rem;flex-wrap:wrap;font-size:.82rem;color:var(--text2);margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);}
+    .meta-row span strong{color:var(--text);}
+    h2{font-size:1.35rem;font-weight:700;color:var(--text);margin:2.5rem 0 .75rem;padding-bottom:.4rem;border-bottom:2px solid var(--accent);}
+    h3{font-size:1.05rem;font-weight:600;color:var(--text);margin:1.5rem 0 .5rem;}
+    p{font-size:.95rem;color:var(--text2);margin-bottom:.75rem;}
+    p strong{color:var(--text);}
+    ul,ol{padding-left:1.4rem;margin-bottom:.75rem;}
+    li{font-size:.93rem;color:var(--text2);margin-bottom:.3rem;line-height:1.6;}
+    li strong{color:var(--text);}
+    table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.84rem;}
+    th{background:var(--bg3);text-align:left;padding:.55rem .9rem;font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);border:1px solid var(--border);}
+    td{padding:.55rem .9rem;border:1px solid var(--border);color:var(--text2);vertical-align:top;}
+    td strong{color:var(--text);}
+    tr:hover td{background:var(--bg3);}
+    .callout{border-left:3px solid var(--accent);background:rgba(185,28,28,.06);border-radius:0 8px 8px 0;padding:.85rem 1.1rem;margin:1rem 0;}
+    .callout.green{border-color:var(--green);background:var(--green-bg);}
+    .callout.amber{border-color:var(--amber);background:rgba(217,119,6,.06);}
+    .callout p{margin:0;font-size:.9rem;color:var(--text);}
+    pre{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;overflow-x:auto;margin:1rem 0;font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:1.6;color:var(--text2);}
+    .obj-list{list-style:none;padding:0;}
+    .obj-list li{display:flex;align-items:flex-start;gap:10px;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.92rem;color:var(--text2);}
+    .obj-list li:last-child{border-bottom:none;}
+    .obj-list .check{color:var(--green);flex-shrink:0;}
+    .toc{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.5rem;margin-bottom:2rem;}
+    .toc h4{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:.75rem;}
+    .toc ol{padding-left:1.2rem;margin:0;}
+    .toc li{font-size:.88rem;margin-bottom:.3rem;}
+    .toc a{color:var(--accent);text-decoration:none;} .toc a:hover{text-decoration:underline;}
+    .takeaway-box{background:var(--green-bg);border:1px solid var(--green);border-radius:10px;padding:1.25rem 1.5rem;margin:1.5rem 0;}
+    .takeaway-box h3{color:var(--green);font-size:.95rem;margin:0 0 .75rem;}
+    .takeaway-box ol{padding-left:1.4rem;margin:0;}
+    .takeaway-box li{font-size:.9rem;color:var(--text2);margin-bottom:.4rem;}
+    .preview-box{background:rgba(185,28,28,.04);border:1px solid var(--accent);border-radius:10px;padding:1.25rem 1.5rem;margin-top:2rem;}
+    .preview-box h3{color:var(--accent);font-size:.95rem;margin:0 0 .5rem;}
+    .preview-box p{margin:0;font-size:.9rem;}
+    .panel-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;margin:.5rem 0;}
+    .panel-card .pc-title{font-weight:600;color:var(--text);font-size:.92rem;margin-bottom:.25rem;}
+    .panel-card .pc-q{font-size:.82rem;color:var(--accent);margin-bottom:.3rem;}
+    .panel-card p{font-size:.85rem;margin:0;color:var(--text2);}
+    .rules-box{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;margin:1rem 0;}
+    .rules-box h4{font-size:.85rem;font-weight:700;color:var(--text);margin-bottom:.5rem;}
+    .rules-box li{font-size:.88rem;}
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-left">
+    <a href="../index.html" class="nav-home">← Course Home</a>
+    <span class="nav-sep">/</span>
+    <span class="nav-title">Lecture 15 — Notes</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:.75rem;">
+    <span class="nav-badge">Module 4</span>
+    <button class="theme-btn" onclick="toggleTheme()">🌙 Dark</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="lec-label">Module 4 · Lecture 15</div>
+  <h1>Building Live Streaming Dashboards in Grafana</h1>
+  <p class="subtitle">Multi-panel build · Variables · Assignment 3 guidance</p>
+  <div class="meta-row">
+    <span>⏱ <strong>90 minutes</strong></span>
+    <span>📍 <strong>Prerequisites:</strong> Lecture 14 (Grafana connected to Atlas)</span>
+    <span>🔧 <strong>Full hands-on build session</strong></span>
+  </div>
+
+  <div class="toc">
+    <h4>Contents</h4>
+    <ol>
+      <li><a href="#objectives">Learning Objectives</a></li>
+      <li><a href="#timeline">Session Timeline</a></li>
+      <li><a href="#design">Dashboard Design Principles</a></li>
+      <li><a href="#lab1">Lab Part 1 — Stock Monitor (4 panels)</a></li>
+      <li><a href="#lab2">Lab Part 2 — Variables &amp; Interactivity</a></li>
+      <li><a href="#transactions">Transactions Dashboard (quick build)</a></li>
+      <li><a href="#review">Design Review Checklist</a></li>
+      <li><a href="#a3">Assignment 3 Guidance</a></li>
+      <li><a href="#takeaways">Key Takeaways</a></li>
+    </ol>
+  </div>
+
+  <h2 id="objectives">Learning Objectives</h2>
+  <ul class="obj-list">
+    <li><span class="check">✓</span> Build a multi-panel Grafana dashboard using live MongoDB data</li>
+    <li><span class="check">✓</span> Use dashboard variables to make charts interactive and filterable</li>
+    <li><span class="check">✓</span> Apply dashboard design principles: hierarchy, colour meaning, panel arrangement</li>
+    <li><span class="check">✓</span> Connect visualisation choices to the business questions being answered</li>
+    <li><span class="check">✓</span> Produce a dashboard suitable for Assignment 3 presentation</li>
+  </ul>
+
+  <h2 id="timeline">Session Timeline</h2>
+  <table>
+    <tr><th>Time</th><th>Segment</th><th>Activity</th></tr>
+    <tr><td>0–10 min</td><td>Setup Check</td><td>Verify Grafana running, producer running, data flowing</td></tr>
+    <tr><td>10–20 min</td><td>Design Principles</td><td>What makes a dashboard useful vs pretty</td></tr>
+    <tr><td>20–50 min</td><td>Lab Part 1</td><td>Build stock monitor dashboard (4 panels)</td></tr>
+    <tr><td>50–65 min</td><td>Lab Part 2</td><td>Add variable dropdown + alert summary panel</td></tr>
+    <tr><td>65–75 min</td><td>Transactions Dashboard</td><td>Quick build from L10 transactions-topic data</td></tr>
+    <tr><td>75–85 min</td><td>Design Review</td><td>Student dashboards — what works, what doesn't</td></tr>
+    <tr><td>85–90 min</td><td>A3 Guidance</td><td>Assignment 3 requirements and tips</td></tr>
+  </table>
+
+  <h2 id="design">Section 1: Dashboard Design Principles</h2>
+
+  <div class="callout amber">
+    <p><strong>The most common mistake:</strong> Building a dashboard that answers "What data do I have?" — instead of "What decision does this dashboard support?"</p>
+  </div>
+
+  <div class="rules-box">
+    <h4>The Four Rules</h4>
+    <ol>
+      <li><strong>One question per panel, one job per dashboard.</strong> If a panel needs a paragraph to explain it, split it.</li>
+      <li><strong>Most important information top-left.</strong> Humans read dashboards like text — put your critical KPI there.</li>
+      <li><strong>Use colour to mean something, not for decoration.</strong> Green = normal, Amber = watch, Red = act. If everything is red, nothing is urgent.</li>
+      <li><strong>Refresh rate matches decision speed.</strong> Risk monitoring = 10s. Operations = 1 min. Executive = 5 min or manual.</li>
+    </ol>
+  </div>
+
+  <h2 id="lab1">Section 2: Lab Part 1 — Stock Monitor Dashboard</h2>
+
+  <h3>Target Layout</h3>
+  <pre>┌────────────────────────────────────────────────────────┐
+│  Stock Monitor  [Symbol: INFY ▼]  [Last 30 min ▼]      │
+├──────────────┬──────────────┬──────────────────────────┤
+│  Current     │  Open        │                          │
+│  Price       │  Alerts      │  INFY Price (30 min)     │
+│  (Stat)      │  (Stat)      │  (Time Series)           │
+├──────────────┴──────────────┤                          │
+│  Price Change from          ├──────────────────────────┤
+│  Last Batch (%)             │  Alert Log (Table)       │
+├─────────────────────────────┤  Latest 5 alerts         │
+│  Min / Max Bar Gauge        │                          │
+└─────────────────────────────┴──────────────────────────┘</pre>
+
+  <h3>Panel 1 — Current Price (Stat)</h3>
+  <div class="panel-card">
+    <div class="pc-title">Current Price</div>
+    <div class="pc-q">Business question: "What is INFY trading at right now?"</div>
+    <p>Query: stock_prices collection, match symbol=INFY, sort by _saved_at desc, limit 1, project price</p>
+  </div>
+  <pre>{
+  "collection": "stock_prices",
+  "aggregate": [
+    { "$match": { "symbol": "INFY" } },
+    { "$sort": { "_saved_at": -1 } },
+    { "$limit": 1 },
+    { "$project": { "_id": 0, "price": 1 } }
+  ]
+}</pre>
+  <p><strong>Settings:</strong> Visualisation = Stat | Unit = ₹ | Thresholds = none (price level is neutral)</p>
+
+  <h3>Panel 2 — Open Alerts Count (Stat)</h3>
+  <div class="panel-card">
+    <div class="pc-title">Open Alerts</div>
+    <div class="pc-q">Business question: "How many unreviewed alerts are in the queue?"</div>
+  </div>
+  <pre>{
+  "collection": "stock_alerts",
+  "aggregate": [
+    { "$match": { "status": "open" } },
+    { "$count": "value" }
+  ]
+}</pre>
+  <p><strong>Thresholds:</strong> 0–2 = green | 3–5 = amber | 6+ = red</p>
+  <div class="callout green">
+    <p><strong>Discussion:</strong> Ask students — "What threshold makes sense for your Assignment 3 dataset?" There is no universal answer; the business context determines urgency.</p>
+  </div>
+
+  <h3>Panel 3 — Price History Time Series</h3>
+  <div class="panel-card">
+    <div class="pc-title">INFY Price — Last 30 Minutes</div>
+    <div class="pc-q">Business question: "What has INFY's price done recently?"</div>
+  </div>
+  <pre>{
+  "collection": "stock_prices",
+  "aggregate": [
+    { "$match": { "symbol": "INFY", "_saved_at": { "$gte": "$__from" } } },
+    { "$sort": { "_saved_at": 1 } },
+    { "$project": { "_id": 0, "time": "$_saved_at", "price": 1 } }
+  ]
+}</pre>
+  <p><strong>Settings:</strong> Line width = 2 | Fill opacity = 10 | Unit = ₹ | Tooltip = All</p>
+
+  <h3>Panel 4 — Alert Log Table</h3>
+  <div class="panel-card">
+    <div class="pc-title">Recent Alerts</div>
+    <div class="pc-q">Business question: "What were the last 5 alerts and why did they fire?"</div>
+  </div>
+  <pre>{
+  "collection": "stock_alerts",
+  "aggregate": [
+    { "$sort": { "alert_at": -1 } },
+    { "$limit": 5 },
+    { "$project": {
+        "_id": 0, "symbol": 1,
+        "mean_price": "$stats.mean",
+        "min": "$stats.min", "max": "$stats.max",
+        "reason": { "$arrayElemAt": ["$alert_reasons", 0] },
+        "time": "$alert_at"
+    }}
+  ]
+}</pre>
+  <p><strong>Settings:</strong> Visualisation = Table | Sort by Time descending</p>
+
+  <h2 id="lab2">Section 3: Lab Part 2 — Variables &amp; Interactivity</h2>
+
+  <h3>Adding a Symbol Dropdown</h3>
+  <p>Variables make dashboards reusable — one dashboard works for INFY and TCS instead of building two.</p>
+  <ol>
+    <li>Dashboard settings (gear icon) → Variables → New variable</li>
+    <li>Name: <code>symbol</code> | Type: Custom | Values: <code>INFY, TCS</code> | Default: <code>INFY</code></li>
+    <li>Save. Now replace <code>"symbol": "INFY"</code> with <code>"symbol": "$symbol"</code> in all panel queries.</li>
+  </ol>
+  <p>The dropdown now filters all panels simultaneously — one click switches the entire dashboard from INFY to TCS.</p>
+
+  <h3>Saving &amp; Sharing</h3>
+  <ol>
+    <li>Save icon → name: "SDA — Stock Monitor"</li>
+    <li>Share → Snapshot → generates a public link (no Grafana login required to view)</li>
+  </ol>
+
+  <h2 id="transactions">Section 4: Transactions Dashboard</h2>
+  <p>Quick build using the <code>transactions-topic</code> data from Lecture 10. Use as a second pattern reference for Assignment 3.</p>
+
+  <pre>┌─────────────────────────────────────────────┐
+│  Transaction Monitor  [City: All ▼]  [1h ▼] │
+├─────────────┬───────────────────────────────┤
+│ Total Txns  │  Transaction Volume             │
+│ Last Hour   │  Time Series — count per min   │
+│  (Stat)     │                                │
+├─────────────┴───────────────────────────────┤
+│  Avg Amount per Minute  │  Top Cities        │
+│  (Time Series)          │  (Bar Chart)       │
+└─────────────────────────┴────────────────────┘</pre>
+
+  <p>Queries follow the same pattern as stock panels — change collection to <code>transactions</code> and field names to match your L10 schema (<code>amount</code>, <code>city</code>, <code>timestamp</code>).</p>
+
+  <h2 id="review">Section 5: Design Review Checklist</h2>
+  <p>For each dashboard, evaluate:</p>
+  <table>
+    <tr><th>Question</th><th>What to Look For</th></tr>
+    <tr><td>Does it answer a clear business question?</td><td>"Who is the user? What decision are they making?" — one sentence</td></tr>
+    <tr><td>Is colour usage consistent?</td><td>Red = alert/bad, Green = normal. No decorative red on neutral data.</td></tr>
+    <tr><td>Is the refresh rate appropriate?</td><td>30s is fine for demos; 5s for live risk monitoring</td></tr>
+    <tr><td>Are axes labelled with units?</td><td>Always: ₹, count, %, minutes — never raw numbers without context</td></tr>
+    <tr><td>Is the time range visible?</td><td>Users should always know what window of data they are looking at</td></tr>
+  </table>
+
+  <h2 id="a3">Assignment 3 Guidance</h2>
+  <p><strong>Due: 1 October | 15 marks</strong></p>
+  <p>Create a dashboard for the analysis of your consumed data (the domain from A1, streamed in A2).</p>
+
+  <table>
+    <tr><th>Requirement</th><th>Detail</th></tr>
+    <tr><td>Minimum 4 panels</td><td>At least 1 time series, 1 stat/KPI, 1 table</td></tr>
+    <tr><td>Real data</td><td>Connected to your Kafka consumer data (MongoDB or InfluxDB)</td></tr>
+    <tr><td>1 variable/filter</td><td>Makes the dashboard interactive</td></tr>
+    <tr><td>Colour thresholds</td><td>Reflect actual business logic — not default colours</td></tr>
+    <tr><td>Explanation</td><td>200-word write-up: what business question each panel answers</td></tr>
+  </table>
+
+  <p><strong>Submission:</strong> Export dashboard JSON (Dashboard → Share → Export JSON) + screenshots. Upload to GitHub with tag <code>[A3][SDA-1]</code>, <code>[A3][SDA-2]</code>, or <code>[A3][SDA-G]</code>.</p>
+
+  <div class="callout green">
+    <p><strong>Quality signal:</strong> Write this before building: "As a [role] at [company type], I want to see [metric] so that I can [decision]." Students who write this user story first consistently produce better dashboards.</p>
+  </div>
+
+  <h2 id="takeaways">Key Takeaways</h2>
+  <div class="takeaway-box">
+    <h3>✓ Key Takeaways — Lecture 15</h3>
+    <ol>
+      <li>Start with the business question, not the chart type — "What decision does this support?"</li>
+      <li>Most important KPIs top-left; main chart takes the most space</li>
+      <li>Variables make dashboards reusable — one dashboard for all symbols/cities instead of duplicating</li>
+      <li>Colour is communication — use thresholds intentionally; miscalibrated thresholds create alert fatigue</li>
+      <li>Refresh rate = decision speed — match the refresh to how quickly the user needs to act</li>
+    </ol>
+  </div>
+
+  <div class="preview-box">
+    <h3>Preview — Lecture 16: Alerts in Grafana</h3>
+    <p>Configure Grafana alert rules on your dashboards, route notifications to email or Slack, and design an alerting strategy that creates action — not noise.</p>
+  </div>
+</div>
+<script>
+function toggleTheme(){const h=document.documentElement;const d=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',d?'light':'dark');document.querySelector('.theme-btn').textContent=d?'☀️ Light':'🌙 Dark';}
+</script>
+</body>
+</html>

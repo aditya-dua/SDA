@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lecture 14 — Grafana Fundamentals | Streaming Data Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--border:#30363d;--text:#e6edf3;--text2:#8b949e;--accent:#b91c1c;--green:#16a34a;--green-bg:rgba(22,163,74,0.12);--amber:#d97706;}
+    [data-theme="light"]{--bg:#f6f8fa;--bg2:#ffffff;--bg3:#eaeef2;--border:#d0d7de;--text:#1a1a2e;--text2:#57606a;--accent:#8C1515;--green:#166534;--green-bg:rgba(22,101,52,0.08);--amber:#92400e;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;}
+    nav{position:sticky;top:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:52px;}
+    .nav-left{display:flex;align-items:center;gap:12px;}
+    .nav-home{font-size:.82rem;color:var(--text2);text-decoration:none;} .nav-home:hover{color:var(--text);}
+    .nav-sep{color:var(--border);}
+    .nav-title{font-size:.88rem;font-weight:600;}
+    .nav-badge{font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:4px;background:var(--green-bg);color:var(--green);border:1px solid var(--green);}
+    .theme-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:7px;padding:5px 10px;cursor:pointer;font-size:.78rem;font-family:inherit;}
+    .wrap{max-width:820px;margin:0 auto;padding:2.5rem 1.5rem 4rem;}
+    .lec-label{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:4px 14px;border-radius:20px;margin-bottom:1rem;}
+    h1{font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:700;line-height:1.2;margin-bottom:.5rem;}
+    .subtitle{font-size:.95rem;color:var(--text2);margin-bottom:.5rem;}
+    .meta-row{display:flex;gap:1.5rem;flex-wrap:wrap;font-size:.82rem;color:var(--text2);margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);}
+    .meta-row span strong{color:var(--text);}
+    h2{font-size:1.35rem;font-weight:700;color:var(--text);margin:2.5rem 0 .75rem;padding-bottom:.4rem;border-bottom:2px solid var(--accent);}
+    h3{font-size:1.05rem;font-weight:600;color:var(--text);margin:1.5rem 0 .5rem;}
+    p{font-size:.95rem;color:var(--text2);margin-bottom:.75rem;}
+    p strong{color:var(--text);}
+    ul,ol{padding-left:1.4rem;margin-bottom:.75rem;}
+    li{font-size:.93rem;color:var(--text2);margin-bottom:.3rem;line-height:1.6;}
+    li strong{color:var(--text);}
+    table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.84rem;}
+    th{background:var(--bg3);text-align:left;padding:.55rem .9rem;font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);border:1px solid var(--border);}
+    td{padding:.55rem .9rem;border:1px solid var(--border);color:var(--text2);vertical-align:top;}
+    td strong{color:var(--text);}
+    tr:hover td{background:var(--bg3);}
+    .callout{border-left:3px solid var(--accent);background:rgba(185,28,28,.06);border-radius:0 8px 8px 0;padding:.85rem 1.1rem;margin:1rem 0;}
+    .callout.green{border-color:var(--green);background:var(--green-bg);}
+    .callout.amber{border-color:var(--amber);background:rgba(217,119,6,.06);}
+    .callout p{margin:0;font-size:.9rem;color:var(--text);}
+    pre{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;overflow-x:auto;margin:1rem 0;font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:1.6;color:var(--text2);}
+    .obj-list{list-style:none;padding:0;}
+    .obj-list li{display:flex;align-items:flex-start;gap:10px;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.92rem;color:var(--text2);}
+    .obj-list li:last-child{border-bottom:none;}
+    .obj-list .check{color:var(--green);flex-shrink:0;}
+    .toc{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.5rem;margin-bottom:2rem;}
+    .toc h4{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:.75rem;}
+    .toc ol{padding-left:1.2rem;margin:0;}
+    .toc li{font-size:.88rem;margin-bottom:.3rem;}
+    .toc a{color:var(--accent);text-decoration:none;} .toc a:hover{text-decoration:underline;}
+    .takeaway-box{background:var(--green-bg);border:1px solid var(--green);border-radius:10px;padding:1.25rem 1.5rem;margin:1.5rem 0;}
+    .takeaway-box h3{color:var(--green);font-size:.95rem;margin:0 0 .75rem;}
+    .takeaway-box ol{padding-left:1.4rem;margin:0;}
+    .takeaway-box li{font-size:.9rem;color:var(--text2);margin-bottom:.4rem;}
+    .preview-box{background:rgba(185,28,28,.04);border:1px solid var(--accent);border-radius:10px;padding:1.25rem 1.5rem;margin-top:2rem;}
+    .preview-box h3{color:var(--accent);font-size:.95rem;margin:0 0 .5rem;}
+    .preview-box p{margin:0;font-size:.9rem;}
+    .step{display:flex;gap:.75rem;align-items:flex-start;padding:.6rem 0;border-bottom:1px solid var(--border);}
+    .step:last-child{border-bottom:none;}
+    .step-num{font-family:'JetBrains Mono',monospace;font-size:.85rem;font-weight:700;color:var(--accent);background:rgba(185,28,28,.1);border:1px solid var(--accent);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+    .step-body p{font-size:.9rem;margin:0;color:var(--text2);}
+    .step-body strong{color:var(--text);}
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-left">
+    <a href="../index.html" class="nav-home">← Course Home</a>
+    <span class="nav-sep">/</span>
+    <span class="nav-title">Lecture 14 — Notes</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:.75rem;">
+    <span class="nav-badge">Module 4</span>
+    <button class="theme-btn" onclick="toggleTheme()">🌙 Dark</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="lec-label">Module 4 · Lecture 14</div>
+  <h1>Grafana Fundamentals: Connecting Data to Dashboards</h1>
+  <p class="subtitle">Install · Connect MongoDB Atlas · Build your first live panel</p>
+  <div class="meta-row">
+    <span>⏱ <strong>90 minutes</strong></span>
+    <span>📍 <strong>Prerequisites:</strong> Lectures 8–9 (MongoDB Atlas data)</span>
+    <span>🔧 <strong>Lab:</strong> Docker + Grafana setup</span>
+  </div>
+
+  <div class="toc">
+    <h4>Contents</h4>
+    <ol>
+      <li><a href="#objectives">Learning Objectives</a></li>
+      <li><a href="#timeline">Session Timeline</a></li>
+      <li><a href="#what">What Is Grafana?</a></li>
+      <li><a href="#model">The Grafana Mental Model</a></li>
+      <li><a href="#setup">Setup & Connection</a></li>
+      <li><a href="#lab">Hands-On Lab — First Panel</a></li>
+      <li><a href="#panels">Panel Types Overview</a></li>
+      <li><a href="#takeaways">Key Takeaways</a></li>
+    </ol>
+  </div>
+
+  <h2 id="objectives">Learning Objectives</h2>
+  <ul class="obj-list">
+    <li><span class="check">✓</span> Explain what Grafana is and where it sits in a data architecture</li>
+    <li><span class="check">✓</span> Connect Grafana to a MongoDB Atlas data source using the community plugin</li>
+    <li><span class="check">✓</span> Understand the Grafana mental model: data sources → queries → panels → dashboards</li>
+    <li><span class="check">✓</span> Create at least one working panel displaying live stock price data</li>
+    <li><span class="check">✓</span> Distinguish between Grafana's use cases vs Atlas Charts (Assignment 3)</li>
+  </ul>
+
+  <h2 id="timeline">Session Timeline</h2>
+  <table>
+    <tr><th>Time</th><th>Segment</th><th>Activity</th></tr>
+    <tr><td>0–10 min</td><td>Recap</td><td>Module 3 wrap-up — from streaming to visualising</td></tr>
+    <tr><td>10–25 min</td><td>What Is Grafana?</td><td>Architecture, who uses it, industry context</td></tr>
+    <tr><td>25–40 min</td><td>Grafana Mental Model</td><td>Data sources, queries, panels, dashboards</td></tr>
+    <tr><td>40–55 min</td><td>Setup &amp; Connection</td><td>Docker install, MongoDB plugin, connect Atlas</td></tr>
+    <tr><td>55–75 min</td><td>Hands-On Lab</td><td>Build first panel: stock prices time series</td></tr>
+    <tr><td>75–85 min</td><td>Panel Types</td><td>Time Series, Stat, Bar Gauge, Table overview</td></tr>
+    <tr><td>85–90 min</td><td>A3 Preview</td><td>What students will build for Assignment 3</td></tr>
+  </table>
+
+  <h2 id="what">Section 1: What Is Grafana?</h2>
+
+  <h3>The Problem It Solves</h3>
+  <p>In Modules 2 and 3, you built the full backend: Kafka producers, consumers, MongoDB storage, alert routing, and windowing. All that work produces data — but the data lives in a database only engineers can query. <strong>Grafana closes this gap.</strong> It turns database queries into visual panels that refresh automatically, putting your streaming data in front of the people who need to act on it.</p>
+
+  <table>
+    <tr><th>What It Is</th><th>What It Isn't</th></tr>
+    <tr><td>A dashboard and visualisation platform</td><td>A database</td></tr>
+    <tr><td>A query builder (UI on top of your data)</td><td>A streaming system</td></tr>
+    <tr><td>An alerting layer with notification routing</td><td>A replacement for MongoDB/Kafka</td></tr>
+    <tr><td>Open source + free for self-hosted use</td><td>An analytics/BI tool (that's Metabase, Tableau)</td></tr>
+  </table>
+
+  <h3>Who Uses Grafana</h3>
+  <pre>2014 — Created by Torkel Odegaard as a fork of Kibana
+2021 — Grafana Labs valued at $3 billion
+2024 — ~20 million users, 200,000+ organisations
+      Default monitoring dashboard at:
+      Netflix, PayPal, Booking.com, Zepto, Swiggy, Paytm, HDFC Securities</pre>
+
+  <div class="callout green">
+    <p><strong>Career context:</strong> When you walk into a data-forward company's operations centre and see a wall of live charts, there is a 70%+ chance you are looking at Grafana. Understanding this tool positions you to have meaningful conversations about data infrastructure — as a manager, analyst, or product leader.</p>
+  </div>
+
+  <h2 id="model">Section 2: The Grafana Mental Model</h2>
+
+  <h3>Four Building Blocks</h3>
+  <ol>
+    <li><strong>Data Source</strong> — A connection to a database. Grafana supports 50+ natively (Prometheus, InfluxDB, MySQL) and 100+ via community plugins (MongoDB, BigQuery, Snowflake).</li>
+    <li><strong>Query</strong> — The question you're asking of the data source. Written in the data source's native language (MongoDB aggregate pipeline, SQL, PromQL).</li>
+    <li><strong>Panel</strong> — One visual unit: one chart, one number, one table. Each panel has exactly one query and one visualisation type.</li>
+    <li><strong>Dashboard</strong> — A collection of panels on a grid. Has a time range selector and auto-refresh interval.</li>
+  </ol>
+
+  <h3>Time as a First-Class Citizen</h3>
+  <p>Unlike static BI tools, Grafana treats <strong>time</strong> as the primary dimension. Every dashboard has a time range (last 5 min, last 1 hour, custom). This makes it ideal for streaming data — you can zoom into the exact window when an alert fired.</p>
+
+  <h2 id="setup">Section 3: Setup &amp; Connection</h2>
+
+  <h3>Install Grafana with Docker</h3>
+  <pre>docker run -d \
+  --name grafana \
+  -p 3000:3000 \
+  -e GF_SECURITY_ADMIN_PASSWORD=admin \
+  grafana/grafana-oss:latest
+
+# Open: http://localhost:3000
+# Login: admin / admin  (Grafana will prompt you to change it)</pre>
+
+  <h3>Install the MongoDB Community Plugin</h3>
+  <pre>docker exec -it grafana grafana-cli plugins install grafana-mongodb-datasource
+docker restart grafana</pre>
+
+  <h3>Add MongoDB Atlas Data Source</h3>
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p><strong>Left sidebar → Connections → Data Sources → Add data source</strong></p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p><strong>Search "MongoDB"</strong> → select the community plugin</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p><strong>Connection string:</strong> <code>mongodb+srv://&lt;user&gt;:&lt;password&gt;@cluster0.xxxxx.mongodb.net/</code><br>Database: <code>sda_course</code></p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body"><p><strong>Click "Save &amp; Test"</strong> — should show ✅ "Data source is working"</p></div>
+  </div>
+
+  <h2 id="lab">Section 4: Hands-On Lab — First Panel</h2>
+  <p>Build a time series panel showing INFY stock price over the last 30 minutes, auto-refreshing every 10 seconds — powered by the <code>stock_prices</code> collection from Lectures 8 &amp; 9.</p>
+
+  <h3>Step 1 — New Dashboard</h3>
+  <p>Left sidebar → Dashboards → New → New Dashboard → Add visualisation → Select MongoDB data source.</p>
+
+  <h3>Step 2 — Write the Query</h3>
+  <pre>{
+  "collection": "stock_prices",
+  "aggregate": [
+    { "$match": { "symbol": "INFY" } },
+    { "$sort": { "_saved_at": 1 } },
+    { "$project": { "_id": 0, "time": "$_saved_at", "price": 1 } }
+  ]
+}</pre>
+  <p>Map <strong>Time field</strong> → <code>time</code> | <strong>Value field</strong> → <code>price</code></p>
+
+  <h3>Step 3 — Panel Settings</h3>
+  <ul>
+    <li>Visualisation: <strong>Time Series</strong></li>
+    <li>Title: "INFY Stock Price"</li>
+    <li>Unit: Currency → Indian Rupee (₹)</li>
+    <li>Time range: Last 30 minutes | Refresh: 10s</li>
+  </ul>
+
+  <h3>Alert Count Panel (Bonus)</h3>
+  <p>Add a <strong>Stat</strong> panel for open alert count:</p>
+  <pre>{
+  "collection": "stock_alerts",
+  "aggregate": [
+    { "$match": { "status": "open" } },
+    { "$count": "value" }
+  ]
+}</pre>
+  <p>Thresholds: 0 = green | 5 = amber | 10 = red</p>
+
+  <div class="callout green">
+    <p><strong>Teaching moment:</strong> When a price spike fires an alert, students see both the time series move AND the alert counter increment in real time. This is the "aha" moment that makes the full pipeline visible — from Kafka producer to live dashboard.</p>
+  </div>
+
+  <h2 id="panels">Section 5: Panel Types Reference</h2>
+  <table>
+    <tr><th>Panel Type</th><th>Best For</th><th>Example Use</th></tr>
+    <tr><td><strong>Time Series</strong></td><td>Trends over time</td><td>Stock price history, transaction volume per minute</td></tr>
+    <tr><td><strong>Stat</strong></td><td>Single important number</td><td>Current price, total open alerts today</td></tr>
+    <tr><td><strong>Bar Gauge</strong></td><td>Progress / comparison</td><td>Alert count per symbol (INFY vs TCS)</td></tr>
+    <tr><td><strong>Bar Chart</strong></td><td>Categorical comparison</td><td>Transactions per city in last hour</td></tr>
+    <tr><td><strong>Table</strong></td><td>Raw data / detail view</td><td>Latest 10 alerts from stock_alerts</td></tr>
+    <tr><td><strong>Gauge</strong></td><td>Single value with thresholds</td><td>Risk score: green/amber/red</td></tr>
+  </table>
+
+  <h2 id="takeaways">Key Takeaways</h2>
+  <div class="takeaway-box">
+    <h3>✓ Key Takeaways — Lecture 14</h3>
+    <ol>
+      <li>Grafana is the visual layer — it sits on top of databases, not inside them</li>
+      <li>Four building blocks: Data Source → Query → Panel → Dashboard</li>
+      <li>Time is central — dashboards have a time range and auto-refresh, making them live</li>
+      <li>MongoDB community plugin enables Atlas → Grafana; InfluxDB is the simpler native option</li>
+      <li>Panel types serve different needs — Time Series for trends, Stat for KPIs, Table for detail</li>
+    </ol>
+  </div>
+
+  <div class="preview-box">
+    <h3>Preview — Lecture 15: Building Live Streaming Dashboards</h3>
+    <p>Full hands-on build session: multi-panel stock monitor, variable dropdowns, the transactions dashboard, and Assignment 3 guidance. Keep Grafana running and your producer streaming before class.</p>
+  </div>
+</div>
+<script>
+function toggleTheme(){const h=document.documentElement;const d=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',d?'light':'dark');document.querySelector('.theme-btn').textContent=d?'☀️ Light':'🌙 Dark';}
+</script>
+</body>
+</html>

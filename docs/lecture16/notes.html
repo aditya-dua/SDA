@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lecture 16 — Alerts in Grafana | Streaming Data Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--border:#30363d;--text:#e6edf3;--text2:#8b949e;--accent:#b91c1c;--green:#16a34a;--green-bg:rgba(22,163,74,0.12);--amber:#d97706;}
+    [data-theme="light"]{--bg:#f6f8fa;--bg2:#ffffff;--bg3:#eaeef2;--border:#d0d7de;--text:#1a1a2e;--text2:#57606a;--accent:#8C1515;--green:#166534;--green-bg:rgba(22,101,52,0.08);--amber:#92400e;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;}
+    nav{position:sticky;top:0;z-index:100;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:52px;}
+    .nav-left{display:flex;align-items:center;gap:12px;}
+    .nav-home{font-size:.82rem;color:var(--text2);text-decoration:none;} .nav-home:hover{color:var(--text);}
+    .nav-sep{color:var(--border);}
+    .nav-title{font-size:.88rem;font-weight:600;}
+    .nav-badge{font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:4px;background:var(--green-bg);color:var(--green);border:1px solid var(--green);}
+    .theme-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:7px;padding:5px 10px;cursor:pointer;font-size:.78rem;font-family:inherit;}
+    .wrap{max-width:820px;margin:0 auto;padding:2.5rem 1.5rem 4rem;}
+    .lec-label{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:4px 14px;border-radius:20px;margin-bottom:1rem;}
+    h1{font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:700;line-height:1.2;margin-bottom:.5rem;}
+    .subtitle{font-size:.95rem;color:var(--text2);margin-bottom:.5rem;}
+    .meta-row{display:flex;gap:1.5rem;flex-wrap:wrap;font-size:.82rem;color:var(--text2);margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);}
+    .meta-row span strong{color:var(--text);}
+    h2{font-size:1.35rem;font-weight:700;color:var(--text);margin:2.5rem 0 .75rem;padding-bottom:.4rem;border-bottom:2px solid var(--accent);}
+    h3{font-size:1.05rem;font-weight:600;color:var(--text);margin:1.5rem 0 .5rem;}
+    p{font-size:.95rem;color:var(--text2);margin-bottom:.75rem;}
+    p strong{color:var(--text);}
+    ul,ol{padding-left:1.4rem;margin-bottom:.75rem;}
+    li{font-size:.93rem;color:var(--text2);margin-bottom:.3rem;line-height:1.6;}
+    li strong{color:var(--text);}
+    table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.84rem;}
+    th{background:var(--bg3);text-align:left;padding:.55rem .9rem;font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--text2);border:1px solid var(--border);}
+    td{padding:.55rem .9rem;border:1px solid var(--border);color:var(--text2);vertical-align:top;}
+    td strong{color:var(--text);}
+    tr:hover td{background:var(--bg3);}
+    .callout{border-left:3px solid var(--accent);background:rgba(185,28,28,.06);border-radius:0 8px 8px 0;padding:.85rem 1.1rem;margin:1rem 0;}
+    .callout.green{border-color:var(--green);background:var(--green-bg);}
+    .callout.amber{border-color:var(--amber);background:rgba(217,119,6,.06);}
+    .callout p{margin:0;font-size:.9rem;color:var(--text);}
+    pre{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;overflow-x:auto;margin:1rem 0;font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:1.6;color:var(--text2);}
+    .obj-list{list-style:none;padding:0;}
+    .obj-list li{display:flex;align-items:flex-start;gap:10px;padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.92rem;color:var(--text2);}
+    .obj-list li:last-child{border-bottom:none;}
+    .obj-list .check{color:var(--green);flex-shrink:0;}
+    .toc{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.5rem;margin-bottom:2rem;}
+    .toc h4{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:.75rem;}
+    .toc ol{padding-left:1.2rem;margin:0;}
+    .toc li{font-size:.88rem;margin-bottom:.3rem;}
+    .toc a{color:var(--accent);text-decoration:none;} .toc a:hover{text-decoration:underline;}
+    .takeaway-box{background:var(--green-bg);border:1px solid var(--green);border-radius:10px;padding:1.25rem 1.5rem;margin:1.5rem 0;}
+    .takeaway-box h3{color:var(--green);font-size:.95rem;margin:0 0 .75rem;}
+    .takeaway-box ol{padding-left:1.4rem;margin:0;}
+    .takeaway-box li{font-size:.9rem;color:var(--text2);margin-bottom:.4rem;}
+    .preview-box{background:rgba(185,28,28,.04);border:1px solid var(--accent);border-radius:10px;padding:1.25rem 1.5rem;margin-top:2rem;}
+    .preview-box h3{color:var(--accent);font-size:.95rem;margin:0 0 .5rem;}
+    .preview-box p{margin:0;font-size:.9rem;}
+    .state-flow{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin:1rem 0;font-family:'JetBrains Mono',monospace;font-size:.82rem;}
+    .state{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 12px;color:var(--text);}
+    .state.normal{border-color:var(--green);color:var(--green);}
+    .state.pending{border-color:var(--amber);color:var(--amber);}
+    .state.firing{border-color:var(--accent);color:var(--accent);}
+    .arrow{color:var(--text2);}
+    .step{display:flex;gap:.75rem;align-items:flex-start;padding:.6rem 0;border-bottom:1px solid var(--border);}
+    .step:last-child{border-bottom:none;}
+    .step-num{font-family:'JetBrains Mono',monospace;font-size:.85rem;font-weight:700;color:var(--accent);background:rgba(185,28,28,.1);border:1px solid var(--accent);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+    .step-body p{font-size:.9rem;margin:0;color:var(--text2);}
+    .step-body strong{color:var(--text);}
+    .module-summary{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.5rem;margin:1.5rem 0;}
+    .module-summary h3{font-size:.95rem;color:var(--text);margin:0 0 1rem;}
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-left">
+    <a href="../index.html" class="nav-home">← Course Home</a>
+    <span class="nav-sep">/</span>
+    <span class="nav-title">Lecture 16 — Notes</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:.75rem;">
+    <span class="nav-badge">Module 4</span>
+    <button class="theme-btn" onclick="toggleTheme()">🌙 Dark</button>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="lec-label">Module 4 · Lecture 16</div>
+  <h1>Alerts in Grafana: From Data to Action</h1>
+  <p class="subtitle">Alert rules · Contact points · Routing · Alert design strategy</p>
+  <div class="meta-row">
+    <span>⏱ <strong>90 minutes</strong></span>
+    <span>📍 <strong>Prerequisites:</strong> Lecture 15 (dashboards built)</span>
+    <span>🔧 <strong>Lab:</strong> Alert rules + Slack/email routing</span>
+  </div>
+
+  <div class="toc">
+    <h4>Contents</h4>
+    <ol>
+      <li><a href="#objectives">Learning Objectives</a></li>
+      <li><a href="#timeline">Session Timeline</a></li>
+      <li><a href="#why">Why Alerts Matter</a></li>
+      <li><a href="#architecture">Grafana Alert Architecture</a></li>
+      <li><a href="#lab1">Lab Part 1 — Create Alert Rules</a></li>
+      <li><a href="#lab2">Lab Part 2 — Configure Contact Points</a></li>
+      <li><a href="#design">Alert Design Framework</a></li>
+      <li><a href="#cases">Case Studies</a></li>
+      <li><a href="#summary">Module 4 Summary</a></li>
+      <li><a href="#takeaways">Key Takeaways</a></li>
+    </ol>
+  </div>
+
+  <h2 id="objectives">Learning Objectives</h2>
+  <ul class="obj-list">
+    <li><span class="check">✓</span> Configure Grafana alert rules using the Unified Alerting framework</li>
+    <li><span class="check">✓</span> Define meaningful alert thresholds based on business context — not technical defaults</li>
+    <li><span class="check">✓</span> Route alerts to notification channels (email or Slack webhook)</li>
+    <li><span class="check">✓</span> Explain the alert state machine: Normal → Pending → Firing → Resolved</li>
+    <li><span class="check">✓</span> Avoid common alerting mistakes: fatigue, missing context, wrong audience</li>
+  </ul>
+
+  <h2 id="timeline">Session Timeline</h2>
+  <table>
+    <tr><th>Time</th><th>Segment</th><th>Activity</th></tr>
+    <tr><td>0–10 min</td><td>Recap</td><td>L15 dashboards — what are you watching and why?</td></tr>
+    <tr><td>10–25 min</td><td>Why Alerts Matter</td><td>The "sleeping in front of a dashboard" problem</td></tr>
+    <tr><td>25–40 min</td><td>Grafana Alert Architecture</td><td>Rules, contact points, notification policies, state machine</td></tr>
+    <tr><td>40–60 min</td><td>Lab Part 1</td><td>Create alert rules on Open Alerts count panel</td></tr>
+    <tr><td>60–70 min</td><td>Lab Part 2</td><td>Configure email / Slack contact point + routing</td></tr>
+    <tr><td>70–80 min</td><td>Alert Design Framework</td><td>Thresholds, routing, escalation, fatigue</td></tr>
+    <tr><td>80–88 min</td><td>Case Studies</td><td>Zepto &amp; HDFC Securities production alerting</td></tr>
+    <tr><td>88–90 min</td><td>Module 4 Wrap-Up</td><td>Course arc + Final Project preview</td></tr>
+  </table>
+
+  <h2 id="why">Section 1: Why Alerts Matter</h2>
+  <p>A dashboard is only useful if someone is looking at it. In a 24-hour streaming system, no one watches 24 hours a day. <strong>Alerts let the data come to you</strong> — instead of you going to the data.</p>
+
+  <pre>Without alerts:
+  10:47 PM  INFY price drops 6% — alert fires in stock_alerts
+  10:47 PM  Nobody sees it
+  11:30 PM  Risk manager checks Grafana manually — too late
+
+With alerts:
+  10:47 PM  Grafana alert fires → Slack message in #risk-alerts
+  10:48 PM  Manager reviews position, takes action</pre>
+
+  <table>
+    <tr><th>Tool</th><th>Purpose</th><th>Acts On</th></tr>
+    <tr><td><strong>Logging</strong></td><td>Record everything that happened</td><td>Engineers debugging after an event</td></tr>
+    <tr><td><strong>Monitoring</strong></td><td>Show current state continuously</td><td>Teams watching dashboards</td></tr>
+    <tr><td><strong>Alerting</strong></td><td>Notify when action is needed</td><td>Decision-makers who need to respond</td></tr>
+  </table>
+
+  <div class="callout">
+    <p><strong>Key principle:</strong> The goal of an alert is to trigger a human action. If an alert fires and nobody knows what to do, the alert is not useful — it is noise. Every alert rule should have a corresponding runbook: who gets notified and what they do.</p>
+  </div>
+
+  <h2 id="architecture">Section 2: Grafana Alert Architecture</h2>
+
+  <h3>Three Components</h3>
+  <ol>
+    <li><strong>Alert Rules</strong> — Conditions evaluated on a schedule. Each rule has a query and fires when the condition is met for a defined duration.</li>
+    <li><strong>Contact Points</strong> — Where notifications go. Supported: Email, Slack, PagerDuty, Opsgenie, Teams, Webhook, Telegram, and 20+ more.</li>
+    <li><strong>Notification Policies</strong> — Routing rules: which alert labels go to which contact point.</li>
+  </ol>
+
+  <h3>The Alert State Machine</h3>
+  <div class="state-flow">
+    <div class="state normal">NORMAL</div>
+    <div class="arrow">→ condition met →</div>
+    <div class="state pending">PENDING</div>
+    <div class="arrow">→ "For" duration elapsed →</div>
+    <div class="state firing">FIRING</div>
+    <div class="arrow">→ condition clears →</div>
+    <div class="state normal">RESOLVED</div>
+  </div>
+
+  <h3>The "For" Duration — Why It Matters</h3>
+  <p>Without a "For" duration, a single bad data point triggers an alert. With <code>For: 2m</code>, the condition must be true for 2 continuous minutes before the alert fires.</p>
+  <pre>Without "For":
+  Tick 1: Rs 1390 → FIRES immediately (bad tick? spike? genuine drop?)
+  Tick 2: Rs 1410 → Resolves — false alarm. Engineers start ignoring alerts.
+
+With For: 2m:
+  Tick 1: Rs 1390 → enters PENDING state
+  2 min later: still Rs 1385 → FIRES — genuine sustained move, worth acting on.</pre>
+
+  <h2 id="lab1">Section 3: Lab Part 1 — Create Alert Rules</h2>
+
+  <h3>Alert 1: "Too Many Open Alerts"</h3>
+  <p>Navigate: <strong>Left sidebar → Alerting (bell icon) → Alert Rules → New alert rule</strong></p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><p><strong>Name:</strong> <code>Stock Alerts — High Open Count</code> | Data source: MongoDB</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><p><strong>Query:</strong> stock_alerts collection, match status=open, count</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><p><strong>Condition:</strong> IS ABOVE 5 | Evaluate every: 1m | For: 2m</p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body"><p><strong>Labels:</strong> <code>severity=warning</code>, <code>team=risk</code></p></div>
+  </div>
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-body"><p><strong>Annotations:</strong> Summary: "Open alert count has exceeded threshold" | Description: "There are {{ $value }} unreviewed stock alerts."</p></div>
+  </div>
+
+  <h3>Alert 2: "Symbol Price Anomaly" (from panel)</h3>
+  <ol>
+    <li>Open the INFY Price panel → Edit → Alert tab → <strong>Create alert rule from this panel</strong></li>
+    <li>Condition: IS BELOW 1400 (absolute floor) | For: 1m</li>
+    <li>Labels: <code>severity=critical</code>, <code>symbol=INFY</code></li>
+  </ol>
+
+  <div class="callout amber">
+    <p><strong>Threshold design discussion:</strong> Should the threshold be absolute (Rs 1,400) or relative (5% from yesterday's close)? Absolute is simpler to configure. Relative is more accurate but requires the query to compute the deviation. The consumer_alerts.py from Lecture 9 already handles relative alerting at the Kafka layer — Grafana can handle the absolute floor as a safety net.</p>
+  </div>
+
+  <h2 id="lab2">Section 4: Lab Part 2 — Contact Points</h2>
+
+  <h3>Option A: Email</h3>
+  <p>Requires SMTP configuration in Docker. Add environment variables to the Grafana run command:</p>
+  <pre>-e GF_SMTP_ENABLED=true
+-e GF_SMTP_HOST=smtp.gmail.com:587
+-e GF_SMTP_USER=your@gmail.com
+-e GF_SMTP_PASSWORD=your-app-password</pre>
+  <p>Then: <strong>Alerting → Contact points → New → Type: Email → Add your address → Test</strong></p>
+
+  <h3>Option B: Slack Webhook (Recommended for demos)</h3>
+  <ol>
+    <li>Go to <code>api.slack.com/apps</code> → Create New App → Incoming Webhooks → Activate</li>
+    <li>Add New Webhook to Workspace → select channel <code>#grafana-alerts</code></li>
+    <li>Copy webhook URL: <code>https://hooks.slack.com/services/T.../B.../...</code></li>
+    <li><strong>Grafana:</strong> Alerting → Contact points → New → Type: Slack → Paste URL → Test</li>
+  </ol>
+
+  <h3>Notification Routing by Label</h3>
+  <p><strong>Alerting → Notification policies → Edit root policy → Add matchers:</strong></p>
+  <ul>
+    <li><code>severity = critical</code> → Slack</li>
+    <li><code>severity = warning</code> → Email</li>
+    <li>Default (catch-all) → Email</li>
+  </ul>
+
+  <h3>Expected Slack Alert Message</h3>
+  <pre>FIRING: Stock Alerts — High Open Count
+Severity: warning | Team: risk
+Open alert count has exceeded threshold
+Current value: 7
+Starts at: 11:47:00
+Dashboard: http://localhost:3000/d/...</pre>
+
+  <h2 id="design">Section 5: Alert Design Framework</h2>
+
+  <h3>Three Questions for Every Alert Rule</h3>
+  <ol>
+    <li><strong>Who receives this alert and what will they do?</strong> If you can't answer in one sentence, the alert is not ready.</li>
+    <li><strong>What is the cost of a false positive?</strong> Each false positive erodes trust. After 10, people ignore alerts.</li>
+    <li><strong>What is the cost of a false negative?</strong> A missed alert on a financial system can mean regulatory exposure or monetary loss.</li>
+  </ol>
+
+  <table>
+    <tr><th>Notification Cost</th><th>Example</th><th>Threshold Approach</th></tr>
+    <tr><td>Low (Slack message, easy to dismiss)</td><td>Warning — 5+ open alerts</td><td>Sensitive threshold OK</td></tr>
+    <tr><td>Medium (email + calendar)</td><td>Price below floor</td><td>Threshold needs care, use "For: 2m"</td></tr>
+    <tr><td>High (PagerDuty, on-call woken up)</td><td>System outage, fraud spike</td><td>Very precise threshold, long "For" duration</td></tr>
+  </table>
+
+  <h3>Avoiding Alert Fatigue</h3>
+  <p><strong>Alert fatigue</strong> = when so many alerts fire that operators start ignoring them — including the ones that matter.</p>
+  <ul>
+    <li>Set <code>For: 2m</code> or longer on non-critical rules — filters out single-tick blips</li>
+    <li>Delete any alert you can't write a runbook for</li>
+    <li>Use severity labels and separate channels (warnings vs critical)</li>
+    <li>Review and tune thresholds monthly — conditions change as data patterns change</li>
+  </ul>
+
+  <h2 id="cases">Section 6: Case Studies</h2>
+
+  <h3>Case A: Zepto — Dark Store Operations</h3>
+  <p>Zepto operates ~350 dark stores. Their alerting rules:</p>
+  <ul>
+    <li><code>order_acceptance_rate &lt; 90%</code> for 3 minutes → Slack to store ops manager</li>
+    <li><code>avg_delivery_time &gt; 35 min</code> for 5 minutes → Escalation to city head</li>
+    <li><code>inventory_stockout_count &gt; 20 SKUs</code> → Automated reorder + alert</li>
+  </ul>
+  <p><strong>Discussion:</strong> Why is the "For" duration 3 minutes for order acceptance but 5 minutes for delivery time? What is different about the business consequence of each?</p>
+
+  <h3>Case B: HDFC Securities — Trading Platform</h3>
+  <ul>
+    <li><code>price_feed_latency &gt; 500ms</code> → PagerDuty (on-call engineer, 24/7)</li>
+    <li><code>order_rejection_rate &gt; 2%</code> → Critical Slack + SMS to CTO</li>
+    <li><code>active_users_drop &gt; 30%</code> in 5 min → Infrastructure alert (possible outage)</li>
+  </ul>
+  <p><strong>Discussion:</strong> The order rejection rate alert goes to the CTO, not an engineer. Why? What does this tell you about how alerting functions as a <em>business communication tool</em>, not just a technical one?</p>
+
+  <h2 id="summary">Module 4 Summary</h2>
+  <div class="module-summary">
+    <h3>What Module 4 Delivered</h3>
+    <table>
+      <tr><th></th><th>L14: Grafana Basics</th><th>L15: Dashboard Build</th><th>L16: Alerts</th></tr>
+      <tr><td><strong>Concept</strong></td><td>Data sources, panels, dashboards</td><td>Dashboard design + live multi-panel build</td><td>Alert rules, contact points, routing</td></tr>
+      <tr><td><strong>Built</strong></td><td>First panel: INFY time series</td><td>Stock monitor + transactions dashboards</td><td>Alert rules with Slack/email routing</td></tr>
+      <tr><td><strong>Business skill</strong></td><td>Understand the visual layer</td><td>Design a dashboard around a business question</td><td>Design an alerting strategy that creates action</td></tr>
+    </table>
+  </div>
+
+  <pre>Module 1 (L1-L5):    UNDERSTAND — What is streaming? How does Kafka work?
+Module 2 (L6-L10):   BUILD — Producer, consumer, MongoDB, alert routing
+Module 3 (L11-L13):  SCALE — Windowing, Spark, Flink — enterprise patterns
+Module 4 (L14-L16):  VISUALISE — Grafana dashboards + alert routing
+Module 5 (L17-L20):  PRESENT — Atlas Charts, final project, real architectures</pre>
+
+  <h2 id="takeaways">Key Takeaways</h2>
+  <div class="takeaway-box">
+    <h3>✓ Key Takeaways — Lecture 16</h3>
+    <ol>
+      <li>Alerts close the feedback loop — data flows in, decisions flow out. Without alerts, dashboards require 24/7 human watching.</li>
+      <li>Three components: Alert Rules (conditions) → Notification Policies (routing) → Contact Points (delivery)</li>
+      <li>The "For" duration prevents noise — require a condition to persist for 1–2 min before firing</li>
+      <li>Every alert needs a runbook — who receives it, what they do. If you can't write this, the alert shouldn't exist.</li>
+      <li>Alert fatigue kills alerting systems — fewer, well-calibrated, high-signal alerts outperform many low-quality ones</li>
+      <li>Threshold design is a business decision — it depends on cost of false positives vs cost of missing a real event</li>
+    </ol>
+  </div>
+
+  <div class="preview-box">
+    <h3>Coming Up — Module 5: Atlas Charts &amp; Final Project</h3>
+    <p><strong>L17:</strong> MongoDB Atlas Charts — native charting tool, no separate install required.<br>
+    <strong>L18–L20:</strong> Final Project — architecture review, pipeline critique, presentations.<br>
+    Start thinking: What business problem are you solving? Who is your end user? What alert would notify a manager without watching the screen?</p>
+  </div>
+</div>
+<script>
+function toggleTheme(){const h=document.documentElement;const d=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',d?'light':'dark');document.querySelector('.theme-btn').textContent=d?'☀️ Light':'🌙 Dark';}
+</script>
+</body>
+</html>
