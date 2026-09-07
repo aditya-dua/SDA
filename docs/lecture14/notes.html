@@ -108,7 +108,7 @@
   <h2 id="objectives">Learning Objectives</h2>
   <ul class="obj-list">
     <li><span class="check">✓</span> Explain what Grafana is and where it sits in a data architecture</li>
-    <li><span class="check">✓</span> Connect Grafana to a MongoDB Atlas data source using the community plugin</li>
+    <li><span class="check">✓</span> Explain the licence requirements for connecting Grafana directly to MongoDB Atlas</li>
     <li><span class="check">✓</span> Understand the Grafana mental model: data sources → queries → panels → dashboards</li>
     <li><span class="check">✓</span> Build a complete three-panel dashboard from the existing transactions collection</li>
     <li><span class="check">✓</span> Match business questions to suitable visualisations</li>
@@ -156,7 +156,7 @@
 
   <h3>Four Building Blocks</h3>
   <ol>
-    <li><strong>Data Source</strong> — A connection to a database. Grafana supports 50+ natively (Prometheus, InfluxDB, MySQL) and 100+ via community plugins (MongoDB, BigQuery, Snowflake).</li>
+    <li><strong>Data Source</strong> — A connection to a database. Grafana supports sources such as Prometheus, InfluxDB, MySQL, and PostgreSQL. MongoDB requires Grafana's official Enterprise plugin and a qualifying licence.</li>
     <li><strong>Query</strong> — The question you're asking of the data source. Written in the data source's native language (MongoDB aggregate pipeline, SQL, PromQL).</li>
     <li><strong>Panel</strong> — One visual unit: one chart, one number, one table. Each panel has exactly one query and one visualisation type.</li>
     <li><strong>Dashboard</strong> — A collection of panels on a grid. Has a time range selector and auto-refresh interval.</li>
@@ -167,19 +167,30 @@
 
   <h2 id="setup">Section 3: Setup &amp; Connection</h2>
 
-  <h3>Install Grafana with Docker</h3>
+  <div class="callout amber">
+    <p><strong>Licence requirement:</strong> Direct MongoDB connectivity is not included in Grafana OSS or the free Grafana tier. The official <code>grafana-mongodb-datasource</code> plugin requires Grafana 11.6.7+ and a Grafana Cloud Pro/Advanced entitlement or a self-managed Enterprise licence. Confirm classroom access before starting this lab.</p>
+  </div>
+
+  <h3>Install Grafana Enterprise with Docker</h3>
   <pre>docker run -d \
   --name grafana \
   -p 3000:3000 \
   -e GF_SECURITY_ADMIN_PASSWORD=admin \
-  grafana/grafana-oss:latest
+  grafana/grafana-enterprise:latest
 
 # Open: http://localhost:3000
 # Login: admin / admin  (Grafana will prompt you to change it)</pre>
 
-  <h3>Install the MongoDB Community Plugin</h3>
-  <pre>docker exec -it grafana grafana-cli plugins install grafana-mongodb-datasource
+  <h3>Install the Official MongoDB Plugin</h3>
+  <p>After activating the Enterprise licence, install the plugin inside the running container. The executable is <code>grafana</code>; <code>plugins</code> is a subcommand, not a standalone executable.</p>
+  <pre>docker exec -it grafana \
+  grafana cli plugins install grafana-mongodb-datasource
+
 docker restart grafana</pre>
+
+  <div class="callout">
+    <p><strong>If you saw “exec: plugins: executable file not found”:</strong> the command omitted <code>grafana cli</code>. If installation succeeds but the health check fails, verify the Enterprise licence and MongoDB plugin entitlement.</p>
+  </div>
 
   <h3>Add MongoDB Atlas Data Source</h3>
   <div class="step">
@@ -188,7 +199,7 @@ docker restart grafana</pre>
   </div>
   <div class="step">
     <div class="step-num">2</div>
-    <div class="step-body"><p><strong>Search "MongoDB"</strong> → select the community plugin</p></div>
+    <div class="step-body"><p><strong>Search "MongoDB"</strong> → select the official Enterprise plugin</p></div>
   </div>
   <div class="step">
     <div class="step-num">3</div>
@@ -197,6 +208,10 @@ docker restart grafana</pre>
   <div class="step">
     <div class="step-num">4</div>
     <div class="step-body"><p><strong>Click "Save &amp; Test"</strong> — should show ✅ "Data source is working"</p></div>
+  </div>
+
+  <div class="callout amber">
+    <p><strong>No Enterprise licence?</strong> Do not use an unverified unsigned plugin for the class. Use MongoDB Atlas Charts for direct free visualisation, or move the transaction data to a Grafana-supported free source such as PostgreSQL, MySQL, or InfluxDB before following the dashboard steps.</p>
   </div>
 
   <h2 id="dataset">Section 4: Inspect the Existing Transactions</h2>
@@ -379,6 +394,7 @@ db.transactions.countDocuments({ is_fraud: "true" })</pre>
       <li>Grafana is the visual layer — it sits on top of databases, not inside them</li>
       <li>Four building blocks: Data Source → Query → Panel → Dashboard</li>
       <li>Time is central — dashboards have a time range and auto-refresh, making them live</li>
+      <li>Direct MongoDB access requires Grafana's licensed Enterprise plugin; OSS users need another supported data source</li>
       <li>A useful dashboard begins with business questions, not chart types</li>
       <li>Stat, Bar Chart, and Table panels answer KPI, comparison, and detail questions</li>
       <li>Auto-refresh reruns queries; the source pipeline is what creates new data</li>
