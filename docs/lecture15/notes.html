@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -63,6 +63,9 @@
     .rules-box{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:1rem 1.25rem;margin:1rem 0;}
     .rules-box h4{font-size:.85rem;font-weight:700;color:var(--text);margin-bottom:.5rem;}
     .rules-box li{font-size:.88rem;}
+    .page-nav{display:flex;justify-content:space-between;gap:1rem;margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--border);}
+    .page-nav a{color:var(--accent);font-size:.88rem;font-weight:600;text-decoration:none;padding:.55rem .85rem;border:1px solid var(--border);border-radius:8px;background:var(--bg2);}
+    .page-nav a:hover{border-color:var(--accent);}
   </style>
 </head>
 <body>
@@ -94,9 +97,9 @@
       <li><a href="#objectives">Learning Objectives</a></li>
       <li><a href="#timeline">Session Timeline</a></li>
       <li><a href="#design">Dashboard Design Principles</a></li>
-      <li><a href="#lab1">Lab Part 1 — Stock Monitor (4 panels)</a></li>
+      <li><a href="#lab1">Lab Part 1 — Fraud Operations Dashboard</a></li>
       <li><a href="#lab2">Lab Part 2 — Variables &amp; Interactivity</a></li>
-      <li><a href="#transactions">Transactions Dashboard (quick build)</a></li>
+      <li><a href="#interpret">Management Interpretation</a></li>
       <li><a href="#review">Design Review Checklist</a></li>
       <li><a href="#a3">Assignment 3 Guidance</a></li>
       <li><a href="#takeaways">Key Takeaways</a></li>
@@ -105,7 +108,7 @@
 
   <h2 id="objectives">Learning Objectives</h2>
   <ul class="obj-list">
-    <li><span class="check">✓</span> Build a multi-panel Grafana dashboard using live MongoDB data</li>
+    <li><span class="check">✓</span> Extend the Lecture 14 transaction dashboard into a five-panel fraud-operations view</li>
     <li><span class="check">✓</span> Use dashboard variables to make charts interactive and filterable</li>
     <li><span class="check">✓</span> Apply dashboard design principles: hierarchy, colour meaning, panel arrangement</li>
     <li><span class="check">✓</span> Connect visualisation choices to the business questions being answered</li>
@@ -115,11 +118,11 @@
   <h2 id="timeline">Session Timeline</h2>
   <table>
     <tr><th>Time</th><th>Segment</th><th>Activity</th></tr>
-    <tr><td>0–10 min</td><td>Setup Check</td><td>Verify Grafana running, producer running, data flowing</td></tr>
+    <tr><td>0–10 min</td><td>Setup Check</td><td>Open the Lecture 14 Transaction Risk dashboard</td></tr>
     <tr><td>10–20 min</td><td>Design Principles</td><td>What makes a dashboard useful vs pretty</td></tr>
-    <tr><td>20–50 min</td><td>Lab Part 1</td><td>Build stock monitor dashboard (4 panels)</td></tr>
-    <tr><td>50–65 min</td><td>Lab Part 2</td><td>Add variable dropdown + alert summary panel</td></tr>
-    <tr><td>65–75 min</td><td>Transactions Dashboard</td><td>Quick build from L10 transactions-topic data</td></tr>
+    <tr><td>20–55 min</td><td>Lab Part 1</td><td>Extend the transaction dashboard to five panels</td></tr>
+    <tr><td>55–70 min</td><td>Lab Part 2</td><td>Add a city variable and update panel queries</td></tr>
+    <tr><td>70–75 min</td><td>Interpretation</td><td>Turn dashboard evidence into a management action</td></tr>
     <tr><td>75–85 min</td><td>Design Review</td><td>Student dashboards — what works, what doesn't</td></tr>
     <tr><td>85–90 min</td><td>A3 Guidance</td><td>Assignment 3 requirements and tips</td></tr>
   </table>
@@ -140,124 +143,137 @@
     </ol>
   </div>
 
-  <h2 id="lab1">Section 2: Lab Part 1 — Stock Monitor Dashboard</h2>
+  <h2 id="lab1">Section 2: Lab Part 1 — Fraud Operations Dashboard</h2>
 
   <h3>Target Layout</h3>
-  <pre>┌────────────────────────────────────────────────────────┐
-│  Stock Monitor  [Symbol: INFY ▼]  [Last 30 min ▼]      │
-├──────────────┬──────────────┬──────────────────────────┤
-│  Current     │  Open        │                          │
-│  Price       │  Alerts      │  INFY Price (30 min)     │
-│  (Stat)      │  (Stat)      │  (Time Series)           │
-├──────────────┴──────────────┤                          │
-│  Price Change from          ├──────────────────────────┤
-│  Last Batch (%)             │  Alert Log (Table)       │
-├─────────────────────────────┤  Latest 5 alerts         │
-│  Min / Max Bar Gauge        │                          │
-└─────────────────────────────┴──────────────────────────┘</pre>
+  <pre>┌───────────────────────────────────────────────────────┐
+│ Fraud Operations  [City: All ▼]                       │
+├───────────────────┬───────────────────────────────────┤
+│ Flagged Rate      │ Flagged Transaction Value         │
+│ (Stat)            │ (Stat)                            │
+├───────────────────┴───────────────────────────────────┤
+│ Daily Transaction Volume (Time Series)                 │
+├───────────────────────────┬───────────────────────────┤
+│ Flagged by Merchant       │ Highest-Value Flagged     │
+│ (Bar Chart)               │ Transactions (Table)      │
+└───────────────────────────────────────────────────────┘</pre>
 
-  <h3>Panel 1 — Current Price (Stat)</h3>
+  <p>Keep the fraud-rate Stat and review-queue Table from Lecture 14. Add the three panels below, then arrange all five into the target layout.</p>
+
+  <h3>Panel 1 — Flagged Transaction Value (Stat)</h3>
   <div class="panel-card">
-    <div class="pc-title">Current Price</div>
-    <div class="pc-q">Business question: "What is INFY trading at right now?"</div>
-    <p>Query: stock_prices collection, match symbol=INFY, sort by _saved_at desc, limit 1, project price</p>
+    <div class="pc-title">Flagged Transaction Value</div>
+    <div class="pc-q">Business question: "How much money is currently associated with flagged transactions?"</div>
   </div>
   <pre>{
-  "collection": "stock_prices",
+  "collection": "transactions",
   "aggregate": [
-    { "$match": { "symbol": "INFY" } },
-    { "$sort": { "_saved_at": -1 } },
-    { "$limit": 1 },
-    { "$project": { "_id": 0, "price": 1 } }
+    { "$match": { "is_fraud": "true" } },
+    { "$group": {
+        "_id": null,
+        "value": {
+          "$sum": {
+            "$convert": {
+              "input": "$amount",
+              "to": "double",
+              "onError": 0,
+              "onNull": 0
+            }
+          }
+        }
+    }},
+    { "$project": { "_id": 0, "value": 1 } }
   ]
 }</pre>
-  <p><strong>Settings:</strong> Visualisation = Stat | Unit = ₹ | Thresholds = none (price level is neutral)</p>
+  <p><strong>Settings:</strong> Visualisation = Stat | Unit = Indian Rupee | Decimals = 0 | Colour = red</p>
 
-  <h3>Panel 2 — Open Alerts Count (Stat)</h3>
+  <h3>Panel 2 — Daily Transaction Volume (Time Series)</h3>
   <div class="panel-card">
-    <div class="pc-title">Open Alerts</div>
-    <div class="pc-q">Business question: "How many unreviewed alerts are in the queue?"</div>
+    <div class="pc-title">Daily Transaction Volume</div>
+    <div class="pc-q">Business question: "How does transaction activity change across the month?"</div>
   </div>
   <pre>{
-  "collection": "stock_alerts",
+  "collection": "transactions",
   "aggregate": [
-    { "$match": { "status": "open" } },
-    { "$count": "value" }
+    { "$addFields": {
+        "event_time": {
+          "$dateFromString": {
+            "dateString": "$timestamp",
+            "format": "%Y-%m-%d %H:%M:%S"
+          }
+        }
+    }},
+    { "$group": {
+        "_id": { "$dateTrunc": { "date": "$event_time", "unit": "day" } },
+        "value": { "$sum": 1 }
+    }},
+    { "$sort": { "_id": 1 } },
+    { "$project": { "_id": 0, "time": "$_id", "value": 1 } }
   ]
 }</pre>
-  <p><strong>Thresholds:</strong> 0–2 = green | 3–5 = amber | 6+ = red</p>
+  <p><strong>Settings:</strong> Visualisation = Time Series | Unit = count | Line width = 2 | Fill opacity = 10</p>
+
+  <h3>Panel 3 — Flagged Transactions by Merchant (Bar Chart)</h3>
+  <div class="panel-card">
+    <div class="pc-title">Flagged Transactions by Merchant</div>
+    <div class="pc-q">Business question: "Which merchants generate the largest review workload?"</div>
+  </div>
+  <pre>{
+  "collection": "transactions",
+  "aggregate": [
+    { "$match": { "is_fraud": "true" } },
+    { "$group": { "_id": "$merchant", "value": { "$sum": 1 } } },
+    { "$sort": { "value": -1 } },
+    { "$limit": 10 },
+    { "$project": { "_id": 0, "merchant": "$_id", "value": 1 } }
+  ]
+}</pre>
+  <p><strong>Settings:</strong> Visualisation = Bar Chart | Category = merchant | Value = count | Orientation = horizontal</p>
+
+  <h3>Panel 4 — Fraud Rate (from Lecture 14)</h3>
+  <div class="panel-card">
+    <div class="pc-title">Flagged Transaction Rate</div>
+    <div class="pc-q">Business question: "What proportion of all transactions needs review?"</div>
+    <p>Reuse the Lecture 14 Stat query. Keep thresholds at green below 3%, amber from 3%, and red from 5%.</p>
+  </div>
+
+  <h3>Panel 5 — Review Queue (from Lecture 14)</h3>
+  <div class="panel-card">
+    <div class="pc-title">Highest-Value Flagged Transactions</div>
+    <div class="pc-q">Business question: "Which cases should analysts inspect first?"</div>
+    <p>Reuse the Lecture 14 Table query, sorted by converted amount descending and limited to 20 rows.</p>
+  </div>
+
   <div class="callout green">
-    <p><strong>Discussion:</strong> Ask students — "What threshold makes sense for your Assignment 3 dataset?" There is no universal answer; the business context determines urgency.</p>
+    <p><strong>Discussion:</strong> A merchant with many flagged transactions is not automatically fraudulent. It may simply have high transaction volume. A manager should request a fraud-rate comparison before blocking the merchant.</p>
   </div>
-
-  <h3>Panel 3 — Price History Time Series</h3>
-  <div class="panel-card">
-    <div class="pc-title">INFY Price — Last 30 Minutes</div>
-    <div class="pc-q">Business question: "What has INFY's price done recently?"</div>
-  </div>
-  <pre>{
-  "collection": "stock_prices",
-  "aggregate": [
-    { "$match": { "symbol": "INFY", "_saved_at": { "$gte": "$__from" } } },
-    { "$sort": { "_saved_at": 1 } },
-    { "$project": { "_id": 0, "time": "$_saved_at", "price": 1 } }
-  ]
-}</pre>
-  <p><strong>Settings:</strong> Line width = 2 | Fill opacity = 10 | Unit = ₹ | Tooltip = All</p>
-
-  <h3>Panel 4 — Alert Log Table</h3>
-  <div class="panel-card">
-    <div class="pc-title">Recent Alerts</div>
-    <div class="pc-q">Business question: "What were the last 5 alerts and why did they fire?"</div>
-  </div>
-  <pre>{
-  "collection": "stock_alerts",
-  "aggregate": [
-    { "$sort": { "alert_at": -1 } },
-    { "$limit": 5 },
-    { "$project": {
-        "_id": 0, "symbol": 1,
-        "mean_price": "$stats.mean",
-        "min": "$stats.min", "max": "$stats.max",
-        "reason": { "$arrayElemAt": ["$alert_reasons", 0] },
-        "time": "$alert_at"
-    }}
-  ]
-}</pre>
-  <p><strong>Settings:</strong> Visualisation = Table | Sort by Time descending</p>
 
   <h2 id="lab2">Section 3: Lab Part 2 — Variables &amp; Interactivity</h2>
 
-  <h3>Adding a Symbol Dropdown</h3>
-  <p>Variables make dashboards reusable — one dashboard works for INFY and TCS instead of building two.</p>
+  <h3>Adding a City Dropdown</h3>
+  <p>Variables make one dashboard reusable across locations instead of creating a separate dashboard for every city.</p>
   <ol>
     <li>Dashboard settings (gear icon) → Variables → New variable</li>
-    <li>Name: <code>symbol</code> | Type: Custom | Values: <code>INFY, TCS</code> | Default: <code>INFY</code></li>
-    <li>Save. Now replace <code>"symbol": "INFY"</code> with <code>"symbol": "$symbol"</code> in all panel queries.</li>
+    <li>Name: <code>city</code> | Type: Custom | Values: <code>Mumbai, Delhi, Bengaluru, Hyderabad, Chennai, Kolkata, Pune, Ahmedabad</code></li>
+    <li>Enable <strong>Include All option</strong> and set the custom all value to <code>.*</code>.</li>
+    <li>Add <code>{ "$match": { "city": { "$regex": "^$city$" } } }</code> as the first stage of each panel query.</li>
   </ol>
-  <p>The dropdown now filters all panels simultaneously — one click switches the entire dashboard from INFY to TCS.</p>
+  <p>The dropdown now filters all panels simultaneously. Selecting All uses the <code>.*</code> regular expression and keeps every city.</p>
 
   <h3>Saving &amp; Sharing</h3>
   <ol>
-    <li>Save icon → name: "SDA — Stock Monitor"</li>
+    <li>Save icon → name: "SDA — Fraud Operations"</li>
     <li>Share → Snapshot → generates a public link (no Grafana login required to view)</li>
   </ol>
 
-  <h2 id="transactions">Section 4: Transactions Dashboard</h2>
-  <p>Quick build using the <code>transactions-topic</code> data from Lecture 10. Use as a second pattern reference for Assignment 3.</p>
-
-  <pre>┌─────────────────────────────────────────────┐
-│  Transaction Monitor  [City: All ▼]  [1h ▼] │
-├─────────────┬───────────────────────────────┤
-│ Total Txns  │  Transaction Volume             │
-│ Last Hour   │  Time Series — count per min   │
-│  (Stat)     │                                │
-├─────────────┴───────────────────────────────┤
-│  Avg Amount per Minute  │  Top Cities        │
-│  (Time Series)          │  (Bar Chart)       │
-└─────────────────────────┴────────────────────┘</pre>
-
-  <p>Queries follow the same pattern as stock panels — change collection to <code>transactions</code> and field names to match your L10 schema (<code>amount</code>, <code>city</code>, <code>timestamp</code>).</p>
+  <h2 id="interpret">Section 4: Management Interpretation</h2>
+  <p>Use the completed dashboard to prepare a 60-second fraud-operations briefing:</p>
+  <ol>
+    <li><strong>State the risk:</strong> What is the flagged rate and flagged transaction value?</li>
+    <li><strong>Locate the workload:</strong> Which days, merchants, and cities dominate activity?</li>
+    <li><strong>Avoid overclaiming:</strong> Explain why flagged does not mean confirmed fraud.</li>
+    <li><strong>Recommend action:</strong> Name one investigation, control, or threshold change.</li>
+  </ol>
 
   <h2 id="review">Section 5: Design Review Checklist</h2>
   <p>For each dashboard, evaluate:</p>
@@ -295,7 +311,7 @@
     <ol>
       <li>Start with the business question, not the chart type — "What decision does this support?"</li>
       <li>Most important KPIs top-left; main chart takes the most space</li>
-      <li>Variables make dashboards reusable — one dashboard for all symbols/cities instead of duplicating</li>
+      <li>Variables make dashboards reusable — one dashboard for all cities instead of duplicating</li>
       <li>Colour is communication — use thresholds intentionally; miscalibrated thresholds create alert fatigue</li>
       <li>Refresh rate = decision speed — match the refresh to how quickly the user needs to act</li>
     </ol>
@@ -304,6 +320,11 @@
   <div class="preview-box">
     <h3>Preview — Lecture 16: Alerts in Grafana</h3>
     <p>Configure Grafana alert rules on your dashboards, route notifications to email or Slack, and design an alerting strategy that creates action — not noise.</p>
+  </div>
+
+  <div class="page-nav">
+    <a href="../lecture14/notes.html">← Lecture 14</a>
+    <a href="../lecture16/notes.html">Lecture 16 →</a>
   </div>
 </div>
 <script>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -59,6 +59,9 @@
     .preview-box{background:rgba(185,28,28,.04);border:1px solid var(--accent);border-radius:10px;padding:1.25rem 1.5rem;margin-top:2rem;}
     .preview-box h3{color:var(--accent);font-size:.95rem;margin:0 0 .5rem;}
     .preview-box p{margin:0;font-size:.9rem;}
+    .page-nav{display:flex;justify-content:space-between;gap:1rem;margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--border);}
+    .page-nav a{color:var(--accent);font-size:.88rem;font-weight:600;text-decoration:none;padding:.55rem .85rem;border:1px solid var(--border);border-radius:8px;background:var(--bg2);}
+    .page-nav a:hover{border-color:var(--accent);}
   </style>
 </head>
 <body>
@@ -300,6 +303,11 @@ query.awaitTermination()</pre>
   <div class="preview-box">
     <h3>Preview — Lecture 13: Apache Flink &amp; True Streaming</h3>
     <p>Where Spark's micro-batch model falls short, and when the extra cost of Flink is actually justified. Think about: NPCI processes ~4 billion UPI transactions/month. Fraud must be flagged in &lt;300ms. Is Spark's micro-batch sufficient?</p>
+  </div>
+
+  <div class="page-nav">
+    <a href="../lecture11/index.html">← Lecture 11</a>
+    <a href="../lecture13/notes.html">Lecture 13 →</a>
   </div>
 
 </div>

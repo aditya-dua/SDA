@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -69,6 +69,9 @@
     .step-body strong{color:var(--text);}
     .module-summary{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.25rem 1.5rem;margin:1.5rem 0;}
     .module-summary h3{font-size:.95rem;color:var(--text);margin:0 0 1rem;}
+    .page-nav{display:flex;justify-content:space-between;gap:1rem;margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--border);}
+    .page-nav a{color:var(--accent);font-size:.88rem;font-weight:600;text-decoration:none;padding:.55rem .85rem;border:1px solid var(--border);border-radius:8px;background:var(--bg2);}
+    .page-nav a:hover{border-color:var(--accent);}
   </style>
 </head>
 <body>
@@ -125,7 +128,7 @@
     <tr><td>0–10 min</td><td>Recap</td><td>L15 dashboards — what are you watching and why?</td></tr>
     <tr><td>10–25 min</td><td>Why Alerts Matter</td><td>The "sleeping in front of a dashboard" problem</td></tr>
     <tr><td>25–40 min</td><td>Grafana Alert Architecture</td><td>Rules, contact points, notification policies, state machine</td></tr>
-    <tr><td>40–60 min</td><td>Lab Part 1</td><td>Create alert rules on Open Alerts count panel</td></tr>
+    <tr><td>40–60 min</td><td>Lab Part 1</td><td>Create alert rules from the transaction-risk dashboard</td></tr>
     <tr><td>60–70 min</td><td>Lab Part 2</td><td>Configure email / Slack contact point + routing</td></tr>
     <tr><td>70–80 min</td><td>Alert Design Framework</td><td>Thresholds, routing, escalation, fatigue</td></tr>
     <tr><td>80–88 min</td><td>Case Studies</td><td>Zepto &amp; HDFC Securities production alerting</td></tr>
@@ -136,13 +139,13 @@
   <p>A dashboard is only useful if someone is looking at it. In a 24-hour streaming system, no one watches 24 hours a day. <strong>Alerts let the data come to you</strong> — instead of you going to the data.</p>
 
   <pre>Without alerts:
-  10:47 PM  INFY price drops 6% — alert fires in stock_alerts
+  10:47 PM  Flagged transaction rate crosses 5%
   10:47 PM  Nobody sees it
   11:30 PM  Risk manager checks Grafana manually — too late
 
 With alerts:
-  10:47 PM  Grafana alert fires → Slack message in #risk-alerts
-  10:48 PM  Manager reviews position, takes action</pre>
+  10:47 PM  Grafana alert fires → Slack message in #fraud-ops
+  10:48 PM  Manager opens the review queue and assigns an analyst</pre>
 
   <table>
     <tr><th>Tool</th><th>Purpose</th><th>Acts On</th></tr>
@@ -178,48 +181,69 @@ With alerts:
   <h3>The "For" Duration — Why It Matters</h3>
   <p>Without a "For" duration, a single bad data point triggers an alert. With <code>For: 2m</code>, the condition must be true for 2 continuous minutes before the alert fires.</p>
   <pre>Without "For":
-  Tick 1: Rs 1390 → FIRES immediately (bad tick? spike? genuine drop?)
-  Tick 2: Rs 1410 → Resolves — false alarm. Engineers start ignoring alerts.
+  Check 1: Fraud rate = 5.2% → FIRES immediately
+  Check 2: Fraud rate = 4.8% → Resolves — short-lived spike
 
 With For: 2m:
-  Tick 1: Rs 1390 → enters PENDING state
-  2 min later: still Rs 1385 → FIRES — genuine sustained move, worth acting on.</pre>
+  Check 1: Fraud rate = 5.2% → enters PENDING state
+  2 min later: still above 5% → FIRES — sustained risk, worth investigating.</pre>
 
   <h2 id="lab1">Section 3: Lab Part 1 — Create Alert Rules</h2>
 
-  <h3>Alert 1: "Too Many Open Alerts"</h3>
+  <h3>Alert 1: "High Flagged Transaction Rate"</h3>
   <p>Navigate: <strong>Left sidebar → Alerting (bell icon) → Alert Rules → New alert rule</strong></p>
 
   <div class="step">
     <div class="step-num">1</div>
-    <div class="step-body"><p><strong>Name:</strong> <code>Stock Alerts — High Open Count</code> | Data source: MongoDB</p></div>
+    <div class="step-body"><p><strong>Name:</strong> <code>Transaction Risk — High Fraud Rate</code> | Data source: MongoDB</p></div>
   </div>
   <div class="step">
     <div class="step-num">2</div>
-    <div class="step-body"><p><strong>Query:</strong> stock_alerts collection, match status=open, count</p></div>
+    <div class="step-body"><p><strong>Query:</strong> reuse the Lecture 14 fraud-rate query against the <code>transactions</code> collection</p></div>
   </div>
   <div class="step">
     <div class="step-num">3</div>
-    <div class="step-body"><p><strong>Condition:</strong> IS ABOVE 5 | Evaluate every: 1m | For: 2m</p></div>
+    <div class="step-body"><p><strong>Condition:</strong> IS ABOVE 5% | Evaluate every: 1m | For: 2m</p></div>
   </div>
   <div class="step">
     <div class="step-num">4</div>
-    <div class="step-body"><p><strong>Labels:</strong> <code>severity=warning</code>, <code>team=risk</code></p></div>
+    <div class="step-body"><p><strong>Labels:</strong> <code>severity=warning</code>, <code>team=fraud-ops</code></p></div>
   </div>
   <div class="step">
     <div class="step-num">5</div>
-    <div class="step-body"><p><strong>Annotations:</strong> Summary: "Open alert count has exceeded threshold" | Description: "There are {{ $value }} unreviewed stock alerts."</p></div>
+    <div class="step-body"><p><strong>Annotations:</strong> Summary: "Flagged transaction rate exceeds 5%" | Description: "Current rate is {{ $value }}%. Open the review queue and assign an analyst."</p></div>
   </div>
 
-  <h3>Alert 2: "Symbol Price Anomaly" (from panel)</h3>
+  <h3>Alert 2: "High-Value Flagged Transaction"</h3>
   <ol>
-    <li>Open the INFY Price panel → Edit → Alert tab → <strong>Create alert rule from this panel</strong></li>
-    <li>Condition: IS BELOW 1400 (absolute floor) | For: 1m</li>
-    <li>Labels: <code>severity=critical</code>, <code>symbol=INFY</code></li>
+    <li>Create a query that counts documents where <code>is_fraud = "true"</code> and converted <code>amount &gt; 50000</code>.</li>
+    <li>Condition: IS ABOVE 0 | Evaluate every: 1m | For: 1m.</li>
+    <li>Labels: <code>severity=critical</code>, <code>team=fraud-ops</code>.</li>
   </ol>
 
+  <pre>{
+  "collection": "transactions",
+  "aggregate": [
+    { "$addFields": {
+        "amount_number": {
+          "$convert": {
+            "input": "$amount",
+            "to": "double",
+            "onError": 0,
+            "onNull": 0
+          }
+        }
+    }},
+    { "$match": {
+        "is_fraud": "true",
+        "amount_number": { "$gt": 50000 }
+    }},
+    { "$count": "value" }
+  ]
+}</pre>
+
   <div class="callout amber">
-    <p><strong>Threshold design discussion:</strong> Should the threshold be absolute (Rs 1,400) or relative (5% from yesterday's close)? Absolute is simpler to configure. Relative is more accurate but requires the query to compute the deviation. The consumer_alerts.py from Lecture 9 already handles relative alerting at the Kafka layer — Grafana can handle the absolute floor as a safety net.</p>
+    <p><strong>Threshold design discussion:</strong> Is ₹50,000 appropriate for every customer and merchant? An absolute threshold is easy to explain, but a customer-relative threshold can be more accurate. The correct choice depends on false-positive cost, customer history, and response capacity.</p>
   </div>
 
   <h2 id="lab2">Section 4: Lab Part 2 — Contact Points</h2>
@@ -249,10 +273,10 @@ With For: 2m:
   </ul>
 
   <h3>Expected Slack Alert Message</h3>
-  <pre>FIRING: Stock Alerts — High Open Count
-Severity: warning | Team: risk
-Open alert count has exceeded threshold
-Current value: 7
+  <pre>FIRING: Transaction Risk — High Fraud Rate
+Severity: warning | Team: fraud-ops
+Flagged transaction rate exceeds 5%
+Current value: 5.4%
 Starts at: 11:47:00
 Dashboard: http://localhost:3000/d/...</pre>
 
@@ -267,8 +291,8 @@ Dashboard: http://localhost:3000/d/...</pre>
 
   <table>
     <tr><th>Notification Cost</th><th>Example</th><th>Threshold Approach</th></tr>
-    <tr><td>Low (Slack message, easy to dismiss)</td><td>Warning — 5+ open alerts</td><td>Sensitive threshold OK</td></tr>
-    <tr><td>Medium (email + calendar)</td><td>Price below floor</td><td>Threshold needs care, use "For: 2m"</td></tr>
+    <tr><td>Low (Slack message, easy to dismiss)</td><td>Single high-value flagged case</td><td>Sensitive threshold may be acceptable</td></tr>
+    <tr><td>Medium (email + calendar)</td><td>Fraud rate above 5%</td><td>Threshold needs care, use "For: 2m"</td></tr>
     <tr><td>High (PagerDuty, on-call woken up)</td><td>System outage, fraud spike</td><td>Very precise threshold, long "For" duration</td></tr>
   </table>
 
@@ -306,7 +330,7 @@ Dashboard: http://localhost:3000/d/...</pre>
     <table>
       <tr><th></th><th>L14: Grafana Basics</th><th>L15: Dashboard Build</th><th>L16: Alerts</th></tr>
       <tr><td><strong>Concept</strong></td><td>Data sources, panels, dashboards</td><td>Dashboard design + live multi-panel build</td><td>Alert rules, contact points, routing</td></tr>
-      <tr><td><strong>Built</strong></td><td>First panel: INFY time series</td><td>Stock monitor + transactions dashboards</td><td>Alert rules with Slack/email routing</td></tr>
+      <tr><td><strong>Built</strong></td><td>Transaction-risk dashboard</td><td>Four-panel fraud-operations dashboard</td><td>Transaction alert rules with Slack/email routing</td></tr>
       <tr><td><strong>Business skill</strong></td><td>Understand the visual layer</td><td>Design a dashboard around a business question</td><td>Design an alerting strategy that creates action</td></tr>
     </table>
   </div>
@@ -335,6 +359,11 @@ Module 5 (L17-L20):  PRESENT — Atlas Charts, final project, real architectures
     <p><strong>L17:</strong> MongoDB Atlas Charts — native charting tool, no separate install required.<br>
     <strong>L18–L20:</strong> Final Project — architecture review, pipeline critique, presentations.<br>
     Start thinking: What business problem are you solving? Who is your end user? What alert would notify a manager without watching the screen?</p>
+  </div>
+
+  <div class="page-nav">
+    <a href="../lecture15/notes.html">← Lecture 15</a>
+    <a href="../index.html">Course Home →</a>
   </div>
 </div>
 <script>

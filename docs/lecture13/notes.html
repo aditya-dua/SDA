@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -60,6 +60,9 @@
     .preview-box{background:rgba(185,28,28,.04);border:1px solid var(--accent);border-radius:10px;padding:1.25rem 1.5rem;margin-top:2rem;}
     .preview-box h3{color:var(--accent);font-size:.95rem;margin:0 0 .5rem;}
     .preview-box p{margin:0;font-size:.9rem;}
+    .page-nav{display:flex;justify-content:space-between;gap:1rem;margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--border);}
+    .page-nav a{color:var(--accent);font-size:.88rem;font-weight:600;text-decoration:none;padding:.55rem .85rem;border:1px solid var(--border);border-radius:8px;background:var(--bg2);}
+    .page-nav a:hover{border-color:var(--accent);}
     .debate-grid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin:1rem 0;}
     .debate-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:1rem;}
     .debate-card .side{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.5rem;}
@@ -308,7 +311,12 @@ Module 4: We stop building backends and focus on the output — dashboards.
 
   <div class="preview-box">
     <h3>Preview — Module 4: Grafana Dashboards &amp; Alerts</h3>
-    <p>Starting Lecture 14, we shift from building pipelines to making them visible. You will use the same data you have been streaming in Module 2 (transactions, INFY/TCS prices) and turn it into dashboards a business manager can actually use.</p>
+    <p>Starting Lecture 14, we shift from building pipelines to making them visible. You will use the banking transactions stored in MongoDB during Lecture 10 and turn them into dashboards a business manager can actually use.</p>
+  </div>
+
+  <div class="page-nav">
+    <a href="../lecture12/notes.html">← Lecture 12</a>
+    <a href="../lecture14/notes.html">Lecture 14 →</a>
   </div>
 
 </div>
