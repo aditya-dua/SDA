@@ -83,10 +83,10 @@
 <div class="wrap">
   <div class="lec-label">Module 4 · Lecture 14</div>
   <h1>Grafana Fundamentals: Connecting Data to Dashboards</h1>
-  <p class="subtitle">Install · Connect MongoDB Atlas · Build your first live panel</p>
+  <p class="subtitle">Install · Connect MongoDB Atlas · Build a transaction-risk dashboard</p>
   <div class="meta-row">
     <span>⏱ <strong>90 minutes</strong></span>
-    <span>📍 <strong>Prerequisites:</strong> Lectures 8–9 (MongoDB Atlas data)</span>
+    <span>📍 <strong>Prerequisites:</strong> Lectures 10–11 (transaction data)</span>
     <span>🔧 <strong>Lab:</strong> Docker + Grafana setup</span>
   </div>
 
@@ -98,8 +98,8 @@
       <li><a href="#what">What Is Grafana?</a></li>
       <li><a href="#model">The Grafana Mental Model</a></li>
       <li><a href="#setup">Setup & Connection</a></li>
-      <li><a href="#dataset">Create the Sample Dataset</a></li>
-      <li><a href="#lab">Hands-On Lab — Stock Market Pulse Dashboard</a></li>
+      <li><a href="#dataset">Inspect the Existing Transactions</a></li>
+      <li><a href="#lab">Hands-On Lab — Transaction Risk Dashboard</a></li>
       <li><a href="#panels">Panel Types Overview</a></li>
       <li><a href="#takeaways">Key Takeaways</a></li>
     </ol>
@@ -110,7 +110,7 @@
     <li><span class="check">✓</span> Explain what Grafana is and where it sits in a data architecture</li>
     <li><span class="check">✓</span> Connect Grafana to a MongoDB Atlas data source using the community plugin</li>
     <li><span class="check">✓</span> Understand the Grafana mental model: data sources → queries → panels → dashboards</li>
-    <li><span class="check">✓</span> Build a complete three-panel dashboard from a sample stock-price dataset</li>
+    <li><span class="check">✓</span> Build a complete three-panel dashboard from the existing transactions collection</li>
     <li><span class="check">✓</span> Match business questions to suitable visualisations</li>
     <li><span class="check">✓</span> Distinguish between Grafana's use cases vs Atlas Charts (Assignment 3)</li>
   </ul>
@@ -122,8 +122,8 @@
     <tr><td>10–20 min</td><td>What Is Grafana?</td><td>Architecture, users, and business value</td></tr>
     <tr><td>20–30 min</td><td>Grafana Mental Model</td><td>Data sources, queries, panels, dashboards</td></tr>
     <tr><td>30–40 min</td><td>Setup &amp; Connection</td><td>Run Grafana and connect MongoDB Atlas</td></tr>
-    <tr><td>40–50 min</td><td>Sample Dataset</td><td>Create and inspect a common classroom dataset</td></tr>
-    <tr><td>50–80 min</td><td>Dashboard Lab</td><td>Build a Stat, Time Series, and Table panel</td></tr>
+    <tr><td>40–50 min</td><td>Existing Dataset</td><td>Inspect the Lecture 10 transactions collection</td></tr>
+    <tr><td>50–80 min</td><td>Dashboard Lab</td><td>Build a Stat, Bar Chart, and Table panel</td></tr>
     <tr><td>80–88 min</td><td>Interpretation</td><td>Read the dashboard and recommend an action</td></tr>
     <tr><td>88–90 min</td><td>Wrap-Up</td><td>Save the dashboard and preview Lecture 15</td></tr>
   </table>
@@ -199,160 +199,176 @@ docker restart grafana</pre>
     <div class="step-body"><p><strong>Click "Save &amp; Test"</strong> — should show ✅ "Data source is working"</p></div>
   </div>
 
-  <h2 id="dataset">Section 4: Create the Sample Dataset</h2>
-  <p>Everyone will first use the same small dataset so that differences in Kafka history do not interrupt the lab. The collection contains ten one-minute observations for both INFY and TCS.</p>
+  <h2 id="dataset">Section 4: Inspect the Existing Transactions</h2>
+  <p>Lecture 10 already loaded roughly 2,000 synthetic banking records into <code>sda_course.transactions</code>. Do not create or import another dataset. This lab adds a visual decision layer to the same collection.</p>
 
-  <h3>Dataset Fields</h3>
+  <h3>Fields Used Today</h3>
   <table>
     <tr><th>Field</th><th>Example</th><th>Business Meaning</th></tr>
-    <tr><td><code>symbol</code></td><td>INFY</td><td>Company being monitored</td></tr>
-    <tr><td><code>event_time</code></td><td>Date value</td><td>When the market observation occurred</td></tr>
-    <tr><td><code>price</code></td><td>1512.50</td><td>Observed share price in rupees</td></tr>
-    <tr><td><code>volume</code></td><td>1320</td><td>Shares traded during the interval</td></tr>
+    <tr><td><code>transaction_id</code></td><td>TXN-00847</td><td>Unique transaction reference</td></tr>
+    <tr><td><code>amount</code></td><td>"4500.00"</td><td>Transaction value; stored as text in the imported data</td></tr>
+    <tr><td><code>city</code></td><td>Mumbai</td><td>Location where the transaction occurred</td></tr>
+    <tr><td><code>merchant</code></td><td>Amazon</td><td>Merchant receiving the payment</td></tr>
+    <tr><td><code>timestamp</code></td><td>2025-08-01 10:00:00</td><td>Business event time stored as text</td></tr>
+    <tr><td><code>is_fraud</code></td><td>"true"</td><td>Classroom fraud label stored as text</td></tr>
   </table>
 
-  <h3>Seed MongoDB Atlas</h3>
-  <ol>
-    <li>In Atlas, open <strong>Browse Collections</strong> and select the <code>sda_course</code> database.</li>
-    <li>Create a collection named <code>grafana_stock_demo</code>.</li>
-    <li>Open MongoDB Compass, connect to the same cluster, and click the embedded <strong>&gt;_ MONGOSH</strong> button.</li>
-    <li>Paste and run the script below. It creates dates relative to the current time, so Grafana's “Last 30 minutes” filter will work whenever the lab is run.</li>
-  </ol>
+  <h3>Verify the Collection Before Grafana</h3>
+  <p>In MongoDB Compass, select <code>sda_course.transactions</code> and use the embedded <strong>&gt;_ MONGOSH</strong> shell:</p>
   <pre>use sda_course
 
-db.grafana_stock_demo.deleteMany({})
-
-const prices = {
-  INFY: [1498, 1502, 1500, 1506, 1511, 1508, 1514, 1518, 1515, 1521],
-  TCS:  [3820, 3814, 3818, 3825, 3831, 3827, 3835, 3842, 3838, 3846]
-}
-
-const now = Date.now()
-const rows = Object.entries(prices).flatMap(([symbol, values]) =>
-  values.map((price, index) => ({
-    symbol,
-    event_time: new Date(now - (9 - index) * 60 * 1000),
-    price,
-    volume: 900 + index * 70 + (symbol === "TCS" ? 120 : 0)
-  }))
-)
-
-db.grafana_stock_demo.insertMany(rows)
-db.grafana_stock_demo.find().sort({event_time: -1}).limit(4)</pre>
+db.transactions.countDocuments({})
+db.transactions.findOne()
+db.transactions.countDocuments({ is_fraud: "true" })</pre>
 
   <div class="callout amber">
-    <p><strong>Checkpoint:</strong> The final command should display four documents. Confirm that <code>event_time</code> is stored as a Date, not as text. Grafana needs a real date field for time filtering.</p>
+    <p><strong>Checkpoint:</strong> You should see roughly 2,000 documents and some records labelled <code>is_fraud: "true"</code>. The queries below use <code>$convert</code> because <code>amount</code> was imported as text.</p>
   </div>
 
-  <h2 id="lab">Section 5: Hands-On Lab — Stock Market Pulse Dashboard</h2>
-  <p><strong>Scenario:</strong> You are the operations manager for a retail investment platform. During market hours, your team needs one screen that answers three questions: What is INFY's latest price? What direction is it moving? What were the latest observations?</p>
+  <h2 id="lab">Section 5: Hands-On Lab — Transaction Risk Dashboard</h2>
+  <p><strong>Scenario:</strong> You manage fraud operations for a digital bank. Your team needs one screen that answers three questions: What percentage of transactions are flagged? Which cities carry the most transaction value? Which individual transactions require review?</p>
 
   <div class="panel-grid">
-    <div class="panel-card"><h3>Panel A — Latest Price</h3><p>Stat visualisation for a fast executive read.</p></div>
-    <div class="panel-card"><h3>Panel B — Price Trend</h3><p>Time Series visualisation to reveal direction.</p></div>
-    <div class="panel-card"><h3>Panel C — Recent Data</h3><p>Table visualisation for operational detail.</p></div>
+    <div class="panel-card"><h3>Panel A — Fraud Rate</h3><p>Stat visualisation for an immediate risk KPI.</p></div>
+    <div class="panel-card"><h3>Panel B — Value by City</h3><p>Bar Chart to compare geographic exposure.</p></div>
+    <div class="panel-card"><h3>Panel C — Review Queue</h3><p>Table listing transactions requiring attention.</p></div>
   </div>
 
   <h3>Step 1 — Create and Name the Dashboard</h3>
   <ol>
     <li>Go to <strong>Dashboards → New → New Dashboard</strong>.</li>
     <li>Select <strong>Add visualisation</strong>, then choose the MongoDB data source.</li>
-    <li>Click <strong>Save dashboard</strong> and name it <code>Stock Market Pulse — Lecture 14</code>.</li>
-    <li>Set the dashboard time range to <strong>Last 30 minutes</strong>.</li>
+    <li>Click <strong>Save dashboard</strong> and name it <code>Transaction Risk Overview — Lecture 14</code>.</li>
+    <li>Because this is a fixed historical dataset, use the dashboard for comparison rather than applying a “Last 30 minutes” filter.</li>
   </ol>
 
-  <h3>Step 2 — Panel A: Latest INFY Price</h3>
-  <p>This panel answers: <strong>“What is the latest price right now?”</strong></p>
+  <h3>Step 2 — Panel A: Flagged Transaction Rate</h3>
+  <p>This panel answers: <strong>“What percentage of transactions are labelled as fraud?”</strong></p>
   <pre>{
-  "collection": "grafana_stock_demo",
+  "collection": "transactions",
   "aggregate": [
-    { "$match": { "symbol": "INFY" } },
-    { "$sort": { "event_time": -1 } },
-    { "$limit": 1 },
-    { "$project": { "_id": 0, "time": "$event_time", "value": "$price" } }
+    { "$group": {
+        "_id": null,
+        "total": { "$sum": 1 },
+        "flagged": {
+          "$sum": { "$cond": [{ "$eq": ["$is_fraud", "true"] }, 1, 0] }
+        }
+    }},
+    { "$project": {
+        "_id": 0,
+        "value": {
+          "$multiply": [{ "$divide": ["$flagged", "$total"] }, 100]
+        }
+    }}
   ]
 }</pre>
   <ol>
     <li>Choose the <strong>Stat</strong> visualisation.</li>
-    <li>Set the title to <code>Latest INFY Price</code>.</li>
-    <li>Under Standard options, set the unit to <strong>Currency → Indian Rupee</strong> and decimals to <strong>2</strong>.</li>
-    <li>Click <strong>Apply</strong>. The panel should display <strong>₹1,521.00</strong>.</li>
+    <li>Set the title to <code>Flagged Transaction Rate</code>.</li>
+    <li>Set the unit to <strong>Percent (0–100)</strong> and decimals to <strong>1</strong>.</li>
+    <li>Add thresholds: green below 3%, amber from 3%, red from 5%.</li>
+    <li>Click <strong>Apply</strong>.</li>
   </ol>
 
-  <h3>Step 3 — Panel B: INFY Price Trend</h3>
-  <p>This panel answers: <strong>“Is the price rising, falling, or stable?”</strong></p>
+  <h3>Step 3 — Panel B: Transaction Value by City</h3>
+  <p>This panel answers: <strong>“Where is the bank's transaction value concentrated?”</strong></p>
   <pre>{
-  "collection": "grafana_stock_demo",
+  "collection": "transactions",
   "aggregate": [
-    { "$match": { "symbol": "INFY" } },
-    { "$sort": { "event_time": 1 } },
-    { "$project": { "_id": 0, "time": "$event_time", "value": "$price" } }
+    { "$group": {
+        "_id": "$city",
+        "value": {
+          "$sum": {
+            "$convert": {
+              "input": "$amount",
+              "to": "double",
+              "onError": 0,
+              "onNull": 0
+            }
+          }
+        }
+    }},
+    { "$sort": { "value": -1 } },
+    { "$project": { "_id": 0, "city": "$_id", "value": 1 } }
   ]
 }</pre>
   <ol>
-    <li>From the dashboard, click <strong>Add → Visualisation</strong>.</li>
-    <li>Choose <strong>Time Series</strong> and title it <code>INFY Price Trend</code>.</li>
-    <li>Set the unit to Indian Rupee and decimals to 2.</li>
-    <li>Under Legend, select <strong>Table</strong> and display <strong>Last, Min, and Max</strong>.</li>
-    <li>Click <strong>Apply</strong>. The line should generally rise from ₹1,498 to ₹1,521.</li>
+    <li>Add a visualisation and choose <strong>Bar Chart</strong>.</li>
+    <li>Set the title to <code>Transaction Value by City</code>.</li>
+    <li>Use <code>city</code> as the category and <code>value</code> as the numeric field.</li>
+    <li>Set the value unit to Indian Rupee and orientation to horizontal.</li>
+    <li>Click <strong>Apply</strong>.</li>
   </ol>
 
-  <h3>Step 4 — Panel C: Recent Market Observations</h3>
-  <p>This panel answers: <strong>“What are the latest underlying records?”</strong></p>
+  <h3>Step 4 — Panel C: Flagged Transactions for Review</h3>
+  <p>This panel answers: <strong>“Which transactions should an analyst inspect first?”</strong></p>
   <pre>{
-  "collection": "grafana_stock_demo",
+  "collection": "transactions",
   "aggregate": [
-    { "$sort": { "event_time": -1 } },
-    { "$limit": 10 },
+    { "$match": { "is_fraud": "true" } },
+    { "$addFields": {
+        "amount_number": {
+          "$convert": {
+            "input": "$amount",
+            "to": "double",
+            "onError": 0,
+            "onNull": 0
+          }
+        }
+    }},
+    { "$sort": { "amount_number": -1 } },
+    { "$limit": 20 },
     { "$project": {
         "_id": 0,
-        "time": "$event_time",
-        "symbol": 1,
-        "price": 1,
-        "volume": 1
+        "transaction_id": 1,
+        "timestamp": 1,
+        "user_name": 1,
+        "merchant": 1,
+        "city": 1,
+        "amount": "$amount_number"
     }}
   ]
 }</pre>
   <ol>
     <li>Add another visualisation and choose <strong>Table</strong>.</li>
-    <li>Set the title to <code>Recent Market Observations</code>.</li>
-    <li>Use <strong>Organize fields</strong> transformation to order the columns: time, symbol, price, volume.</li>
-    <li>Rename the displayed headings to Time, Symbol, Price (₹), and Volume.</li>
+    <li>Set the title to <code>Flagged Transactions — Review Queue</code>.</li>
+    <li>Organize columns as Transaction ID, Timestamp, Customer, Merchant, City, Amount.</li>
+    <li>Set Amount to Indian Rupee and sort it descending.</li>
     <li>Click <strong>Apply</strong>.</li>
   </ol>
 
   <h3>Step 5 — Arrange and Refresh</h3>
   <ol>
-    <li>Place the latest-price Stat panel at the top left and keep it small.</li>
-    <li>Place the Time Series beside it and make it the widest panel.</li>
-    <li>Place the Table across the full width below the charts.</li>
-    <li>Set dashboard refresh to <strong>10 seconds</strong> and save.</li>
+    <li>Place the Fraud Rate Stat panel at the top left.</li>
+    <li>Place the city Bar Chart beside it and give it more width.</li>
+    <li>Place the Review Queue Table across the full width below.</li>
+    <li>Set dashboard refresh to <strong>30 seconds</strong> and save.</li>
   </ol>
 
   <div class="callout">
-    <p><strong>Important:</strong> Refreshing does not create new data; it only reruns the queries. The seeded chart remains unchanged until new documents arrive. When the Lecture 8/9 producer and consumer are running, the same dashboard pattern becomes live.</p>
+    <p><strong>Important:</strong> Refreshing reruns the queries; it does not generate transactions. If the Lecture 10 producer and storage consumer are running, new records will enter this same collection and the dashboard will update.</p>
   </div>
 
   <h3>Step 6 — Read the Dashboard Like a Manager</h3>
   <ol>
-    <li><strong>Observe:</strong> INFY closes the sample at ₹1,521, up ₹23 from the first observation.</li>
-    <li><strong>Explain:</strong> The time series shows a generally positive direction with two short pullbacks.</li>
-    <li><strong>Check:</strong> The table confirms that both symbols have recent records and increasing volume.</li>
-    <li><strong>Decide:</strong> Continue monitoring rather than escalating; a trend alone is not an alert without a defined threshold.</li>
+    <li><strong>Observe:</strong> Read the fraud-rate KPI before looking at individual rows.</li>
+    <li><strong>Prioritise:</strong> Use the review queue to identify the highest-value flagged transactions.</li>
+    <li><strong>Contextualise:</strong> Compare city exposure before treating a high count as unusual.</li>
+    <li><strong>Decide:</strong> Recommend investigation or monitoring; the label is a signal, not proof of fraud.</li>
   </ol>
 
   <div class="callout green">
-    <p><strong>Success checklist:</strong> Your dashboard has three titled panels, uses the Last 30 minutes range, shows ₹1,521 as the latest INFY price, and can be explained in one sentence to a business stakeholder.</p>
+    <p><strong>Success checklist:</strong> Your dashboard has three titled panels, displays a fraud-rate percentage, compares transaction value by city, lists the 20 highest-value flagged transactions, and supports one clear management recommendation.</p>
   </div>
 
   <h2 id="panels">Section 6: Panel Types Reference</h2>
   <table>
     <tr><th>Panel Type</th><th>Best For</th><th>Example Use</th></tr>
-    <tr><td><strong>Time Series</strong></td><td>Trends over time</td><td>Stock price history, transaction volume per minute</td></tr>
-    <tr><td><strong>Stat</strong></td><td>Single important number</td><td>Current price, total open alerts today</td></tr>
-    <tr><td><strong>Bar Gauge</strong></td><td>Progress / comparison</td><td>Alert count per symbol (INFY vs TCS)</td></tr>
-    <tr><td><strong>Bar Chart</strong></td><td>Categorical comparison</td><td>Transactions per city in last hour</td></tr>
-    <tr><td><strong>Table</strong></td><td>Raw data / detail view</td><td>Latest 10 alerts from stock_alerts</td></tr>
+    <tr><td><strong>Time Series</strong></td><td>Trends over time</td><td>Transaction count or value per hour</td></tr>
+    <tr><td><strong>Stat</strong></td><td>Single important number</td><td>Fraud rate or total transaction value</td></tr>
+    <tr><td><strong>Bar Gauge</strong></td><td>Progress / comparison</td><td>Flagged transactions by merchant</td></tr>
+    <tr><td><strong>Bar Chart</strong></td><td>Categorical comparison</td><td>Transaction value by city</td></tr>
+    <tr><td><strong>Table</strong></td><td>Raw data / detail view</td><td>Flagged transactions requiring review</td></tr>
     <tr><td><strong>Gauge</strong></td><td>Single value with thresholds</td><td>Risk score: green/amber/red</td></tr>
   </table>
 
@@ -364,14 +380,14 @@ db.grafana_stock_demo.find().sort({event_time: -1}).limit(4)</pre>
       <li>Four building blocks: Data Source → Query → Panel → Dashboard</li>
       <li>Time is central — dashboards have a time range and auto-refresh, making them live</li>
       <li>A useful dashboard begins with business questions, not chart types</li>
-      <li>Stat, Time Series, and Table panels answer summary, trend, and detail questions</li>
+      <li>Stat, Bar Chart, and Table panels answer KPI, comparison, and detail questions</li>
       <li>Auto-refresh reruns queries; the source pipeline is what creates new data</li>
     </ol>
   </div>
 
   <div class="preview-box">
     <h3>Preview — Lecture 15: Building Live Streaming Dashboards</h3>
-    <p>Full hands-on build session: multi-panel stock monitor, variable dropdowns, the transactions dashboard, and Assignment 3 guidance. Keep Grafana running and your producer streaming before class.</p>
+    <p>Extend today's transaction dashboard with more panels, reusable variables, and Assignment 3 design guidance. Keep Grafana running and retain access to the same MongoDB collection.</p>
   </div>
 </div>
 <script>
