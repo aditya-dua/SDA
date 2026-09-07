@@ -61,6 +61,10 @@
     .step-num{font-family:'JetBrains Mono',monospace;font-size:.85rem;font-weight:700;color:var(--accent);background:rgba(185,28,28,.1);border:1px solid var(--accent);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
     .step-body p{font-size:.9rem;margin:0;color:var(--text2);}
     .step-body strong{color:var(--text);}
+    .panel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin:1rem 0;}
+    .panel-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1rem;}
+    .panel-card h3{font-size:.95rem;margin:0 0 .35rem;color:var(--text);}
+    .panel-card p{font-size:.86rem;margin:0;}
   </style>
 </head>
 <body>
@@ -79,10 +83,10 @@
 <div class="wrap">
   <div class="lec-label">Module 4 · Lecture 14</div>
   <h1>Grafana Fundamentals: Connecting Data to Dashboards</h1>
-  <p class="subtitle">Install · Connect MongoDB Atlas · Build your first live panel</p>
+  <p class="subtitle">Install · Connect MongoDB Atlas · Build a transaction-risk dashboard</p>
   <div class="meta-row">
     <span>⏱ <strong>90 minutes</strong></span>
-    <span>📍 <strong>Prerequisites:</strong> Lectures 8–9 (MongoDB Atlas data)</span>
+    <span>📍 <strong>Prerequisites:</strong> Lectures 10–11 (transaction data)</span>
     <span>🔧 <strong>Lab:</strong> Docker + Grafana setup</span>
   </div>
 
@@ -94,7 +98,8 @@
       <li><a href="#what">What Is Grafana?</a></li>
       <li><a href="#model">The Grafana Mental Model</a></li>
       <li><a href="#setup">Setup & Connection</a></li>
-      <li><a href="#lab">Hands-On Lab — First Panel</a></li>
+      <li><a href="#dataset">Inspect the Existing Transactions</a></li>
+      <li><a href="#lab">Hands-On Lab — Transaction Risk Dashboard</a></li>
       <li><a href="#panels">Panel Types Overview</a></li>
       <li><a href="#takeaways">Key Takeaways</a></li>
     </ol>
@@ -105,20 +110,22 @@
     <li><span class="check">✓</span> Explain what Grafana is and where it sits in a data architecture</li>
     <li><span class="check">✓</span> Connect Grafana to a MongoDB Atlas data source using the community plugin</li>
     <li><span class="check">✓</span> Understand the Grafana mental model: data sources → queries → panels → dashboards</li>
-    <li><span class="check">✓</span> Create at least one working panel displaying live stock price data</li>
+    <li><span class="check">✓</span> Build a complete three-panel dashboard from the existing transactions collection</li>
+    <li><span class="check">✓</span> Match business questions to suitable visualisations</li>
     <li><span class="check">✓</span> Distinguish between Grafana's use cases vs Atlas Charts (Assignment 3)</li>
   </ul>
 
   <h2 id="timeline">Session Timeline</h2>
   <table>
     <tr><th>Time</th><th>Segment</th><th>Activity</th></tr>
-    <tr><td>0–10 min</td><td>Recap</td><td>Module 3 wrap-up — from streaming to visualising</td></tr>
-    <tr><td>10–25 min</td><td>What Is Grafana?</td><td>Architecture, who uses it, industry context</td></tr>
-    <tr><td>25–40 min</td><td>Grafana Mental Model</td><td>Data sources, queries, panels, dashboards</td></tr>
-    <tr><td>40–55 min</td><td>Setup &amp; Connection</td><td>Docker install, MongoDB plugin, connect Atlas</td></tr>
-    <tr><td>55–75 min</td><td>Hands-On Lab</td><td>Build first panel: stock prices time series</td></tr>
-    <tr><td>75–85 min</td><td>Panel Types</td><td>Time Series, Stat, Bar Gauge, Table overview</td></tr>
-    <tr><td>85–90 min</td><td>A3 Preview</td><td>What students will build for Assignment 3</td></tr>
+    <tr><td>0–10 min</td><td>Recap</td><td>From Kafka and MongoDB to business decisions</td></tr>
+    <tr><td>10–20 min</td><td>What Is Grafana?</td><td>Architecture, users, and business value</td></tr>
+    <tr><td>20–30 min</td><td>Grafana Mental Model</td><td>Data sources, queries, panels, dashboards</td></tr>
+    <tr><td>30–40 min</td><td>Setup &amp; Connection</td><td>Run Grafana and connect MongoDB Atlas</td></tr>
+    <tr><td>40–50 min</td><td>Existing Dataset</td><td>Inspect the Lecture 10 transactions collection</td></tr>
+    <tr><td>50–80 min</td><td>Dashboard Lab</td><td>Build a Stat, Bar Chart, and Table panel</td></tr>
+    <tr><td>80–88 min</td><td>Interpretation</td><td>Read the dashboard and recommend an action</td></tr>
+    <tr><td>88–90 min</td><td>Wrap-Up</td><td>Save the dashboard and preview Lecture 15</td></tr>
   </table>
 
   <h2 id="what">Section 1: What Is Grafana?</h2>
@@ -192,54 +199,176 @@ docker restart grafana</pre>
     <div class="step-body"><p><strong>Click "Save &amp; Test"</strong> — should show ✅ "Data source is working"</p></div>
   </div>
 
-  <h2 id="lab">Section 4: Hands-On Lab — First Panel</h2>
-  <p>Build a time series panel showing INFY stock price over the last 30 minutes, auto-refreshing every 10 seconds — powered by the <code>stock_prices</code> collection from Lectures 8 &amp; 9.</p>
+  <h2 id="dataset">Section 4: Inspect the Existing Transactions</h2>
+  <p>Lecture 10 already loaded roughly 2,000 synthetic banking records into <code>sda_course.transactions</code>. Do not create or import another dataset. This lab adds a visual decision layer to the same collection.</p>
 
-  <h3>Step 1 — New Dashboard</h3>
-  <p>Left sidebar → Dashboards → New → New Dashboard → Add visualisation → Select MongoDB data source.</p>
+  <h3>Fields Used Today</h3>
+  <table>
+    <tr><th>Field</th><th>Example</th><th>Business Meaning</th></tr>
+    <tr><td><code>transaction_id</code></td><td>TXN-00847</td><td>Unique transaction reference</td></tr>
+    <tr><td><code>amount</code></td><td>"4500.00"</td><td>Transaction value; stored as text in the imported data</td></tr>
+    <tr><td><code>city</code></td><td>Mumbai</td><td>Location where the transaction occurred</td></tr>
+    <tr><td><code>merchant</code></td><td>Amazon</td><td>Merchant receiving the payment</td></tr>
+    <tr><td><code>timestamp</code></td><td>2025-08-01 10:00:00</td><td>Business event time stored as text</td></tr>
+    <tr><td><code>is_fraud</code></td><td>"true"</td><td>Classroom fraud label stored as text</td></tr>
+  </table>
 
-  <h3>Step 2 — Write the Query</h3>
-  <pre>{
-  "collection": "stock_prices",
-  "aggregate": [
-    { "$match": { "symbol": "INFY" } },
-    { "$sort": { "_saved_at": 1 } },
-    { "$project": { "_id": 0, "time": "$_saved_at", "price": 1 } }
-  ]
-}</pre>
-  <p>Map <strong>Time field</strong> → <code>time</code> | <strong>Value field</strong> → <code>price</code></p>
+  <h3>Verify the Collection Before Grafana</h3>
+  <p>In MongoDB Compass, select <code>sda_course.transactions</code> and use the embedded <strong>&gt;_ MONGOSH</strong> shell:</p>
+  <pre>use sda_course
 
-  <h3>Step 3 — Panel Settings</h3>
-  <ul>
-    <li>Visualisation: <strong>Time Series</strong></li>
-    <li>Title: "INFY Stock Price"</li>
-    <li>Unit: Currency → Indian Rupee (₹)</li>
-    <li>Time range: Last 30 minutes | Refresh: 10s</li>
-  </ul>
+db.transactions.countDocuments({})
+db.transactions.findOne()
+db.transactions.countDocuments({ is_fraud: "true" })</pre>
 
-  <h3>Alert Count Panel (Bonus)</h3>
-  <p>Add a <strong>Stat</strong> panel for open alert count:</p>
-  <pre>{
-  "collection": "stock_alerts",
-  "aggregate": [
-    { "$match": { "status": "open" } },
-    { "$count": "value" }
-  ]
-}</pre>
-  <p>Thresholds: 0 = green | 5 = amber | 10 = red</p>
-
-  <div class="callout green">
-    <p><strong>Teaching moment:</strong> When a price spike fires an alert, students see both the time series move AND the alert counter increment in real time. This is the "aha" moment that makes the full pipeline visible — from Kafka producer to live dashboard.</p>
+  <div class="callout amber">
+    <p><strong>Checkpoint:</strong> You should see roughly 2,000 documents and some records labelled <code>is_fraud: "true"</code>. The queries below use <code>$convert</code> because <code>amount</code> was imported as text.</p>
   </div>
 
-  <h2 id="panels">Section 5: Panel Types Reference</h2>
+  <h2 id="lab">Section 5: Hands-On Lab — Transaction Risk Dashboard</h2>
+  <p><strong>Scenario:</strong> You manage fraud operations for a digital bank. Your team needs one screen that answers three questions: What percentage of transactions are flagged? Which cities carry the most transaction value? Which individual transactions require review?</p>
+
+  <div class="panel-grid">
+    <div class="panel-card"><h3>Panel A — Fraud Rate</h3><p>Stat visualisation for an immediate risk KPI.</p></div>
+    <div class="panel-card"><h3>Panel B — Value by City</h3><p>Bar Chart to compare geographic exposure.</p></div>
+    <div class="panel-card"><h3>Panel C — Review Queue</h3><p>Table listing transactions requiring attention.</p></div>
+  </div>
+
+  <h3>Step 1 — Create and Name the Dashboard</h3>
+  <ol>
+    <li>Go to <strong>Dashboards → New → New Dashboard</strong>.</li>
+    <li>Select <strong>Add visualisation</strong>, then choose the MongoDB data source.</li>
+    <li>Click <strong>Save dashboard</strong> and name it <code>Transaction Risk Overview — Lecture 14</code>.</li>
+    <li>Because this is a fixed historical dataset, use the dashboard for comparison rather than applying a “Last 30 minutes” filter.</li>
+  </ol>
+
+  <h3>Step 2 — Panel A: Flagged Transaction Rate</h3>
+  <p>This panel answers: <strong>“What percentage of transactions are labelled as fraud?”</strong></p>
+  <pre>{
+  "collection": "transactions",
+  "aggregate": [
+    { "$group": {
+        "_id": null,
+        "total": { "$sum": 1 },
+        "flagged": {
+          "$sum": { "$cond": [{ "$eq": ["$is_fraud", "true"] }, 1, 0] }
+        }
+    }},
+    { "$project": {
+        "_id": 0,
+        "value": {
+          "$multiply": [{ "$divide": ["$flagged", "$total"] }, 100]
+        }
+    }}
+  ]
+}</pre>
+  <ol>
+    <li>Choose the <strong>Stat</strong> visualisation.</li>
+    <li>Set the title to <code>Flagged Transaction Rate</code>.</li>
+    <li>Set the unit to <strong>Percent (0–100)</strong> and decimals to <strong>1</strong>.</li>
+    <li>Add thresholds: green below 3%, amber from 3%, red from 5%.</li>
+    <li>Click <strong>Apply</strong>.</li>
+  </ol>
+
+  <h3>Step 3 — Panel B: Transaction Value by City</h3>
+  <p>This panel answers: <strong>“Where is the bank's transaction value concentrated?”</strong></p>
+  <pre>{
+  "collection": "transactions",
+  "aggregate": [
+    { "$group": {
+        "_id": "$city",
+        "value": {
+          "$sum": {
+            "$convert": {
+              "input": "$amount",
+              "to": "double",
+              "onError": 0,
+              "onNull": 0
+            }
+          }
+        }
+    }},
+    { "$sort": { "value": -1 } },
+    { "$project": { "_id": 0, "city": "$_id", "value": 1 } }
+  ]
+}</pre>
+  <ol>
+    <li>Add a visualisation and choose <strong>Bar Chart</strong>.</li>
+    <li>Set the title to <code>Transaction Value by City</code>.</li>
+    <li>Use <code>city</code> as the category and <code>value</code> as the numeric field.</li>
+    <li>Set the value unit to Indian Rupee and orientation to horizontal.</li>
+    <li>Click <strong>Apply</strong>.</li>
+  </ol>
+
+  <h3>Step 4 — Panel C: Flagged Transactions for Review</h3>
+  <p>This panel answers: <strong>“Which transactions should an analyst inspect first?”</strong></p>
+  <pre>{
+  "collection": "transactions",
+  "aggregate": [
+    { "$match": { "is_fraud": "true" } },
+    { "$addFields": {
+        "amount_number": {
+          "$convert": {
+            "input": "$amount",
+            "to": "double",
+            "onError": 0,
+            "onNull": 0
+          }
+        }
+    }},
+    { "$sort": { "amount_number": -1 } },
+    { "$limit": 20 },
+    { "$project": {
+        "_id": 0,
+        "transaction_id": 1,
+        "timestamp": 1,
+        "user_name": 1,
+        "merchant": 1,
+        "city": 1,
+        "amount": "$amount_number"
+    }}
+  ]
+}</pre>
+  <ol>
+    <li>Add another visualisation and choose <strong>Table</strong>.</li>
+    <li>Set the title to <code>Flagged Transactions — Review Queue</code>.</li>
+    <li>Organize columns as Transaction ID, Timestamp, Customer, Merchant, City, Amount.</li>
+    <li>Set Amount to Indian Rupee and sort it descending.</li>
+    <li>Click <strong>Apply</strong>.</li>
+  </ol>
+
+  <h3>Step 5 — Arrange and Refresh</h3>
+  <ol>
+    <li>Place the Fraud Rate Stat panel at the top left.</li>
+    <li>Place the city Bar Chart beside it and give it more width.</li>
+    <li>Place the Review Queue Table across the full width below.</li>
+    <li>Set dashboard refresh to <strong>30 seconds</strong> and save.</li>
+  </ol>
+
+  <div class="callout">
+    <p><strong>Important:</strong> Refreshing reruns the queries; it does not generate transactions. If the Lecture 10 producer and storage consumer are running, new records will enter this same collection and the dashboard will update.</p>
+  </div>
+
+  <h3>Step 6 — Read the Dashboard Like a Manager</h3>
+  <ol>
+    <li><strong>Observe:</strong> Read the fraud-rate KPI before looking at individual rows.</li>
+    <li><strong>Prioritise:</strong> Use the review queue to identify the highest-value flagged transactions.</li>
+    <li><strong>Contextualise:</strong> Compare city exposure before treating a high count as unusual.</li>
+    <li><strong>Decide:</strong> Recommend investigation or monitoring; the label is a signal, not proof of fraud.</li>
+  </ol>
+
+  <div class="callout green">
+    <p><strong>Success checklist:</strong> Your dashboard has three titled panels, displays a fraud-rate percentage, compares transaction value by city, lists the 20 highest-value flagged transactions, and supports one clear management recommendation.</p>
+  </div>
+
+  <h2 id="panels">Section 6: Panel Types Reference</h2>
   <table>
     <tr><th>Panel Type</th><th>Best For</th><th>Example Use</th></tr>
-    <tr><td><strong>Time Series</strong></td><td>Trends over time</td><td>Stock price history, transaction volume per minute</td></tr>
-    <tr><td><strong>Stat</strong></td><td>Single important number</td><td>Current price, total open alerts today</td></tr>
-    <tr><td><strong>Bar Gauge</strong></td><td>Progress / comparison</td><td>Alert count per symbol (INFY vs TCS)</td></tr>
-    <tr><td><strong>Bar Chart</strong></td><td>Categorical comparison</td><td>Transactions per city in last hour</td></tr>
-    <tr><td><strong>Table</strong></td><td>Raw data / detail view</td><td>Latest 10 alerts from stock_alerts</td></tr>
+    <tr><td><strong>Time Series</strong></td><td>Trends over time</td><td>Transaction count or value per hour</td></tr>
+    <tr><td><strong>Stat</strong></td><td>Single important number</td><td>Fraud rate or total transaction value</td></tr>
+    <tr><td><strong>Bar Gauge</strong></td><td>Progress / comparison</td><td>Flagged transactions by merchant</td></tr>
+    <tr><td><strong>Bar Chart</strong></td><td>Categorical comparison</td><td>Transaction value by city</td></tr>
+    <tr><td><strong>Table</strong></td><td>Raw data / detail view</td><td>Flagged transactions requiring review</td></tr>
     <tr><td><strong>Gauge</strong></td><td>Single value with thresholds</td><td>Risk score: green/amber/red</td></tr>
   </table>
 
@@ -250,14 +379,15 @@ docker restart grafana</pre>
       <li>Grafana is the visual layer — it sits on top of databases, not inside them</li>
       <li>Four building blocks: Data Source → Query → Panel → Dashboard</li>
       <li>Time is central — dashboards have a time range and auto-refresh, making them live</li>
-      <li>MongoDB community plugin enables Atlas → Grafana; InfluxDB is the simpler native option</li>
-      <li>Panel types serve different needs — Time Series for trends, Stat for KPIs, Table for detail</li>
+      <li>A useful dashboard begins with business questions, not chart types</li>
+      <li>Stat, Bar Chart, and Table panels answer KPI, comparison, and detail questions</li>
+      <li>Auto-refresh reruns queries; the source pipeline is what creates new data</li>
     </ol>
   </div>
 
   <div class="preview-box">
     <h3>Preview — Lecture 15: Building Live Streaming Dashboards</h3>
-    <p>Full hands-on build session: multi-panel stock monitor, variable dropdowns, the transactions dashboard, and Assignment 3 guidance. Keep Grafana running and your producer streaming before class.</p>
+    <p>Extend today's transaction dashboard with more panels, reusable variables, and Assignment 3 design guidance. Keep Grafana running and retain access to the same MongoDB collection.</p>
   </div>
 </div>
 <script>
