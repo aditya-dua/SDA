@@ -216,6 +216,10 @@ docker run -d \
   <h2 id="dataset">Section 4: Import the Existing Transactions</h2>
   <p>Reuse the <code>transactions.csv</code> generated in Lecture 10. This is the same dataset used in the Kafka fraud exercise; MySQL is only an additional analytics destination for Grafana.</p>
 
+  <div class="callout green">
+    <p><strong>Live-stream alternative:</strong> Instead of importing the CSV, run Lecture 10's <code>consumer_store_mysql.py</code> while <code>transaction_producer.py</code> is publishing. The consumer creates and continuously populates the same <code>sda_course.transactions</code> table used below. Its upsert makes Kafka replays safe.</p>
+  </div>
+
   <h3>Fields Used Today</h3>
   <table>
     <tr><th>Field</th><th>Example</th><th>Business Meaning</th></tr>
