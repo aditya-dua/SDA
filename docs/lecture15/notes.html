@@ -87,7 +87,7 @@
   <p class="subtitle">Multi-panel build · Variables · Assignment 3 guidance</p>
   <div class="meta-row">
     <span>⏱ <strong>90 minutes</strong></span>
-    <span>📍 <strong>Prerequisites:</strong> Lecture 14 (Grafana connected to Atlas)</span>
+    <span>📍 <strong>Prerequisites:</strong> Lecture 14 (Grafana connected to MySQL)</span>
     <span>🔧 <strong>Full hands-on build session</strong></span>
   </div>
 
@@ -144,6 +144,7 @@
   </div>
 
   <h2 id="lab1">Section 2: Lab Part 1 — Fraud Operations Dashboard</h2>
+  <p>Set the dashboard time range to <strong>1 August–31 August 2025</strong> so the Daily Transaction Volume panel includes the imported historical records.</p>
 
   <h3>Target Layout</h3>
   <pre>┌───────────────────────────────────────────────────────┐
@@ -165,26 +166,9 @@
     <div class="pc-title">Flagged Transaction Value</div>
     <div class="pc-q">Business question: "How much money is currently associated with flagged transactions?"</div>
   </div>
-  <pre>{
-  "collection": "transactions",
-  "aggregate": [
-    { "$match": { "is_fraud": "true" } },
-    { "$group": {
-        "_id": null,
-        "value": {
-          "$sum": {
-            "$convert": {
-              "input": "$amount",
-              "to": "double",
-              "onError": 0,
-              "onNull": 0
-            }
-          }
-        }
-    }},
-    { "$project": { "_id": 0, "value": 1 } }
-  ]
-}</pre>
+  <pre>SELECT SUM(amount) AS value
+FROM transactions
+WHERE is_fraud = 'true';</pre>
   <p><strong>Settings:</strong> Visualisation = Stat | Unit = Indian Rupee | Decimals = 0 | Colour = red</p>
 
   <h3>Panel 2 — Daily Transaction Volume (Time Series)</h3>
@@ -192,25 +176,13 @@
     <div class="pc-title">Daily Transaction Volume</div>
     <div class="pc-q">Business question: "How does transaction activity change across the month?"</div>
   </div>
-  <pre>{
-  "collection": "transactions",
-  "aggregate": [
-    { "$addFields": {
-        "event_time": {
-          "$dateFromString": {
-            "dateString": "$timestamp",
-            "format": "%Y-%m-%d %H:%M:%S"
-          }
-        }
-    }},
-    { "$group": {
-        "_id": { "$dateTrunc": { "date": "$event_time", "unit": "day" } },
-        "value": { "$sum": 1 }
-    }},
-    { "$sort": { "_id": 1 } },
-    { "$project": { "_id": 0, "time": "$_id", "value": 1 } }
-  ]
-}</pre>
+  <pre>SELECT
+  $__timeGroupAlias(`timestamp`, '1d'),
+  COUNT(*) AS value
+FROM transactions
+WHERE $__timeFilter(`timestamp`)
+GROUP BY 1
+ORDER BY 1;</pre>
   <p><strong>Settings:</strong> Visualisation = Time Series | Unit = count | Line width = 2 | Fill opacity = 10</p>
 
   <h3>Panel 3 — Flagged Transactions by Merchant (Bar Chart)</h3>
@@ -218,16 +190,12 @@
     <div class="pc-title">Flagged Transactions by Merchant</div>
     <div class="pc-q">Business question: "Which merchants generate the largest review workload?"</div>
   </div>
-  <pre>{
-  "collection": "transactions",
-  "aggregate": [
-    { "$match": { "is_fraud": "true" } },
-    { "$group": { "_id": "$merchant", "value": { "$sum": 1 } } },
-    { "$sort": { "value": -1 } },
-    { "$limit": 10 },
-    { "$project": { "_id": 0, "merchant": "$_id", "value": 1 } }
-  ]
-}</pre>
+  <pre>SELECT merchant, COUNT(*) AS value
+FROM transactions
+WHERE is_fraud = 'true'
+GROUP BY merchant
+ORDER BY value DESC
+LIMIT 10;</pre>
   <p><strong>Settings:</strong> Visualisation = Bar Chart | Category = merchant | Value = count | Orientation = horizontal</p>
 
   <h3>Panel 4 — Fraud Rate (from Lecture 14)</h3>
@@ -256,7 +224,8 @@
     <li>Dashboard settings (gear icon) → Variables → New variable</li>
     <li>Name: <code>city</code> | Type: Custom | Values: <code>Mumbai, Delhi, Bengaluru, Hyderabad, Chennai, Kolkata, Pune, Ahmedabad</code></li>
     <li>Enable <strong>Include All option</strong> and set the custom all value to <code>.*</code>.</li>
-    <li>Add <code>{ "$match": { "city": { "$regex": "^$city$" } } }</code> as the first stage of each panel query.</li>
+    <li>Add <code>AND city REGEXP '^${city:raw}$'</code> to queries that already have a WHERE clause.</li>
+    <li>For queries without WHERE, add <code>WHERE city REGEXP '^${city:raw}$'</code> before GROUP BY.</li>
   </ol>
   <p>The dropdown now filters all panels simultaneously. Selecting All uses the <code>.*</code> regular expression and keeps every city.</p>
 
@@ -293,7 +262,7 @@
   <table>
     <tr><th>Requirement</th><th>Detail</th></tr>
     <tr><td>Minimum 4 panels</td><td>At least 1 time series, 1 stat/KPI, 1 table</td></tr>
-    <tr><td>Real data</td><td>Connected to your Kafka consumer data (MongoDB or InfluxDB)</td></tr>
+    <tr><td>Real data</td><td>Connected to the course MySQL transaction dataset or another supported datasource</td></tr>
     <tr><td>1 variable/filter</td><td>Makes the dashboard interactive</td></tr>
     <tr><td>Colour thresholds</td><td>Reflect actual business logic — not default colours</td></tr>
     <tr><td>Explanation</td><td>200-word write-up: what business question each panel answers</td></tr>

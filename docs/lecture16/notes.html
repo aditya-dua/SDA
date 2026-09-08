@@ -139,7 +139,7 @@
   <p>A dashboard is only useful if someone is looking at it. In a 24-hour streaming system, no one watches 24 hours a day. <strong>Alerts let the data come to you</strong> — instead of you going to the data.</p>
 
   <pre>Without alerts:
-  10:47 PM  Flagged transaction rate crosses 5%
+  10:47 PM  Flagged transaction rate crosses the operating threshold
   10:47 PM  Nobody sees it
   11:30 PM  Risk manager checks Grafana manually — too late
 
@@ -181,12 +181,12 @@ With alerts:
   <h3>The "For" Duration — Why It Matters</h3>
   <p>Without a "For" duration, a single bad data point triggers an alert. With <code>For: 2m</code>, the condition must be true for 2 continuous minutes before the alert fires.</p>
   <pre>Without "For":
-  Check 1: Fraud rate = 5.2% → FIRES immediately
-  Check 2: Fraud rate = 4.8% → Resolves — short-lived spike
+  Check 1: Fraud rate = 3.8% → FIRES immediately
+  Check 2: Fraud rate = 3.4% → Resolves — short-lived spike
 
 With For: 2m:
-  Check 1: Fraud rate = 5.2% → enters PENDING state
-  2 min later: still above 5% → FIRES — sustained risk, worth investigating.</pre>
+  Check 1: Fraud rate = 3.8% → enters PENDING state
+  2 min later: still above 3.5% → FIRES — sustained risk, worth investigating.</pre>
 
   <h2 id="lab1">Section 3: Lab Part 1 — Create Alert Rules</h2>
 
@@ -195,15 +195,15 @@ With For: 2m:
 
   <div class="step">
     <div class="step-num">1</div>
-    <div class="step-body"><p><strong>Name:</strong> <code>Transaction Risk — High Fraud Rate</code> | Data source: MongoDB</p></div>
+    <div class="step-body"><p><strong>Name:</strong> <code>Transaction Risk — High Fraud Rate</code> | Data source: MySQL</p></div>
   </div>
   <div class="step">
     <div class="step-num">2</div>
-    <div class="step-body"><p><strong>Query:</strong> reuse the Lecture 14 fraud-rate query against the <code>transactions</code> collection</p></div>
+    <div class="step-body"><p><strong>Query:</strong> reuse the Lecture 14 fraud-rate SQL query against the <code>transactions</code> table</p></div>
   </div>
   <div class="step">
     <div class="step-num">3</div>
-    <div class="step-body"><p><strong>Condition:</strong> IS ABOVE 5% | Evaluate every: 1m | For: 2m</p></div>
+    <div class="step-body"><p><strong>Condition:</strong> IS ABOVE 3.5% for the classroom dataset | Evaluate every: 1m | For: 2m</p></div>
   </div>
   <div class="step">
     <div class="step-num">4</div>
@@ -211,36 +211,20 @@ With For: 2m:
   </div>
   <div class="step">
     <div class="step-num">5</div>
-    <div class="step-body"><p><strong>Annotations:</strong> Summary: "Flagged transaction rate exceeds 5%" | Description: "Current rate is {{ $value }}%. Open the review queue and assign an analyst."</p></div>
+    <div class="step-body"><p><strong>Annotations:</strong> Summary: "Flagged transaction rate exceeds threshold" | Description: "Current rate is {{ $value }}%. Open the review queue and assign an analyst."</p></div>
   </div>
 
   <h3>Alert 2: "High-Value Flagged Transaction"</h3>
   <ol>
-    <li>Create a query that counts documents where <code>is_fraud = "true"</code> and converted <code>amount &gt; 50000</code>.</li>
+    <li>Create a query that counts MySQL rows where <code>is_fraud = 'true'</code> and <code>amount &gt; 50000</code>.</li>
     <li>Condition: IS ABOVE 0 | Evaluate every: 1m | For: 1m.</li>
     <li>Labels: <code>severity=critical</code>, <code>team=fraud-ops</code>.</li>
   </ol>
 
-  <pre>{
-  "collection": "transactions",
-  "aggregate": [
-    { "$addFields": {
-        "amount_number": {
-          "$convert": {
-            "input": "$amount",
-            "to": "double",
-            "onError": 0,
-            "onNull": 0
-          }
-        }
-    }},
-    { "$match": {
-        "is_fraud": "true",
-        "amount_number": { "$gt": 50000 }
-    }},
-    { "$count": "value" }
-  ]
-}</pre>
+  <pre>SELECT COUNT(*) AS value
+FROM transactions
+WHERE is_fraud = 'true'
+  AND amount &gt; 50000;</pre>
 
   <div class="callout amber">
     <p><strong>Threshold design discussion:</strong> Is ₹50,000 appropriate for every customer and merchant? An absolute threshold is easy to explain, but a customer-relative threshold can be more accurate. The correct choice depends on false-positive cost, customer history, and response capacity.</p>
@@ -275,8 +259,8 @@ With For: 2m:
   <h3>Expected Slack Alert Message</h3>
   <pre>FIRING: Transaction Risk — High Fraud Rate
 Severity: warning | Team: fraud-ops
-Flagged transaction rate exceeds 5%
-Current value: 5.4%
+Flagged transaction rate exceeds threshold
+Current value: 3.8%
 Starts at: 11:47:00
 Dashboard: http://localhost:3000/d/...</pre>
 
@@ -292,7 +276,7 @@ Dashboard: http://localhost:3000/d/...</pre>
   <table>
     <tr><th>Notification Cost</th><th>Example</th><th>Threshold Approach</th></tr>
     <tr><td>Low (Slack message, easy to dismiss)</td><td>Single high-value flagged case</td><td>Sensitive threshold may be acceptable</td></tr>
-    <tr><td>Medium (email + calendar)</td><td>Fraud rate above 5%</td><td>Threshold needs care, use "For: 2m"</td></tr>
+    <tr><td>Medium (email + calendar)</td><td>Fraud rate above operating threshold</td><td>Threshold needs care, use "For: 2m"</td></tr>
     <tr><td>High (PagerDuty, on-call woken up)</td><td>System outage, fraud spike</td><td>Very precise threshold, long "For" duration</td></tr>
   </table>
 
@@ -336,7 +320,7 @@ Dashboard: http://localhost:3000/d/...</pre>
   </div>
 
   <pre>Module 1 (L1-L5):    UNDERSTAND — What is streaming? How does Kafka work?
-Module 2 (L6-L10):   BUILD — Producer, consumer, MongoDB, alert routing
+Module 2 (L6-L10):   BUILD — Producer, consumer, persistence, alert routing
 Module 3 (L11-L13):  SCALE — Windowing, Spark, Flink — enterprise patterns
 Module 4 (L14-L16):  VISUALISE — Grafana dashboards + alert routing
 Module 5 (L17-L20):  PRESENT — Atlas Charts, final project, real architectures</pre>
