@@ -193,7 +193,7 @@
     <div class="slide title-slide" id="s1" data-slide="1">
       <div class="lec-label">Lecture 10 · Module 2 Capstone</div>
       <h1>Banking <span>Fraud Detection</span><br>End-to-End</h1>
-      <p class="subtitle">Multi-Producer · Kafka · MongoDB · Enrichment · 3 Fraud Rules · Live Alerts</p>
+      <p class="subtitle">Multi-Producer · Kafka · MongoDB or MySQL · Enrichment · 3 Fraud Rules · Live Alerts</p>
       <div class="title-meta">
         <div class="meta-item">📅 <strong>Module 2</strong> — Making Kafka Work</div>
         <div class="meta-item">⏱ <strong>90 min</strong> Workshop</div>
@@ -215,7 +215,7 @@
           <tr><td>10 – 20</td><td>Why fraud detection? Architecture overview</td><td>Lecture</td></tr>
           <tr><td>20 – 30</td><td>The dataset — 2000 synthetic transactions, 3 fraud patterns planted</td><td>Demo</td></tr>
           <tr><td>30 – 45</td><td>Step 1 — Generate data + Run producer</td><td>Live build</td></tr>
-          <tr><td>45 – 60</td><td>Step 2 — consumer_store.py (save + user profiles)</td><td>Live build</td></tr>
+          <tr><td>45 – 60</td><td>Step 2 — choose MongoDB or MySQL storage consumer</td><td>Live build</td></tr>
           <tr><td>60 – 80</td><td>Step 3 — consumer_fraud.py (3 rules + MongoDB enrichment)</td><td>Live build</td></tr>
           <tr><td>80 – 90</td><td>See fraud alerts fire, discuss extensions, module wrap-up</td><td>Discussion</td></tr>
         </tbody>
@@ -281,17 +281,17 @@
           <span class="arch-arrow">↘</span>
         </div>
         <div class="arch-row" style="gap:3rem;">
-          <div class="arch-node green"><div class="an-label">consumer_store.py</div><div class="an-sub">saves every transaction<br>updates user_profiles</div></div>
+          <div class="arch-node green"><div class="an-label">Storage Consumer</div><div class="an-sub">consumer_store.py<br>or consumer_store_mysql.py</div></div>
           <div class="arch-node highlight"><div class="an-label">consumer_fraud.py</div><div class="an-sub">queries MongoDB<br>applies 3 fraud rules</div></div>
         </div>
         <div class="arch-row" style="margin-top:0.5rem;gap:3rem;">
-          <div class="arch-node green"><div class="an-label">MongoDB</div><div class="an-sub">transactions<br>user_profiles</div></div>
+          <div class="arch-node green"><div class="an-label">MongoDB or MySQL</div><div class="an-sub">operational history<br>analytics destination</div></div>
           <div class="arch-node highlight"><div class="an-label">🚨 Fraud Alerts</div><div class="an-sub">Impossible Travel<br>Unusual Amount · Rapid Fire</div></div>
         </div>
       </div>
 
       <div class="callout green">
-        <p><strong>Key insight:</strong> <code>consumer_store.py</code> runs first — it builds the historical record that <code>consumer_fraud.py</code> relies on. Storage and enrichment are inseparable.</p>
+        <p><strong>Choose by objective:</strong> use <code>consumer_store.py</code> with MongoDB for the fraud-enrichment lab, or <code>consumer_store_mysql.py</code> to create a live SQL table for the Grafana lectures. Both consume the same Kafka topic.</p>
       </div>
     </div>
 
@@ -374,8 +374,18 @@ python transaction_producer.py</code></pre>
         <span class="slide-num">07 / 10</span>
         <span class="slide-tag lab">Step 2 — Terminal 2</span>
       </div>
-      <h2>consumer_store.py — <span>Persist &amp; Profile</span></h2>
-      <p>Two MongoDB writes on every message:</p>
+      <h2>Storage Consumer — <span>Choose a Destination</span></h2>
+      <p>The consumer can write the same Kafka stream to either destination:</p>
+      <table>
+        <thead><tr><th>Option</th><th>Use It When</th><th>Consumer</th></tr></thead>
+        <tbody>
+          <tr><td><strong>MongoDB</strong></td><td>You want to run the three fraud rules using user profiles and recent history</td><td><code>consumer_store.py</code></td></tr>
+          <tr><td><strong>MySQL</strong></td><td>You want SQL analysis and a live data source for the Lecture 14–16 Grafana dashboards</td><td><code>consumer_store_mysql.py</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3>Option A — MongoDB: Persist and Profile</h3>
+      <p>Two MongoDB writes occur on every message:</p>
 
       <div class="code-header"><span class="code-lang">python · consumer_store.py — key logic</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
       <pre><code><span class="cm"># 1. Append raw transaction to audit log</span>
@@ -402,6 +412,29 @@ profiles.<span class="fn">update_one</span>(
 
       <div class="callout green">
         <p><strong>Check Atlas:</strong> After 30 seconds, open MongoDB Atlas → Browse Collections → <code>sda_course</code>. You'll see <code>user_profiles</code> filling up with one document per user, each showing their latest city and cumulative spend.</p>
+      </div>
+
+      <h3>Option B — MySQL: Persist for SQL and Grafana</h3>
+      <p>Start the free MySQL container used in Lecture 14, install the connector, and run the alternative consumer:</p>
+      <div class="code-header"><span class="code-lang">bash · Terminal 2</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><code>docker run -d \
+  --name sda-mysql \
+  -e MYSQL_ROOT_PASSWORD=admin \
+  -p 3306:3306 \
+  mysql:8.4
+
+pip install kafka-python mysql-connector-python
+python consumer_store_mysql.py</code></pre>
+      <p>The script creates <code>sda_course.transactions</code>, converts numeric and date fields, and writes one row after each Kafka message. Its upsert protects against duplicate rows if Kafka replays a transaction.</p>
+      <pre><code><span class="cm"># Save first, then commit the Kafka offset</span>
+cursor.<span class="fn">execute</span>(UPSERT_SQL, <span class="fn">transaction_values</span>(txn))
+db.<span class="fn">commit</span>()
+consumer.<span class="fn">commit</span>()</code></pre>
+      <div class="callout green">
+        <p><strong>Checkpoint:</strong> Run <code>docker exec -it sda-mysql mysql -uroot -padmin</code>, then query <code>SELECT COUNT(*) FROM sda_course.transactions;</code>. The count should rise while the producer is running.</p>
+      </div>
+      <div class="callout">
+        <p><strong>Important:</strong> <code>consumer_fraud.py</code> still reads MongoDB profiles. Choose MongoDB for the complete fraud lab; choose MySQL for the optional SQL/Grafana path.</p>
       </div>
     </div>
 
@@ -506,6 +539,11 @@ profiles.<span class="fn">update_one</span>(
         <a href="consumer_store.py" download class="download-card">
           <span class="dl-icon">💾</span>
           <div class="dl-info"><div class="dl-name">consumer_store.py</div><div class="dl-desc">Saves to MongoDB + updates user_profiles</div></div>
+          <span class="dl-badge">.py</span>
+        </a>
+        <a href="consumer_store_mysql.py" download class="download-card">
+          <span class="dl-icon">🐬</span>
+          <div class="dl-info"><div class="dl-name">consumer_store_mysql.py</div><div class="dl-desc">Optional live Kafka-to-MySQL storage consumer</div></div>
           <span class="dl-badge">.py</span>
         </a>
         <a href="consumer_fraud.py" download class="download-card">

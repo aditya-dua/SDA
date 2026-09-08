@@ -86,7 +86,7 @@
 <div class="wrap">
   <div class="lec-label">Module 4 · Lecture 14</div>
   <h1>Grafana Fundamentals: Connecting Data to Dashboards</h1>
-  <p class="subtitle">Install · Connect MongoDB Atlas · Build a transaction-risk dashboard</p>
+  <p class="subtitle">Install · Import transactions into MySQL · Build a transaction-risk dashboard</p>
   <div class="meta-row">
     <span>⏱ <strong>90 minutes</strong></span>
     <span>📍 <strong>Prerequisites:</strong> Lectures 10–11 (transaction data)</span>
@@ -101,7 +101,7 @@
       <li><a href="#what">What Is Grafana?</a></li>
       <li><a href="#model">The Grafana Mental Model</a></li>
       <li><a href="#setup">Setup & Connection</a></li>
-      <li><a href="#dataset">Inspect the Existing Transactions</a></li>
+      <li><a href="#dataset">Import the Existing Transactions</a></li>
       <li><a href="#lab">Hands-On Lab — Transaction Risk Dashboard</a></li>
       <li><a href="#panels">Panel Types Overview</a></li>
       <li><a href="#takeaways">Key Takeaways</a></li>
@@ -111,9 +111,9 @@
   <h2 id="objectives">Learning Objectives</h2>
   <ul class="obj-list">
     <li><span class="check">✓</span> Explain what Grafana is and where it sits in a data architecture</li>
-    <li><span class="check">✓</span> Explain the licence requirements for connecting Grafana directly to MongoDB Atlas</li>
+    <li><span class="check">✓</span> Import the Lecture 10 transaction CSV into MySQL and connect Grafana</li>
     <li><span class="check">✓</span> Understand the Grafana mental model: data sources → queries → panels → dashboards</li>
-    <li><span class="check">✓</span> Build a complete three-panel dashboard from the existing transactions collection</li>
+    <li><span class="check">✓</span> Build a complete three-panel dashboard from the transactions table</li>
     <li><span class="check">✓</span> Match business questions to suitable visualisations</li>
     <li><span class="check">✓</span> Distinguish between Grafana's use cases vs Atlas Charts (Assignment 3)</li>
   </ul>
@@ -121,11 +121,11 @@
   <h2 id="timeline">Session Timeline</h2>
   <table>
     <tr><th>Time</th><th>Segment</th><th>Activity</th></tr>
-    <tr><td>0–10 min</td><td>Recap</td><td>From Kafka and MongoDB to business decisions</td></tr>
+    <tr><td>0–10 min</td><td>Recap</td><td>From Kafka storage to business decisions</td></tr>
     <tr><td>10–20 min</td><td>What Is Grafana?</td><td>Architecture, users, and business value</td></tr>
     <tr><td>20–30 min</td><td>Grafana Mental Model</td><td>Data sources, queries, panels, dashboards</td></tr>
-    <tr><td>30–40 min</td><td>Setup &amp; Connection</td><td>Run Grafana and connect MongoDB Atlas</td></tr>
-    <tr><td>40–50 min</td><td>Existing Dataset</td><td>Inspect the Lecture 10 transactions collection</td></tr>
+    <tr><td>30–45 min</td><td>Setup &amp; Connection</td><td>Run MySQL and Grafana with Docker</td></tr>
+    <tr><td>45–55 min</td><td>Existing Dataset</td><td>Import the Lecture 10 transactions CSV</td></tr>
     <tr><td>50–80 min</td><td>Dashboard Lab</td><td>Build a Stat, Bar Chart, and Table panel</td></tr>
     <tr><td>80–88 min</td><td>Interpretation</td><td>Read the dashboard and recommend an action</td></tr>
     <tr><td>88–90 min</td><td>Wrap-Up</td><td>Save the dashboard and preview Lecture 15</td></tr>
@@ -159,8 +159,8 @@
 
   <h3>Four Building Blocks</h3>
   <ol>
-    <li><strong>Data Source</strong> — A connection to a database. Grafana supports sources such as Prometheus, InfluxDB, MySQL, and PostgreSQL. MongoDB requires Grafana's official Enterprise plugin and a qualifying licence.</li>
-    <li><strong>Query</strong> — The question you're asking of the data source. Written in the data source's native language (MongoDB aggregate pipeline, SQL, PromQL).</li>
+    <li><strong>Data Source</strong> — A connection to a database. This lab uses MySQL because Grafana supports it without an Enterprise plugin.</li>
+    <li><strong>Query</strong> — The question you're asking of the data source. This lab uses SQL.</li>
     <li><strong>Panel</strong> — One visual unit: one chart, one number, one table. Each panel has exactly one query and one visualisation type.</li>
     <li><strong>Dashboard</strong> — A collection of panels on a grid. Has a time range selector and auto-refresh interval.</li>
   </ol>
@@ -171,76 +171,108 @@
   <h2 id="setup">Section 3: Setup &amp; Connection</h2>
 
   <div class="callout amber">
-    <p><strong>Licence requirement:</strong> Direct MongoDB connectivity is not included in Grafana OSS or the free Grafana tier. The official <code>grafana-mongodb-datasource</code> plugin requires Grafana 11.6.7+ and a Grafana Cloud Pro/Advanced entitlement or a self-managed Enterprise licence. Confirm classroom access before starting this lab.</p>
+    <p><strong>Why MySQL?</strong> Grafana's MongoDB datasource requires an Enterprise entitlement that is not available for this course. MySQL is supported directly by Grafana, so every student can complete the lab without a paid plugin.</p>
   </div>
 
-  <h3>Install Grafana Enterprise with Docker</h3>
-  <pre>docker run -d \
+  <h3>Run MySQL and Grafana with Docker</h3>
+  <pre># Create one network so Grafana can reach MySQL by container name
+docker network create sda-analytics
+
+docker run -d \
+  --name sda-mysql \
+  --network sda-analytics \
+  -e MYSQL_ROOT_PASSWORD=admin \
+  -p 3306:3306 \
+  mysql:8.4 \
+  --local-infile=1
+
+docker run -d \
   --name grafana \
+  --network sda-analytics \
   -p 3000:3000 \
   -e GF_SECURITY_ADMIN_PASSWORD=admin \
-  grafana/grafana-enterprise:latest
+  grafana/grafana:latest
 
-# Open: http://localhost:3000
-# Login: admin / admin  (Grafana will prompt you to change it)</pre>
+# Open http://localhost:3000 and log in with admin / admin</pre>
 
-  <h3>Install the Official MongoDB Plugin</h3>
-  <p>After activating the Enterprise licence, install the plugin inside the running container. The executable is <code>grafana</code>; <code>plugins</code> is a subcommand, not a standalone executable.</p>
-  <pre>docker exec -it grafana \
-  grafana cli plugins install grafana-mongodb-datasource
-
-docker restart grafana</pre>
-
-  <div class="callout">
-    <p><strong>If you saw “exec: plugins: executable file not found”:</strong> the command omitted <code>grafana cli</code>. If installation succeeds but the health check fails, verify the Enterprise licence and MongoDB plugin entitlement.</p>
-  </div>
-
-  <h3>Add MongoDB Atlas Data Source</h3>
+  <h3>Add the Built-In MySQL Data Source</h3>
   <div class="step">
     <div class="step-num">1</div>
     <div class="step-body"><p><strong>Left sidebar → Connections → Data Sources → Add data source</strong></p></div>
   </div>
   <div class="step">
     <div class="step-num">2</div>
-    <div class="step-body"><p><strong>Search "MongoDB"</strong> → select the official Enterprise plugin</p></div>
+    <div class="step-body"><p><strong>Search "MySQL"</strong> → select the built-in datasource</p></div>
   </div>
   <div class="step">
     <div class="step-num">3</div>
-    <div class="step-body"><p><strong>Connection string:</strong> <code>mongodb+srv://&lt;user&gt;:&lt;password&gt;@cluster0.xxxxx.mongodb.net/</code><br>Database: <code>sda_course</code></p></div>
+    <div class="step-body"><p><strong>Host:</strong> <code>sda-mysql:3306</code> | <strong>Database:</strong> <code>sda_course</code><br><strong>User:</strong> <code>grafana</code> | <strong>Password:</strong> <code>grafana</code> | TLS/SSL mode: disabled for this local lab</p></div>
   </div>
   <div class="step">
     <div class="step-num">4</div>
-    <div class="step-body"><p><strong>Click "Save &amp; Test"</strong> — should show ✅ "Data source is working"</p></div>
+    <div class="step-body"><p><strong>Keep this browser tab open.</strong> Create the database and read-only user below, then return and click "Save &amp; Test".</p></div>
   </div>
 
-  <div class="callout amber">
-    <p><strong>No Enterprise licence?</strong> Do not use an unverified unsigned plugin for the class. Use MongoDB Atlas Charts for direct free visualisation, or move the transaction data to a Grafana-supported free source such as PostgreSQL, MySQL, or InfluxDB before following the dashboard steps.</p>
-  </div>
+  <h2 id="dataset">Section 4: Import the Existing Transactions</h2>
+  <p>Reuse the <code>transactions.csv</code> generated in Lecture 10. This is the same dataset used in the Kafka fraud exercise; MySQL is only an additional analytics destination for Grafana.</p>
 
-  <h2 id="dataset">Section 4: Inspect the Existing Transactions</h2>
-  <p>Lecture 10 already loaded roughly 2,000 synthetic banking records into <code>sda_course.transactions</code>. Do not create or import another dataset. This lab adds a visual decision layer to the same collection.</p>
+  <div class="callout green">
+    <p><strong>Live-stream alternative:</strong> Instead of importing the CSV, run Lecture 10's <code>consumer_store_mysql.py</code> while <code>transaction_producer.py</code> is publishing. The consumer creates and continuously populates the same <code>sda_course.transactions</code> table used below. Its upsert makes Kafka replays safe.</p>
+  </div>
 
   <h3>Fields Used Today</h3>
   <table>
     <tr><th>Field</th><th>Example</th><th>Business Meaning</th></tr>
     <tr><td><code>transaction_id</code></td><td>TXN-00847</td><td>Unique transaction reference</td></tr>
-    <tr><td><code>amount</code></td><td>"4500.00"</td><td>Transaction value; stored as text in the imported data</td></tr>
+    <tr><td><code>amount</code></td><td>4500.00</td><td>Transaction value imported as a decimal</td></tr>
     <tr><td><code>city</code></td><td>Mumbai</td><td>Location where the transaction occurred</td></tr>
     <tr><td><code>merchant</code></td><td>Amazon</td><td>Merchant receiving the payment</td></tr>
-    <tr><td><code>timestamp</code></td><td>2025-08-01 10:00:00</td><td>Business event time stored as text</td></tr>
-    <tr><td><code>is_fraud</code></td><td>"true"</td><td>Classroom fraud label stored as text</td></tr>
+    <tr><td><code>timestamp</code></td><td>2025-08-01 10:00:00</td><td>Business event time imported as DATETIME</td></tr>
+    <tr><td><code>is_fraud</code></td><td>true</td><td>Classroom fraud label</td></tr>
   </table>
 
-  <h3>Verify the Collection Before Grafana</h3>
-  <p>In MongoDB Compass, select <code>sda_course.transactions</code> and use the embedded <strong>&gt;_ MONGOSH</strong> shell:</p>
-  <pre>use sda_course
+  <h3>Create the Table and Import the CSV</h3>
+  <p>Run these commands from the folder containing <code>transactions.csv</code>:</p>
+  <pre>docker cp transactions.csv sda-mysql:/var/lib/mysql-files/transactions.csv
+docker exec -it sda-mysql mysql -uroot -padmin</pre>
+  <p>Then run this SQL in the MySQL prompt:</p>
+  <pre>CREATE DATABASE IF NOT EXISTS sda_course;
+USE sda_course;
 
-db.transactions.countDocuments({})
-db.transactions.findOne()
-db.transactions.countDocuments({ is_fraud: "true" })</pre>
+DROP TABLE IF EXISTS transactions;
+CREATE TABLE transactions (
+  transaction_id VARCHAR(20) PRIMARY KEY,
+  user_id VARCHAR(20),
+  user_name VARCHAR(100),
+  card_last4 VARCHAR(4),
+  amount DECIMAL(12,2),
+  merchant VARCHAR(100),
+  city VARCHAR(50),
+  country VARCHAR(50),
+  lat DECIMAL(9,4),
+  lon DECIMAL(9,4),
+  `timestamp` DATETIME,
+  is_fraud VARCHAR(5)
+);
+
+LOAD DATA INFILE '/var/lib/mysql-files/transactions.csv'
+INTO TABLE transactions
+FIELDS TERMINATED BY ',' ENCLOSED BY '"'
+LINES TERMINATED BY '\r\n'
+IGNORE 1 LINES
+(transaction_id,user_id,user_name,card_last4,amount,merchant,
+ city,country,lat,lon,`timestamp`,is_fraud);
+
+CREATE USER IF NOT EXISTS 'grafana'@'%' IDENTIFIED BY 'grafana';
+GRANT SELECT ON sda_course.* TO 'grafana'@'%';
+FLUSH PRIVILEGES;
+
+SELECT COUNT(*) AS total_transactions,
+       SUM(is_fraud = 'true') AS flagged_transactions
+FROM transactions;</pre>
 
   <div class="callout amber">
-    <p><strong>Checkpoint:</strong> You should see roughly 2,000 documents and some records labelled <code>is_fraud: "true"</code>. The queries below use <code>$convert</code> because <code>amount</code> was imported as text.</p>
+    <p><strong>Checkpoint:</strong> The deterministic Lecture 10 generator produces 2,003 transactions with 76 flagged records. Return to Grafana and click <strong>Save &amp; Test</strong>.</p>
   </div>
 
   <h2 id="lab">Section 5: Hands-On Lab — Transaction Risk Dashboard</h2>
@@ -255,61 +287,30 @@ db.transactions.countDocuments({ is_fraud: "true" })</pre>
   <h3>Step 1 — Create and Name the Dashboard</h3>
   <ol>
     <li>Go to <strong>Dashboards → New → New Dashboard</strong>.</li>
-    <li>Select <strong>Add visualisation</strong>, then choose the MongoDB data source.</li>
+    <li>Select <strong>Add visualisation</strong>, then choose the MySQL data source.</li>
     <li>Click <strong>Save dashboard</strong> and name it <code>Transaction Risk Overview — Lecture 14</code>.</li>
-    <li>Because this is a fixed historical dataset, use the dashboard for comparison rather than applying a “Last 30 minutes” filter.</li>
+    <li>Because this is a fixed historical dataset, set a custom dashboard time range of <strong>1 August–31 August 2025</strong>.</li>
   </ol>
 
   <h3>Step 2 — Panel A: Flagged Transaction Rate</h3>
   <p>This panel answers: <strong>“What percentage of transactions are labelled as fraud?”</strong></p>
-  <pre>{
-  "collection": "transactions",
-  "aggregate": [
-    { "$group": {
-        "_id": null,
-        "total": { "$sum": 1 },
-        "flagged": {
-          "$sum": { "$cond": [{ "$eq": ["$is_fraud", "true"] }, 1, 0] }
-        }
-    }},
-    { "$project": {
-        "_id": 0,
-        "value": {
-          "$multiply": [{ "$divide": ["$flagged", "$total"] }, 100]
-        }
-    }}
-  ]
-}</pre>
+  <pre>SELECT
+  100.0 * SUM(is_fraud = 'true') / COUNT(*) AS value
+FROM transactions;</pre>
   <ol>
     <li>Choose the <strong>Stat</strong> visualisation.</li>
     <li>Set the title to <code>Flagged Transaction Rate</code>.</li>
     <li>Set the unit to <strong>Percent (0–100)</strong> and decimals to <strong>1</strong>.</li>
     <li>Add thresholds: green below 3%, amber from 3%, red from 5%.</li>
-    <li>Click <strong>Apply</strong>.</li>
+    <li>Click <strong>Apply</strong>. The generated dataset should display <strong>3.8%</strong> in amber.</li>
   </ol>
 
   <h3>Step 3 — Panel B: Transaction Value by City</h3>
   <p>This panel answers: <strong>“Where is the bank's transaction value concentrated?”</strong></p>
-  <pre>{
-  "collection": "transactions",
-  "aggregate": [
-    { "$group": {
-        "_id": "$city",
-        "value": {
-          "$sum": {
-            "$convert": {
-              "input": "$amount",
-              "to": "double",
-              "onError": 0,
-              "onNull": 0
-            }
-          }
-        }
-    }},
-    { "$sort": { "value": -1 } },
-    { "$project": { "_id": 0, "city": "$_id", "value": 1 } }
-  ]
-}</pre>
+  <pre>SELECT city, SUM(amount) AS value
+FROM transactions
+GROUP BY city
+ORDER BY value DESC;</pre>
   <ol>
     <li>Add a visualisation and choose <strong>Bar Chart</strong>.</li>
     <li>Set the title to <code>Transaction Value by City</code>.</li>
@@ -320,33 +321,17 @@ db.transactions.countDocuments({ is_fraud: "true" })</pre>
 
   <h3>Step 4 — Panel C: Flagged Transactions for Review</h3>
   <p>This panel answers: <strong>“Which transactions should an analyst inspect first?”</strong></p>
-  <pre>{
-  "collection": "transactions",
-  "aggregate": [
-    { "$match": { "is_fraud": "true" } },
-    { "$addFields": {
-        "amount_number": {
-          "$convert": {
-            "input": "$amount",
-            "to": "double",
-            "onError": 0,
-            "onNull": 0
-          }
-        }
-    }},
-    { "$sort": { "amount_number": -1 } },
-    { "$limit": 20 },
-    { "$project": {
-        "_id": 0,
-        "transaction_id": 1,
-        "timestamp": 1,
-        "user_name": 1,
-        "merchant": 1,
-        "city": 1,
-        "amount": "$amount_number"
-    }}
-  ]
-}</pre>
+  <pre>SELECT
+  transaction_id,
+  `timestamp`,
+  user_name,
+  merchant,
+  city,
+  amount
+FROM transactions
+WHERE is_fraud = 'true'
+ORDER BY amount DESC
+LIMIT 20;</pre>
   <ol>
     <li>Add another visualisation and choose <strong>Table</strong>.</li>
     <li>Set the title to <code>Flagged Transactions — Review Queue</code>.</li>
@@ -364,7 +349,7 @@ db.transactions.countDocuments({ is_fraud: "true" })</pre>
   </ol>
 
   <div class="callout">
-    <p><strong>Important:</strong> Refreshing reruns the queries; it does not generate transactions. If the Lecture 10 producer and storage consumer are running, new records will enter this same collection and the dashboard will update.</p>
+    <p><strong>Important:</strong> Refreshing reruns the queries; it does not generate or re-import transactions. This lab uses a fixed MySQL copy of the Lecture 10 dataset.</p>
   </div>
 
   <h3>Step 6 — Read the Dashboard Like a Manager</h3>
@@ -397,7 +382,7 @@ db.transactions.countDocuments({ is_fraud: "true" })</pre>
       <li>Grafana is the visual layer — it sits on top of databases, not inside them</li>
       <li>Four building blocks: Data Source → Query → Panel → Dashboard</li>
       <li>Time is central — dashboards have a time range and auto-refresh, making them live</li>
-      <li>Direct MongoDB access requires Grafana's licensed Enterprise plugin; OSS users need another supported data source</li>
+      <li>MySQL provides a free built-in Grafana datasource for the course transaction dataset</li>
       <li>A useful dashboard begins with business questions, not chart types</li>
       <li>Stat, Bar Chart, and Table panels answer KPI, comparison, and detail questions</li>
       <li>Auto-refresh reruns queries; the source pipeline is what creates new data</li>
@@ -406,7 +391,7 @@ db.transactions.countDocuments({ is_fraud: "true" })</pre>
 
   <div class="preview-box">
     <h3>Preview — Lecture 15: Building Live Streaming Dashboards</h3>
-    <p>Extend today's transaction dashboard with more panels, reusable variables, and Assignment 3 design guidance. Keep Grafana running and retain access to the same MongoDB collection.</p>
+    <p>Extend today's transaction dashboard with more panels, reusable variables, and Assignment 3 design guidance. Keep the MySQL and Grafana containers running.</p>
   </div>
 
   <div class="page-nav">
