@@ -282,7 +282,7 @@
         </div>
         <div class="arch-row" style="gap:3rem;">
           <div class="arch-node green"><div class="an-label">Storage Consumer</div><div class="an-sub">consumer_store.py<br>or consumer_store_mysql.py</div></div>
-          <div class="arch-node highlight"><div class="an-label">consumer_fraud.py</div><div class="an-sub">queries MongoDB<br>applies 3 fraud rules</div></div>
+          <div class="arch-node highlight"><div class="an-label">Alert Consumer</div><div class="an-sub">consumer_fraud.py<br>or consumer_alerts_mysql.py</div></div>
         </div>
         <div class="arch-row" style="margin-top:0.5rem;gap:3rem;">
           <div class="arch-node green"><div class="an-label">MongoDB or MySQL</div><div class="an-sub">operational history<br>analytics destination</div></div>
@@ -436,6 +436,18 @@ consumer.<span class="fn">commit</span>()</code></pre>
       <div class="callout">
         <p><strong>Important:</strong> <code>consumer_fraud.py</code> still reads MongoDB profiles. Choose MongoDB for the complete fraud lab; choose MySQL for the optional SQL/Grafana path.</p>
       </div>
+
+      <h3>Option C — Persist Alert Events in MySQL</h3>
+      <p>For the live Grafana extension, open another terminal and run a second consumer group. It reads the same topic, keeps only flagged transactions, classifies the classroom fraud pattern, and writes each alert to <code>sda_course.fraud_alerts</code>.</p>
+      <div class="code-header"><span class="code-lang">bash · Terminal 3</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
+      <pre><code>python consumer_alerts_mysql.py
+
+<span class="cm"># Check the live alert table</span>
+docker exec -it sda-mysql mysql -uroot -padmin \
+  -e "SELECT alert_type, severity, COUNT(*)
+      FROM sda_course.fraud_alerts
+      GROUP BY alert_type, severity;"</code></pre>
+      <p>The <code>mysql-store-group</code> and <code>mysql-alert-group</code> are independent. Each receives every transaction: one builds the transaction table; the other builds the operational alert queue.</p>
     </div>
 
     <!-- SLIDE 8: STEP 3 — FRAUD CONSUMER -->
@@ -544,6 +556,11 @@ consumer.<span class="fn">commit</span>()</code></pre>
         <a href="consumer_store_mysql.py" download class="download-card">
           <span class="dl-icon">🐬</span>
           <div class="dl-info"><div class="dl-name">consumer_store_mysql.py</div><div class="dl-desc">Optional live Kafka-to-MySQL storage consumer</div></div>
+          <span class="dl-badge">.py</span>
+        </a>
+        <a href="consumer_alerts_mysql.py" download class="download-card">
+          <span class="dl-icon">🚨</span>
+          <div class="dl-info"><div class="dl-name">consumer_alerts_mysql.py</div><div class="dl-desc">Writes live fraud alerts to MySQL for Grafana</div></div>
           <span class="dl-badge">.py</span>
         </a>
         <a href="consumer_fraud.py" download class="download-card">

@@ -45,7 +45,8 @@ CREATE TABLE IF NOT EXISTS transactions (
     lat DECIMAL(9,4),
     lon DECIMAL(9,4),
     `timestamp` DATETIME,
-    is_fraud VARCHAR(5)
+    is_fraud VARCHAR(5),
+    ingested_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 )
 """
 
@@ -100,6 +101,12 @@ cursor = db.cursor()
 cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
 cursor.execute(f"USE {DB_NAME}")
 cursor.execute(CREATE_TABLE_SQL)
+cursor.execute("SHOW COLUMNS FROM transactions LIKE 'ingested_at'")
+if cursor.fetchone() is None:
+    cursor.execute(
+        "ALTER TABLE transactions "
+        "ADD COLUMN ingested_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"
+    )
 
 consumer = KafkaConsumer(
     TOPIC,

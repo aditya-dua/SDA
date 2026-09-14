@@ -99,6 +99,7 @@
       <li><a href="#design">Dashboard Design Principles</a></li>
       <li><a href="#lab1">Lab Part 1 — Fraud Operations Dashboard</a></li>
       <li><a href="#lab2">Lab Part 2 — Variables &amp; Interactivity</a></li>
+      <li><a href="#live">Live Dashboard Mode</a></li>
       <li><a href="#interpret">Management Interpretation</a></li>
       <li><a href="#review">Design Review Checklist</a></li>
       <li><a href="#a3">Assignment 3 Guidance</a></li>
@@ -112,6 +113,7 @@
     <li><span class="check">✓</span> Use dashboard variables to make charts interactive and filterable</li>
     <li><span class="check">✓</span> Apply dashboard design principles: hierarchy, colour meaning, panel arrangement</li>
     <li><span class="check">✓</span> Connect visualisation choices to the business questions being answered</li>
+    <li><span class="check">✓</span> Distinguish historical event time from live ingestion time</li>
     <li><span class="check">✓</span> Produce a dashboard suitable for Assignment 3 presentation</li>
   </ul>
 
@@ -235,7 +237,44 @@ LIMIT 10;</pre>
     <li>Share → Snapshot → generates a public link (no Grafana login required to view)</li>
   </ol>
 
-  <h2 id="interpret">Section 4: Management Interpretation</h2>
+  <h2 id="live">Section 4: Live Dashboard Mode</h2>
+  <p>The dashboard above analyses a completed historical dataset. To watch it change while Kafka is running, use the optional MySQL consumers from Lecture 10. One writes every transaction to <code>transactions</code>; the other writes flagged events to <code>fraud_alerts</code>.</p>
+
+  <pre>transaction_producer.py
+          |
+          v
+  transactions-topic
+       |          |
+       v          v
+consumer_store_  consumer_alerts_
+mysql.py         mysql.py
+       |          |
+       v          v
+transactions     fraud_alerts
+       \          /
+        v        v
+          Grafana</pre>
+
+  <ol>
+    <li>Set the dashboard range to <strong>Last 5 minutes</strong>.</li>
+    <li>Set dashboard refresh to <strong>5s</strong>.</li>
+    <li>Use <code>ingested_at</code> for live transaction panels, not the simulated <code>timestamp</code>.</li>
+    <li>Use <code>detected_at</code> for the live alert queue.</li>
+  </ol>
+
+  <pre>SELECT
+  $__timeGroupAlias(ingested_at, '5s'),
+  COUNT(*) AS value
+FROM transactions
+WHERE $__timeFilter(ingested_at)
+GROUP BY 1
+ORDER BY 1;</pre>
+
+  <div class="callout green">
+    <p><strong>Continue with the complete build:</strong> <a href="../lecture16/extension.html">Lecture 16 Extension — Kafka to MySQL to a Real-Time Fraud Dashboard</a> clubs the producer, both consumers, database tables, live queries, and dashboard configuration into one guided lab.</p>
+  </div>
+
+  <h2 id="interpret">Section 5: Management Interpretation</h2>
   <p>Use the completed dashboard to prepare a 60-second fraud-operations briefing:</p>
   <ol>
     <li><strong>State the risk:</strong> What is the flagged rate and flagged transaction value?</li>
@@ -244,7 +283,7 @@ LIMIT 10;</pre>
     <li><strong>Recommend action:</strong> Name one investigation, control, or threshold change.</li>
   </ol>
 
-  <h2 id="review">Section 5: Design Review Checklist</h2>
+  <h2 id="review">Section 6: Design Review Checklist</h2>
   <p>For each dashboard, evaluate:</p>
   <table>
     <tr><th>Question</th><th>What to Look For</th></tr>
@@ -287,8 +326,8 @@ LIMIT 10;</pre>
   </div>
 
   <div class="preview-box">
-    <h3>Preview — Lecture 16: Alerts in Grafana</h3>
-    <p>Configure Grafana alert rules on your dashboards, route notifications to email or Slack, and design an alerting strategy that creates action — not noise.</p>
+    <h3>Preview — Lecture 16: Alerts in Grafana + Live Extension</h3>
+    <p>Configure Grafana alert rules and routing, then run the optional end-to-end extension to watch Kafka transactions and fraud alerts appear in MySQL and Grafana in real time.</p>
   </div>
 
   <div class="page-nav">

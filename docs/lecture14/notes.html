@@ -252,7 +252,8 @@ CREATE TABLE transactions (
   lat DECIMAL(9,4),
   lon DECIMAL(9,4),
   `timestamp` DATETIME,
-  is_fraud VARCHAR(5)
+  is_fraud VARCHAR(5),
+  ingested_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 LOAD DATA INFILE '/var/lib/mysql-files/transactions.csv'
