@@ -109,6 +109,7 @@
       <li><a href="#design">Alert Design Framework</a></li>
       <li><a href="#cases">Case Studies</a></li>
       <li><a href="#summary">Module 4 Summary</a></li>
+      <li><a href="#extension">Live Pipeline Extension</a></li>
       <li><a href="#takeaways">Key Takeaways</a></li>
     </ol>
   </div>
@@ -325,6 +326,12 @@ Module 3 (L11-L13):  SCALE — Windowing, Spark, Flink — enterprise patterns
 Module 4 (L14-L16):  VISUALISE — Grafana dashboards + alert routing
 Module 5 (L17-L20):  PRESENT — Atlas Charts, final project, real architectures</pre>
 
+  <h2 id="extension">Lecture 16 Extension: See the Full Pipeline Live</h2>
+  <p>The alert rules above evaluate data already stored in MySQL. The extension reconnects every course component so students can watch the system operate: the producer publishes, two Kafka consumers persist transactions and alert events, and Grafana refreshes from both tables every five seconds.</p>
+  <div class="callout green">
+    <p><strong>Open the guided extension:</strong> <a href="extension.html">Kafka to MySQL to a Real-Time Fraud Dashboard</a>. It includes the required files, terminal sequence, reset commands, live SQL queries, dashboard layout, and management discussion.</p>
+  </div>
+
   <h2 id="takeaways">Key Takeaways</h2>
   <div class="takeaway-box">
     <h3>✓ Key Takeaways — Lecture 16</h3>
@@ -347,7 +354,7 @@ Module 5 (L17-L20):  PRESENT — Atlas Charts, final project, real architectures
 
   <div class="page-nav">
     <a href="../lecture15/notes.html">← Lecture 15</a>
-    <a href="../index.html">Course Home →</a>
+    <a href="extension.html">Lecture 16 Extension →</a>
   </div>
 </div>
 <script>
