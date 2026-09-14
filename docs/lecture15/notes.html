@@ -238,16 +238,16 @@ LIMIT 10;</pre>
   </ol>
 
   <h2 id="live">Section 4: Live Dashboard Mode</h2>
-  <p>The dashboard above analyses a completed historical dataset. To watch it change while Kafka is running, use the optional MySQL consumers from Lecture 10. One writes every transaction to <code>transactions</code>; the other writes flagged events to <code>fraud_alerts</code>.</p>
+  <p>The dashboard above analyses a completed historical dataset. To watch it change while Kafka is running, use the isolated Lecture 16 Extension files and database. One consumer writes every transaction to <code>sda_course_l16.transactions</code>; the other writes flagged events to <code>sda_course_l16.fraud_alerts</code>.</p>
 
-  <pre>transaction_producer.py
+  <pre>transaction_producer_16.py
           |
           v
-  transactions-topic
+  transactions-topic-l16
        |          |
        v          v
 consumer_store_  consumer_alerts_
-mysql.py         mysql.py
+mysql_16.py      mysql_16.py
        |          |
        v          v
 transactions     fraud_alerts

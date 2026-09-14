@@ -64,17 +64,17 @@
   </table>
 
   <h2 id="architecture">The Complete Architecture</h2>
-  <pre class="pipeline">transactions.csv
+  <pre class="pipeline">  transactions_16.csv
        |
        v
-transaction_producer.py
+  transaction_producer_16.py
        |
        v
-transactions-topic (Kafka)
+  transactions-topic-l16 (Kafka)
        |                         |
        v                         v
-consumer_store_mysql.py     consumer_alerts_mysql.py
-group: mysql-store-group    group: mysql-alert-group
+  consumer_store_mysql_16.py  consumer_alerts_mysql_16.py
+  group: mysql-store-l16      group: mysql-alert-l16
        |                         |
        v                         v
 transactions table          fraud_alerts table
@@ -84,12 +84,12 @@ transactions table          fraud_alerts table
               refresh: 5s</pre>
   <div class="callout green"><p><strong>Business design:</strong> The transaction table answers “what is happening?” The alert table answers “what needs attention?” Separate consumer groups let each workflow receive every Kafka message and evolve independently.</p></div>
 
-  <h3>Download the Lecture 10 Files</h3>
+  <h3>Download the Isolated Lecture 16 Files</h3>
   <div class="files">
-    <a class="file" href="../lecture10/generate_transactions.py" download><strong>generate_transactions.py</strong><span>Creates the deterministic transaction dataset</span></a>
-    <a class="file" href="../lecture10/transaction_producer.py" download><strong>transaction_producer.py</strong><span>Publishes transactions to Kafka</span></a>
-    <a class="file" href="../lecture10/consumer_store_mysql.py" download><strong>consumer_store_mysql.py</strong><span>Persists every transaction with ingestion time</span></a>
-    <a class="file" href="../lecture10/consumer_alerts_mysql.py" download><strong>consumer_alerts_mysql.py</strong><span>Persists flagged alert events</span></a>
+    <a class="file" href="generate_transactions_16.py" download><strong>generate_transactions_16.py</strong><span>Creates transactions_16.csv</span></a>
+    <a class="file" href="transaction_producer_16.py" download><strong>transaction_producer_16.py</strong><span>Publishes to the Lecture 16 Kafka topic</span></a>
+    <a class="file" href="consumer_store_mysql_16.py" download><strong>consumer_store_mysql_16.py</strong><span>Persists every transaction with ingestion time</span></a>
+    <a class="file" href="consumer_alerts_mysql_16.py" download><strong>consumer_alerts_mysql_16.py</strong><span>Persists flagged alert events</span></a>
   </div>
 
   <h2 id="setup">Lab Part 1 — Start a Clean Live Pipeline</h2>
@@ -113,19 +113,19 @@ docker run -d \
 
   <h3>2. Install Python Packages and Generate Data</h3>
   <pre>pip install kafka-python mysql-connector-python
-python generate_transactions.py</pre>
+  python generate_transactions_16.py</pre>
 
   <h3>3. Reset the Demo Tables</h3>
   <p>Use a clean run so counts rise from zero and every student can see the dashboard move.</p>
   <p>Stop any producer or consumer processes left from an earlier run before resetting the tables.</p>
   <pre>docker exec -it sda-mysql mysql -uroot -padmin
 
-CREATE DATABASE IF NOT EXISTS sda_course;
-USE sda_course;
+CREATE DATABASE IF NOT EXISTS sda_course_l16;
+USE sda_course_l16;
 DROP TABLE IF EXISTS fraud_alerts;
 DROP TABLE IF EXISTS transactions;
 CREATE USER IF NOT EXISTS 'grafana'@'%' IDENTIFIED BY 'grafana';
-GRANT SELECT ON sda_course.* TO 'grafana'@'%';
+GRANT SELECT ON sda_course_l16.* TO 'grafana'@'%';
 FLUSH PRIVILEGES;
 exit</pre>
   <div class="callout amber"><p><strong>Classroom-only reset:</strong> Dropping tables deletes prior lab data. Never use this reset pattern on a production database.</p></div>
@@ -133,15 +133,15 @@ exit</pre>
   <h3>4. Run Four Terminals</h3>
   <table>
     <tr><th>Terminal</th><th>Command</th><th>Purpose</th></tr>
-    <tr><td>1</td><td><code>python consumer_store_mysql.py</code></td><td>Create and populate <code>transactions</code></td></tr>
-    <tr><td>2</td><td><code>python consumer_alerts_mysql.py</code></td><td>Create and populate <code>fraud_alerts</code></td></tr>
-    <tr><td>3</td><td><code>python transaction_producer.py</code></td><td>Publish the live stream</td></tr>
-    <tr><td>4</td><td><code>docker exec sda-mysql mysql -uroot -padmin -e "SELECT COUNT(*) FROM sda_course.transactions; SELECT COUNT(*) FROM sda_course.fraud_alerts;"</code></td><td>Optional row-count checkpoint; rerun to see growth</td></tr>
+    <tr><td>1</td><td><code>python consumer_store_mysql_16.py</code></td><td>Create and populate <code>transactions</code></td></tr>
+    <tr><td>2</td><td><code>python consumer_alerts_mysql_16.py</code></td><td>Create and populate <code>fraud_alerts</code></td></tr>
+    <tr><td>3</td><td><code>python transaction_producer_16.py</code></td><td>Publish the live stream</td></tr>
+    <tr><td>4</td><td><code>docker exec sda-mysql mysql -uroot -padmin -e "SELECT COUNT(*) FROM sda_course_l16.transactions; SELECT COUNT(*) FROM sda_course_l16.fraud_alerts;"</code></td><td>Optional row-count checkpoint; rerun to see growth</td></tr>
   </table>
   <p>Start both consumers before the producer. The producer sends approximately three transactions per second at the default delay.</p>
 
   <h2 id="dashboard">Lab Part 2 — Build the Real-Time Dashboard</h2>
-  <p>Open <code>http://localhost:3000</code>. Use the MySQL datasource from Lecture 14: host <code>sda-mysql:3306</code>, database <code>sda_course</code>, user <code>grafana</code>, password <code>grafana</code>.</p>
+  <p>Open <code>http://localhost:3000</code>. Add a separate MySQL datasource for this lab: host <code>sda-mysql:3306</code>, database <code>sda_course_l16</code>, user <code>grafana</code>, password <code>grafana</code>. Name it <code>MySQL — Lecture 16 Live</code>.</p>
   <ol>
     <li>Create a dashboard named <code>Live Fraud Operations — Lecture 16</code>.</li>
     <li>Set the time range to <strong>Last 5 minutes</strong>.</li>
