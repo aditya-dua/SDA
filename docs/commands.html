@@ -69,7 +69,7 @@
     .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
     footer{background:var(--bg2);border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;font-size:.8rem;color:var(--text2);}
     footer a{color:var(--accent);text-decoration:none;}
-    @media(max-width:600px){nav .nav-links{display:none;}.hero{padding:1.75rem 1.25rem;}.shared-panel,.main{padding:0 1rem;}}
+    @media(max-width:600px){nav{padding:0 .75rem}.nav-brand{display:none}.nav-links{gap:.4rem}.nav-links a{font-size:.7rem}#tl{display:none}.theme-btn{padding:5px 8px}.hero{padding:1.75rem 1.25rem}.shared-panel,.main{padding:0 1rem}}
   </style>
 </head>
 <body>
@@ -78,7 +78,8 @@
   <a href="index.html" class="nav-brand"><span class="dot"></span>Streaming Data Analytics</a>
   <div class="nav-links">
     <a href="index.html">Lectures</a>
-    <a href="commands.html" class="active">Command Builder</a>
+    <a href="commands.html" class="active">Commands</a>
+    <a href="transaction-generator.html">Generator</a>
     <a href="submissions.html">Submissions</a>
   </div>
   <div style="display:flex;align-items:center;gap:.75rem;">

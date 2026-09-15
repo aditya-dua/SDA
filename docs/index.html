@@ -191,7 +191,13 @@
       font-size: 0.8rem; color: var(--text2);
     }
     footer a { color: var(--accent); text-decoration: none; }
-    @media (max-width: 600px) {
+    @media (max-width: 760px) {
+      .nav-brand { font-size: 0; }
+      .nav-tag { display: none; }
+      nav { padding: 0 0.75rem; }
+      .nav-right { gap: 0.35rem; }
+      .nav-right a { padding: 4px 7px !important; font-size: 0.72rem !important; }
+      #themeLabel { display: none; }
       .hero { padding: 2.5rem 1.25rem 2rem; }
       main  { padding: 2rem 1.25rem 4rem; }
       .hero-stats { gap: 1.5rem; }
@@ -207,6 +213,7 @@
     <div class="nav-right">
       <span class="nav-tag">MBA · 20 Lectures</span>
       <a href="commands.html" style="font-size:.83rem;font-weight:600;color:var(--text2);text-decoration:none;border:1px solid var(--border);padding:5px 12px;border-radius:8px;transition:all .2s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">⌨️ Commands</a>
+      <a href="transaction-generator.html" style="font-size:.83rem;font-weight:600;color:var(--text2);text-decoration:none;border:1px solid var(--border);padding:5px 12px;border-radius:8px;transition:all .2s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">🧮 Generator</a>
       <a href="submissions.html" style="font-size:.83rem;font-weight:600;color:var(--accent);text-decoration:none;border:1px solid var(--accent);padding:5px 12px;border-radius:8px;transition:all .2s;" onmouseover="this.style.background='var(--accent)';this.style.color='#fff'" onmouseout="this.style.background='';this.style.color='var(--accent)'">Submissions</a>
       <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()">
         <span id="themeIcon">☀️</span>

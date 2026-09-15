@@ -7,9 +7,12 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     :root{--bg:#f6f8fa;--card:#fff;--soft:#eaeef2;--border:#d0d7de;--text:#1f2328;--muted:#57606a;--accent:#8c1515;--green:#166534;--red:#b91c1c}
+    [data-theme="dark"]{--bg:#0d1117;--card:#161b22;--soft:#1c2128;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--accent:#dc2626;--green:#4ade80;--red:#f87171}
     *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.55}
-    nav{height:52px;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;background:var(--card);border-bottom:1px solid var(--border)}
-    nav a{color:var(--muted);text-decoration:none;font-size:.85rem}.badge{font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--green);border:1px solid var(--green);padding:3px 9px;border-radius:12px}
+    nav{height:56px;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;background:var(--card);border-bottom:1px solid var(--border)}
+    .nav-brand{display:flex;align-items:center;gap:10px;font-weight:600;color:var(--text);text-decoration:none}.dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+    .nav-links{display:flex;align-items:center;gap:1.25rem}.nav-links a{color:var(--muted);text-decoration:none;font-size:.85rem}.nav-links a:hover{color:var(--text)}.nav-links a.active{color:var(--accent);font-weight:600}
+    .theme-btn{background:var(--soft);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:6px 12px;cursor:pointer}.badge{font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--green);border:1px solid var(--green);padding:3px 9px;border-radius:12px}
     main{max-width:920px;margin:0 auto;padding:2.5rem 1.5rem 4rem}h1{font-size:clamp(1.8rem,4vw,2.6rem);line-height:1.15;margin:.5rem 0}.subtitle{color:var(--muted);margin:0 0 2rem}
     h2{font-size:1.25rem;margin:2rem 0 .8rem;padding-bottom:.4rem;border-bottom:2px solid var(--accent)}
     .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.2rem}
@@ -19,11 +22,20 @@
     button,.download{display:inline-block;border:0;border-radius:8px;padding:.75rem 1rem;font:600 .9rem Inter;cursor:pointer;text-decoration:none}.primary{background:var(--accent);color:white}.secondary{background:var(--soft);color:var(--text);margin-left:.5rem}
     pre{background:#161b22;color:#e6edf3;border-radius:8px;padding:1rem;overflow:auto;font-family:'JetBrains Mono',monospace;font-size:.8rem}
     ul{color:var(--muted);padding-left:1.25rem}.note{border-left:3px solid var(--green);background:#f0fdf4;padding:.8rem 1rem;color:#14532d;border-radius:0 8px 8px 0}
-    @media(max-width:700px){.grid,.summary{grid-template-columns:1fr}}
+    @media(max-width:700px){.grid,.summary{grid-template-columns:1fr}.nav-brand{display:none}.nav-links{gap:.65rem}.nav-links a{font-size:.75rem}nav{padding:0 1rem}.theme-btn{padding:5px 8px}}
   </style>
 </head>
 <body>
-<nav><a href="index.html">← Lecture 10</a><span class="badge">Browser-only builder</span></nav>
+<nav>
+  <a href="index.html" class="nav-brand"><span class="dot"></span>Streaming Data Analytics</a>
+  <div class="nav-links">
+    <a href="index.html">Lectures</a>
+    <a href="commands.html">Commands</a>
+    <a href="transaction-generator.html" class="active">Generator</a>
+    <a href="submissions.html">Submissions</a>
+  </div>
+  <button class="theme-btn" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
+</nav>
 <main>
   <div class="badge">Optional Course Tool</div>
   <h1>Configurable Transaction Generator</h1>
@@ -113,6 +125,16 @@
 const ids = ['total','fraudMode','fraudValue','allocationMode','impossible','unusual','rapid'];
 const elements = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
 
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('themeBtn').textContent = theme === 'dark' ? '☀️ Light' : '🌙 Dark';
+}
+function toggleTheme() {
+  const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('sda-theme', theme);
+  applyTheme(theme);
+}
+
 function allocate(total, values) {
   const raw = values.map(value => total * value / 100);
   const counts = raw.map(Math.floor);
@@ -190,6 +212,7 @@ document.getElementById('download').addEventListener('click', () => {
   URL.revokeObjectURL(link.href);
 });
 updateLabels();
+applyTheme(localStorage.getItem('sda-theme') || 'light');
 </script>
 </body>
 </html>
