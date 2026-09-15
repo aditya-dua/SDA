@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transaction Generator Builder | Streaming Data Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root{--bg:#f6f8fa;--card:#fff;--soft:#eaeef2;--border:#d0d7de;--text:#1f2328;--muted:#57606a;--accent:#8c1515;--green:#166534;--red:#b91c1c}
+    *{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.55}
+    nav{height:52px;padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;background:var(--card);border-bottom:1px solid var(--border)}
+    nav a{color:var(--muted);text-decoration:none;font-size:.85rem}.badge{font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--green);border:1px solid var(--green);padding:3px 9px;border-radius:12px}
+    main{max-width:920px;margin:0 auto;padding:2.5rem 1.5rem 4rem}h1{font-size:clamp(1.8rem,4vw,2.6rem);line-height:1.15;margin:.5rem 0}.subtitle{color:var(--muted);margin:0 0 2rem}
+    h2{font-size:1.25rem;margin:2rem 0 .8rem;padding-bottom:.4rem;border-bottom:2px solid var(--accent)}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.2rem}
+    label{display:block;font-size:.8rem;font-weight:600;margin:.8rem 0 .3rem}input,select{width:100%;padding:.65rem .75rem;border:1px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text);font:inherit}
+    .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem}.metric{background:var(--soft);border-radius:8px;padding:.8rem}.metric span{display:block;font-size:.72rem;color:var(--muted)}.metric strong{font-size:1.15rem}
+    .status{margin:1rem 0;padding:.8rem 1rem;border-radius:8px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412}.status.ok{background:#f0fdf4;border-color:#86efac;color:var(--green)}
+    button,.download{display:inline-block;border:0;border-radius:8px;padding:.75rem 1rem;font:600 .9rem Inter;cursor:pointer;text-decoration:none}.primary{background:var(--accent);color:white}.secondary{background:var(--soft);color:var(--text);margin-left:.5rem}
+    pre{background:#161b22;color:#e6edf3;border-radius:8px;padding:1rem;overflow:auto;font-family:'JetBrains Mono',monospace;font-size:.8rem}
+    ul{color:var(--muted);padding-left:1.25rem}.note{border-left:3px solid var(--green);background:#f0fdf4;padding:.8rem 1rem;color:#14532d;border-radius:0 8px 8px 0}
+    @media(max-width:700px){.grid,.summary{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<nav><a href="index.html">← Lecture 10</a><span class="badge">Browser-only builder</span></nav>
+<main>
+  <div class="badge">Optional Course Tool</div>
+  <h1>Configurable Transaction Generator</h1>
+  <p class="subtitle">Choose dataset size and the exact fraud mix, then download a Python configuration file. No server, login, or uploaded data is required.</p>
+
+  <div class="grid">
+    <section class="card">
+      <h2>1. Dataset Size</h2>
+      <label for="total">Total transactions</label>
+      <input id="total" type="number" min="1" max="1000000" value="20000" />
+
+      <label for="fraudMode">Specify total fraud as</label>
+      <select id="fraudMode">
+        <option value="percent">Percentage</option>
+        <option value="count">Exact count</option>
+      </select>
+
+      <label id="fraudLabel" for="fraudValue">Fraud percentage</label>
+      <input id="fraudValue" type="number" min="0" step="0.1" value="5" />
+    </section>
+
+    <section class="card">
+      <h2>2. Fraud Mix</h2>
+      <label for="allocationMode">Specify each fraud type as</label>
+      <select id="allocationMode">
+        <option value="percent">Percentage of fraud</option>
+        <option value="count">Exact count</option>
+      </select>
+
+      <label for="impossible">Impossible travel</label>
+      <input id="impossible" type="number" min="0" step="0.1" value="30" />
+      <label for="unusual">Unusual amount</label>
+      <input id="unusual" type="number" min="0" step="0.1" value="30" />
+      <label for="rapid">Rapid fire</label>
+      <input id="rapid" type="number" min="0" step="0.1" value="40" />
+    </section>
+  </div>
+
+  <h2>3. Validated Output</h2>
+  <div class="summary">
+    <div class="metric"><span>Normal</span><strong id="normalSummary">19,000</strong></div>
+    <div class="metric"><span>Fraud</span><strong id="fraudSummary">1,000</strong></div>
+    <div class="metric"><span>Total</span><strong id="totalSummary">20,000</strong></div>
+    <div class="metric"><span>Impossible travel</span><strong id="impossibleSummary">300</strong></div>
+    <div class="metric"><span>Unusual amount</span><strong id="unusualSummary">300</strong></div>
+    <div class="metric"><span>Rapid fire</span><strong id="rapidSummary">400</strong></div>
+  </div>
+  <div class="status ok" id="status">Configuration is valid.</div>
+  <button class="primary" id="download">Download configured Python file</button>
+  <a class="download secondary" href="generate_transactions_custom.py" download>Download base generator</a>
+
+  <h2>How to Run</h2>
+  <ol>
+    <li>Download both files into the same folder.</li>
+    <li>Run the downloaded configuration: <code>python generate_transactions_config.py</code>.</li>
+    <li>The generator creates <code>transactions_custom.csv</code>.</li>
+    <li>Repeated runs continue transaction IDs using a local sequence file, so database primary keys do not collide.</li>
+  </ol>
+  <pre id="preview"></pre>
+
+  <h2>What Simple HTML Can and Cannot Do</h2>
+  <div class="grid">
+    <div class="card">
+      <h3>Possible without a backend</h3>
+      <ul>
+        <li>Collect counts and percentages</li>
+        <li>Validate totals instantly in JavaScript</li>
+        <li>Calculate exact fraud-type counts</li>
+        <li>Generate and download a Python configuration file</li>
+        <li>Remember form choices using browser storage</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Not possible directly</h3>
+      <ul>
+        <li>Run Python on the student's computer</li>
+        <li>Write directly into MySQL or Kafka</li>
+        <li>Read arbitrary local files without user selection</li>
+        <li>Maintain one global transaction sequence across devices</li>
+        <li>Generate very large files reliably on low-memory browsers</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note"><strong>Why two files?</strong> The HTML safely handles configuration and validation. The reusable Python generator performs the actual data creation efficiently, including 20,000+ rows and collision-safe ID continuation.</p>
+</main>
+<script>
+const ids = ['total','fraudMode','fraudValue','allocationMode','impossible','unusual','rapid'];
+const elements = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
+
+function allocate(total, values) {
+  const raw = values.map(value => total * value / 100);
+  const counts = raw.map(Math.floor);
+  let remaining = total - counts.reduce((a,b) => a+b, 0);
+  const order = raw.map((value,index) => ({index,fraction:value-counts[index]}))
+    .sort((a,b) => b.fraction-a.fraction);
+  for (let i=0; i<remaining; i++) counts[order[i].index]++;
+  return counts;
+}
+
+function calculate() {
+  const total = Number(elements.total.value);
+  const fraudValue = Number(elements.fraudValue.value);
+  const mix = [elements.impossible,elements.unusual,elements.rapid].map(el => Number(el.value));
+  const fraud = elements.fraudMode.value === 'percent' ? Math.round(total * fraudValue / 100) : Math.round(fraudValue);
+  const errors = [];
+  if (!Number.isInteger(total) || total < 1 || total > 1000000) errors.push('Total must be an integer from 1 to 1,000,000.');
+  if (fraud < 0 || fraud > total) errors.push('Fraud must be between zero and the total transaction count.');
+  if (elements.fraudMode.value === 'percent' && (fraudValue < 0 || fraudValue > 100)) errors.push('Fraud percentage must be between 0 and 100.');
+  if (mix.some(value => value < 0 || !Number.isFinite(value))) errors.push('Fraud-type values cannot be negative.');
+
+  let counts = mix.map(Math.round);
+  if (elements.allocationMode.value === 'percent') {
+    if (Math.abs(mix.reduce((a,b)=>a+b,0)-100) > 0.0001) errors.push('Fraud-type percentages must add up to 100.');
+    counts = allocate(fraud, mix);
+  } else if (counts.reduce((a,b)=>a+b,0) !== fraud) {
+    errors.push('Fraud-type counts must add up to the total fraud count.');
+  }
+
+  const [impossible, unusual, rapid] = counts;
+  document.getElementById('normalSummary').textContent = Math.max(0,total-fraud).toLocaleString();
+  document.getElementById('fraudSummary').textContent = Math.max(0,fraud).toLocaleString();
+  document.getElementById('totalSummary').textContent = Math.max(0,total).toLocaleString();
+  document.getElementById('impossibleSummary').textContent = (impossible || 0).toLocaleString();
+  document.getElementById('unusualSummary').textContent = (unusual || 0).toLocaleString();
+  document.getElementById('rapidSummary').textContent = (rapid || 0).toLocaleString();
+
+  const code = `from generate_transactions_custom import GeneratorConfig, generate_transactions
+
+config = GeneratorConfig(
+    total=${total},
+    fraud_count=${fraud},
+    impossible_count=${impossible || 0},
+    unusual_count=${unusual || 0},
+    rapid_count=${rapid || 0},
+    output_file="transactions_custom.csv",
+    seed=42,
+)
+
+generate_transactions(config)
+`;
+  document.getElementById('preview').textContent = code;
+  const status = document.getElementById('status');
+  status.textContent = errors.length ? errors.join(' ') : 'Configuration is valid.';
+  status.className = errors.length ? 'status' : 'status ok';
+  document.getElementById('download').disabled = errors.length > 0;
+  return {valid: errors.length === 0, code};
+}
+
+function updateLabels() {
+  document.getElementById('fraudLabel').textContent =
+    elements.fraudMode.value === 'percent' ? 'Fraud percentage' : 'Fraud count';
+  calculate();
+}
+
+ids.forEach(id => elements[id].addEventListener('input', updateLabels));
+document.getElementById('download').addEventListener('click', () => {
+  const result = calculate();
+  if (!result.valid) return;
+  const blob = new Blob([result.code], {type:'text/x-python'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'generate_transactions_config.py';
+  link.click();
+  URL.revokeObjectURL(link.href);
+});
+updateLabels();
+</script>
+</body>
+</html>

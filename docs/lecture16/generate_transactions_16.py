@@ -9,11 +9,13 @@ Output: transactions_16.csv
 import csv
 import random
 from datetime import datetime, timedelta
+from pathlib import Path
 
 
 random.seed(16)
 
-OUTPUT_FILE = "transactions_16.csv"
+OUTPUT_FILE = Path("transactions_16.csv")
+SEQUENCE_FILE = Path(".transactions_sequence_l16")
 USERS = [
     ("USR-161", "Aarav Sharma", "4521"),
     ("USR-162", "Priya Mehta", "7834"),
@@ -44,6 +46,23 @@ MERCHANTS = [
     "Apollo Pharmacy",
 ]
 BASE_TIME = datetime(2025, 8, 16, 9, 0, 0)
+
+
+def next_transaction_number():
+    candidates = [0]
+    if SEQUENCE_FILE.exists():
+        try:
+            candidates.append(int(SEQUENCE_FILE.read_text().strip()))
+        except ValueError:
+            pass
+    if OUTPUT_FILE.exists():
+        with OUTPUT_FILE.open(newline="") as csv_file:
+            for row in csv.DictReader(csv_file):
+                try:
+                    candidates.append(int(row["transaction_id"].rsplit("-", 1)[1]))
+                except (KeyError, ValueError):
+                    continue
+    return max(candidates) + 1
 
 
 def make_row(user, amount, merchant, city, offset_seconds, is_fraud):
@@ -129,8 +148,11 @@ for user in USERS[:5]:
         )
 
 rows.sort(key=lambda row: row["timestamp"])
+start_transaction_number = next_transaction_number()
 for index, row in enumerate(rows, 1):
-    row["transaction_id"] = f"L16-TXN-{index:04d}"
+    row["transaction_id"] = (
+        f"L16-TXN-{start_transaction_number + index - 1:05d}"
+    )
 
 fieldnames = [
     "transaction_id",
@@ -146,12 +168,18 @@ fieldnames = [
     "timestamp",
     "is_fraud",
 ]
-with open(OUTPUT_FILE, "w", newline="") as csv_file:
+with OUTPUT_FILE.open("w", newline="") as csv_file:
     writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
     writer.writeheader()
     writer.writerows(rows)
 
+last_transaction_number = start_transaction_number + len(rows) - 1
+SEQUENCE_FILE.write_text(str(last_transaction_number))
 flagged = sum(row["is_fraud"] == "true" for row in rows)
 print(f"Generated {len(rows)} transactions -> {OUTPUT_FILE}")
+print(
+    f"ID range: L16-TXN-{start_transaction_number:05d} "
+    f"to L16-TXN-{last_transaction_number:05d}"
+)
 print(f"Normal: {len(rows) - flagged} | Flagged: {flagged}")
 print("Run next: python transaction_producer_16.py")

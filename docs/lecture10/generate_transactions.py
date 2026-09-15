@@ -3,7 +3,7 @@ generate_transactions.py
 Lecture 10 — End-to-End Capstone: Banking Fraud Detection
 Streaming Data Analytics | MBA Course
 
-Generates a 2000-row synthetic banking transaction dataset with
+Generates a 2,003-row synthetic banking transaction dataset with
 ~5% deliberately planted fraud patterns for classroom use.
 
 Usage:
@@ -16,8 +16,30 @@ import csv
 import random
 import math
 from datetime import datetime, timedelta
+from pathlib import Path
 
 random.seed(42)
+
+OUTPUT_FILE = Path("transactions.csv")
+SEQUENCE_FILE = Path(".transactions_sequence")
+
+
+def next_transaction_number():
+    """Continue after the last generated ID, even when the CSV was moved."""
+    candidates = [0]
+    if SEQUENCE_FILE.exists():
+        try:
+            candidates.append(int(SEQUENCE_FILE.read_text().strip()))
+        except ValueError:
+            pass
+    if OUTPUT_FILE.exists():
+        with OUTPUT_FILE.open(newline="") as csv_file:
+            for row in csv.DictReader(csv_file):
+                try:
+                    candidates.append(int(row["transaction_id"].rsplit("-", 1)[1]))
+                except (KeyError, ValueError):
+                    continue
+    return max(candidates) + 1
 
 # ---------------------------------------------------------------------------
 # 50 Synthetic Users
@@ -222,22 +244,30 @@ for fu in rapid_users:
 # Sort chronologically
 transactions.sort(key=lambda x: x["timestamp"])
 
-# Renumber IDs after sort
+# Renumber IDs after sort, continuing from the previous generated batch.
+start_transaction_number = next_transaction_number()
 for i, t in enumerate(transactions, 1):
-    t["transaction_id"] = f"TXN-{i:05d}"
+    t["transaction_id"] = f"TXN-{start_transaction_number + i - 1:05d}"
 
 # Write CSV
 fieldnames = ["transaction_id","user_id","user_name","card_last4",
               "amount","merchant","city","country","lat","lon",
               "timestamp","is_fraud"]
 
-with open("transactions.csv", "w", newline="") as f:
+with OUTPUT_FILE.open("w", newline="") as f:
     writer = csv.DictWriter(f, fieldnames=fieldnames)
     writer.writeheader()
     writer.writerows(transactions)
 
+last_transaction_number = start_transaction_number + len(transactions) - 1
+SEQUENCE_FILE.write_text(str(last_transaction_number))
+
 legitimate = len(transactions) - fraud_count
-print(f"✅ Generated {len(transactions)} transactions → transactions.csv")
+print(f"✅ Generated {len(transactions)} transactions → {OUTPUT_FILE}")
+print(
+    f"   ID range       : TXN-{start_transaction_number:05d} "
+    f"to TXN-{last_transaction_number:05d}"
+)
 print(f"   Legitimate    : {legitimate}")
 print(f"   Fraud planted : {fraud_count}")
 print(f"   Fraud rate    : {fraud_count/len(transactions)*100:.1f}%")
