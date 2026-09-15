@@ -213,7 +213,7 @@
         <tbody>
           <tr><td>0 – 10</td><td>Module 2 recap — full path from L6 → L9</td><td>Discussion</td></tr>
           <tr><td>10 – 20</td><td>Why fraud detection? Architecture overview</td><td>Lecture</td></tr>
-          <tr><td>20 – 30</td><td>The dataset — 2000 synthetic transactions, 3 fraud patterns planted</td><td>Demo</td></tr>
+          <tr><td>20 – 30</td><td>The dataset — 2,003 synthetic transactions, 3 fraud patterns planted</td><td>Demo</td></tr>
           <tr><td>30 – 45</td><td>Step 1 — Generate data + Run producer</td><td>Live build</td></tr>
           <tr><td>45 – 60</td><td>Step 2 — choose MongoDB or MySQL storage consumer</td><td>Live build</td></tr>
           <tr><td>60 – 80</td><td>Step 3 — consumer_fraud.py (3 rules + MongoDB enrichment)</td><td>Live build</td></tr>
@@ -267,7 +267,7 @@
 
       <div class="arch-box">
         <div class="arch-row">
-          <div class="arch-node"><div class="an-label">generate_transactions.py</div><div class="an-sub">2000 rows · 3 fraud patterns</div></div>
+          <div class="arch-node"><div class="an-label">generate_transactions.py</div><div class="an-sub">2,003 rows · 3 fraud patterns</div></div>
           <span class="arch-arrow">→</span>
           <div class="arch-node"><div class="an-label">transactions.csv</div><div class="an-sub">synthetic dataset</div></div>
           <span class="arch-arrow">→</span>
@@ -302,7 +302,7 @@
         <span class="slide-tag theory">Dataset</span>
       </div>
       <h2>The <span>Synthetic Dataset</span></h2>
-      <p>Run <code>generate_transactions.py</code> to create <code>transactions.csv</code> — 2000 rows, 50 fake users, 8 Indian cities.</p>
+      <p>Run <code>generate_transactions.py</code> to create <code>transactions.csv</code> — 2,003 rows, 50 fake users, 8 Indian cities.</p>
 
       <table>
         <thead><tr><th>Field</th><th>Example</th><th>Notes</th></tr></thead>
@@ -325,6 +325,13 @@
           <div class="rc-cond">Mumbai 10:00 → London 10:45 (7,189 km in 45 min)</div>
           <div class="rc-sig">10 users affected</div>
         </div>
+
+        <div class="callout green">
+          <p><strong>Safe repeated runs:</strong> The generator stores the last issued number in <code>.transactions_sequence</code>. If the first batch ends at <code>TXN-02003</code>, the next batch starts at <code>TXN-02004</code>. The CSV contains the latest batch, while IDs continue to avoid MySQL primary-key conflicts.</p>
+        </div>
+
+        <h3>Need 20,000 or a Custom Fraud Mix?</h3>
+        <p>Open the <a href="transaction-generator.html"><strong>Configurable Transaction Generator</strong></a>. Choose the total rows, total fraud as count or percentage, and the count or percentage for each fraud type. The browser validates the allocation and downloads a Python configuration file.</p>
         <div class="rule-card">
           <div class="rc-num">Pattern 2</div>
           <div class="rc-name">Amount Spike</div>
@@ -350,8 +357,9 @@
 
       <div class="code-header"><span class="code-lang">bash · Terminal 1</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div>
       <pre><code>python generate_transactions.py
-<span class="t-ok cm"># ✅ Generated 2000 transactions → transactions.csv
-#    Legitimate: 1903  |  Fraud planted: 97</span>
+<span class="t-ok cm"># ✅ Generated 2003 transactions → transactions.csv
+#    Legitimate: 1927  |  Fraud planted: 76
+#    Next run continues after the displayed ID range</span>
 
 python transaction_producer.py</code></pre>
 
@@ -540,8 +548,18 @@ docker exec -it sda-mysql mysql -uroot -padmin \
       <div class="download-grid">
         <a href="generate_transactions.py" download class="download-card">
           <span class="dl-icon">🗄️</span>
-          <div class="dl-info"><div class="dl-name">generate_transactions.py</div><div class="dl-desc">Creates 2000-row synthetic CSV with planted fraud</div></div>
+          <div class="dl-info"><div class="dl-name">generate_transactions.py</div><div class="dl-desc">Creates 2,003-row synthetic CSV with planted fraud</div></div>
           <span class="dl-badge">.py</span>
+        </a>
+        <a href="generate_transactions_custom.py" download class="download-card">
+          <span class="dl-icon">⚙️</span>
+          <div class="dl-info"><div class="dl-name">generate_transactions_custom.py</div><div class="dl-desc">Interactive or CLI generator for 20,000+ rows</div></div>
+          <span class="dl-badge">.py</span>
+        </a>
+        <a href="transaction-generator.html" class="download-card">
+          <span class="dl-icon">🧮</span>
+          <div class="dl-info"><div class="dl-name">Transaction Generator Builder</div><div class="dl-desc">Choose totals and fraud mix in the browser</div></div>
+          <span class="dl-badge">HTML</span>
         </a>
         <a href="transaction_producer.py" download class="download-card">
           <span class="dl-icon">📡</span>
