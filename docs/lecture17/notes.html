@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lecture 17 — Multi-Source Surge Pricing | Streaming Data Analytics</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root{--bg:#0d1117;--bg2:#161b22;--bg3:#1c2128;--border:#30363d;--text:#e6edf3;--text2:#8b949e;--accent:#b91c1c;--green:#16a34a;--green-bg:rgba(22,163,74,.12);--amber:#d97706;--blue:#2563eb}
+    [data-theme="light"]{--bg:#f6f8fa;--bg2:#fff;--bg3:#eaeef2;--border:#d0d7de;--text:#1a1a2e;--text2:#57606a;--accent:#8c1515;--green:#166534;--green-bg:rgba(22,101,52,.08);--amber:#92400e;--blue:#1d4ed8}
+    *{box-sizing:border-box;margin:0;padding:0}body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7}
+    nav{position:sticky;top:0;z-index:10;background:var(--bg2);border-bottom:1px solid var(--border);min-height:52px;padding:.45rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+    .nav-left,.nav-right{display:flex;align-items:center;gap:.6rem}.nav-home,.tool{font-size:.8rem;color:var(--text2);text-decoration:none}.tool{border:1px solid var(--border);padding:4px 8px;border-radius:6px}.tool:hover,.nav-home:hover{color:var(--accent);border-color:var(--accent)}
+    .nav-title{font-size:.85rem;font-weight:600}.badge{font-size:.68rem;font-weight:700;text-transform:uppercase;color:var(--green);border:1px solid var(--green);padding:3px 8px;border-radius:12px}.theme-btn{background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:7px;padding:5px 9px;cursor:pointer}
+    .wrap{max-width:900px;margin:0 auto;padding:2.5rem 1.5rem 4rem}.lec-label{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:4px 14px;border-radius:20px;margin-bottom:1rem}
+    h1{font-size:clamp(1.7rem,4vw,2.55rem);line-height:1.2;margin-bottom:.5rem}h2{font-size:1.35rem;margin:2.5rem 0 .75rem;padding-bottom:.4rem;border-bottom:2px solid var(--accent)}h3{font-size:1.05rem;margin:1.5rem 0 .5rem}
+    p{font-size:.95rem;color:var(--text2);margin-bottom:.75rem}p strong,li strong{color:var(--text)}.subtitle{font-size:1rem}.meta{display:flex;gap:1.5rem;flex-wrap:wrap;color:var(--text2);font-size:.82rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);margin-bottom:2rem}
+    ul,ol{padding-left:1.4rem;margin-bottom:.9rem}li{font-size:.93rem;color:var(--text2);margin-bottom:.35rem}
+    table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.84rem}th{background:var(--bg3);text-align:left;padding:.6rem .8rem;font-size:.75rem;text-transform:uppercase;color:var(--text2);border:1px solid var(--border)}td{padding:.6rem .8rem;border:1px solid var(--border);color:var(--text2);vertical-align:top}
+    pre{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem 1.2rem;overflow-x:auto;margin:1rem 0;font-family:'JetBrains Mono',monospace;font-size:.79rem;line-height:1.65;color:var(--text)}
+    code{font-family:'JetBrains Mono',monospace;font-size:.88em}.callout{border-left:3px solid var(--accent);background:rgba(185,28,28,.06);padding:.9rem 1.1rem;margin:1rem 0;border-radius:0 8px 8px 0}.callout.green{border-color:var(--green);background:var(--green-bg)}.callout.amber{border-color:var(--amber);background:rgba(217,119,6,.06)}.callout p{margin:0;color:var(--text)}
+    .toc{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:1.2rem 1.5rem}.toc a,a{color:var(--accent)}.pipeline{text-align:center;font-family:'JetBrains Mono',monospace}
+    .files,.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:.75rem;margin:1rem 0}.file,.card{display:block;text-decoration:none;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:1rem}.file strong,.card strong{display:block;color:var(--text)}.file span,.card span{font-size:.78rem;color:var(--text2)}
+    .formula{background:var(--bg3);border:1px solid var(--blue);border-radius:10px;padding:1rem 1.2rem;font-family:'JetBrains Mono',monospace;color:var(--text);margin:1rem 0}.page-nav{display:flex;justify-content:space-between;gap:1rem;margin-top:2.5rem;padding-top:1.25rem;border-top:1px solid var(--border)}.page-nav a{text-decoration:none;font-size:.88rem;font-weight:600;padding:.55rem .85rem;border:1px solid var(--border);border-radius:8px;background:var(--bg2)}
+    @media(max-width:760px){.tool,.badge{display:none}.nav-title{font-size:.75rem}.wrap{padding:2rem 1rem 4rem}}
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-left"><a href="../index.html" class="nav-home">← Course Home</a><span>/</span><span class="nav-title">Lecture 17</span></div>
+  <div class="nav-right">
+    <a class="tool" href="../commands.html">Commands</a>
+    <a class="tool" href="../transaction-generator.html">Generator</a>
+    <a class="tool" href="../submissions.html">Submissions</a>
+    <span class="badge">Module 5 Project</span>
+    <button class="theme-btn" onclick="toggleTheme()">🌙 Dark</button>
+  </div>
+</nav>
+<main class="wrap">
+  <div class="lec-label">Module 5 · Lecture 17</div>
+  <h1>End-to-End Multi-Source Surge Pricing</h1>
+  <p class="subtitle">Demand + driver supply + weather, traffic, and events → explainable pricing decision</p>
+  <div class="meta"><span>⏱ <strong>90 minutes</strong></span><span>📍 <strong>Prerequisites:</strong> Kafka, Python consumers, MySQL, Grafana</span><span>🎯 <strong>Outcome:</strong> Live zone-pricing dashboard</span></div>
+
+  <div class="callout amber"><p><strong>Educational model:</strong> This project demonstrates the decision architecture behind dynamic pricing. It is not Uber's proprietary algorithm, does not claim to reproduce Uber prices, and deliberately uses transparent weights so students can debate them.</p></div>
+
+  <div class="toc">
+    <strong>Contents</strong>
+    <ol>
+      <li><a href="#outcomes">Learning outcomes and timeline</a></li>
+      <li><a href="#case">Business case and data sources</a></li>
+      <li><a href="#architecture">Architecture and files</a></li>
+      <li><a href="#logic">Pricing logic and guardrails</a></li>
+      <li><a href="#run">Run the end-to-end pipeline</a></li>
+      <li><a href="#dashboard">Build the live Grafana dashboard</a></li>
+      <li><a href="#decide">Management decisions, fairness, and troubleshooting</a></li>
+    </ol>
+  </div>
+
+  <h2 id="outcomes">Learning Outcomes and Timeline</h2>
+  <ul>
+    <li>Explain why a pricing decision needs multiple live sources rather than demand alone.</li>
+    <li>Join demand, supply, and context streams into zone-level state.</li>
+    <li>Read and challenge an explainable surge-pricing formula.</li>
+    <li>Use a dashboard to separate a genuine demand shock from a data-quality problem.</li>
+    <li>Recommend pricing guardrails based on customer, driver, and regulatory impact.</li>
+  </ul>
+  <table>
+    <tr><th>Time</th><th>Segment</th><th>Output</th></tr>
+    <tr><td>0–10</td><td>Business problem</td><td>Why demand-only pricing fails</td></tr>
+    <tr><td>10–25</td><td>Architecture + formula</td><td>Source map and pricing policy</td></tr>
+    <tr><td>25–40</td><td>Start the pipeline</td><td>Three live Kafka sources</td></tr>
+    <tr><td>40–65</td><td>Grafana build</td><td>Five-panel pricing control room</td></tr>
+    <tr><td>65–78</td><td>Scenario observation</td><td>Normal → surge → recovery evidence</td></tr>
+    <tr><td>78–88</td><td>Policy challenge</td><td>Revised weights or guardrails</td></tr>
+    <tr><td>88–90</td><td>Briefing</td><td>60-second management recommendation</td></tr>
+  </table>
+
+  <h2 id="case">Section 1: The Business Case</h2>
+  <p>A ride platform must balance two competing outcomes: riders need cars quickly, while drivers need a reason to move toward high-demand zones. A multiplier can help rebalance the market—but a weak rule can create unfair prices, false scarcity, or reputational risk.</p>
+  <div class="cards">
+    <div class="card"><strong>Demand source</strong><span>Ride requests by zone. Answers: how many riders currently want a trip?</span></div>
+    <div class="card"><strong>Supply source</strong><span>Available and occupied drivers. Answers: how much capacity can respond?</span></div>
+    <div class="card"><strong>Context source</strong><span>Rain, traffic, and event intensity. Answers: why might matching be difficult?</span></div>
+  </div>
+
+  <h3>The 60-Second Scenario</h3>
+  <table>
+    <tr><th>Phase</th><th>Seconds</th><th>What Changes</th><th>Expected Decision</th></tr>
+    <tr><td><strong>Normal</strong></td><td>0–19</td><td>Balanced requests and drivers; light traffic</td><td>Multiplier stays near 1.0×</td></tr>
+    <tr><td><strong>Surge</strong></td><td>20–44</td><td>Concert ends during heavy rain; CBD and station demand rises while available drivers fall</td><td>CBD rises fastest, but never above 2.5×</td></tr>
+    <tr><td><strong>Recovery</strong></td><td>45–59</td><td>Rain reduces and drivers return</td><td>Multiplier declines gradually, not instantly</td></tr>
+  </table>
+
+  <h2 id="architecture">Section 2: Architecture and Files</h2>
+  <pre class="pipeline">ride_requests_17.csv      driver_supply_17.csv      zone_context_17.csv
+          |                         |                         |
+          v                         v                         v
+ride_request_producer   driver_supply_producer     context_producer
+          |                         |                         |
+ride-requests-l17       driver-supply-l17          zone-context-l17
+          \_________________________|_________________________/
+                                    |
+                                    v
+                      surge_pricing_consumer_17.py
+                       10-second zone state + formula
+                                    |
+                                    v
+                 MySQL: sda_course_l17 (4 audit tables)
+                                    |
+                                    v
+                         Grafana pricing dashboard</pre>
+
+  <div class="callout green"><p><strong>Why separate topics?</strong> Demand, supply, and context have different owners, update rates, and failure modes. Kafka lets the pricing engine consume them together without forcing the source teams into one application.</p></div>
+
+  <h3>Download Project Files</h3>
+  <div class="files">
+    <a class="file" href="generate_surge_data_17.py" download><strong>generate_surge_data_17.py</strong><span>Creates all three source datasets</span></a>
+    <a class="file" href="ride_request_producer_17.py" download><strong>ride_request_producer_17.py</strong><span>Demand producer</span></a>
+    <a class="file" href="driver_supply_producer_17.py" download><strong>driver_supply_producer_17.py</strong><span>Supply producer</span></a>
+    <a class="file" href="context_producer_17.py" download><strong>context_producer_17.py</strong><span>Weather, traffic, and event producer</span></a>
+    <a class="file" href="surge_pricing_logic_17.py" download><strong>surge_pricing_logic_17.py</strong><span>Pure explainable pricing formula</span></a>
+    <a class="file" href="surge_pricing_consumer_17.py" download><strong>surge_pricing_consumer_17.py</strong><span>Multi-topic state, MySQL, and decisions</span></a>
+  </div>
+
+  <h2 id="logic">Section 3: Pricing Logic and Guardrails</h2>
+  <p>For each zone, the consumer counts requests received in the last 10 seconds, combines the latest driver supply and context, then calculates:</p>
+  <div class="formula">ratio = requests_in_last_10_seconds / max(available_drivers, 1)
+
+demand adjustment  = max(ratio - 1, 0) × 0.35
+weather adjustment = rain intensity × 0.20
+traffic adjustment = max(traffic index - 0.50, 0) × 0.30
+event adjustment   = event intensity × 0.25
+
+raw multiplier = 1 + all adjustments
+capped target = clamp(raw, 1.0, 2.5)
+final multiplier moves toward the target by at most ±0.20</div>
+
+  <table>
+    <tr><th>Guardrail</th><th>Management Purpose</th></tr>
+    <tr><td>Minimum 1.0×</td><td>This classroom model does not apply discounts.</td></tr>
+    <tr><td>Maximum 2.5×</td><td>Limits extreme customer impact during shocks.</td></tr>
+    <tr><td>±0.20 per decision</td><td>Avoids abrupt jumps caused by one update.</td></tr>
+    <tr><td>Visible components</td><td>Every decision stores the uncapped proposal, capped/rate-limited result, factor contributions, and a human-readable reason.</td></tr>
+    <tr><td>Isolated database</td><td><code>sda_course_l17</code> cannot overwrite Lecture 10 or 16 data.</td></tr>
+  </table>
+
+  <div class="callout"><p><strong>Decision question:</strong> Should rain increase price when demand remains below supply? The current formula says “slightly.” A team could instead use context only to explain demand pressure, not directly change price. There is no neutral choice—only a policy with consequences.</p></div>
+
+  <h2 id="run">Section 4: Run the End-to-End Pipeline</h2>
+  <h3>1. Start Existing Infrastructure</h3>
+  <pre>docker start sda-mysql grafana
+
+# Kafka and ZooKeeper should also be running from earlier lectures.
+pip install kafka-python mysql-connector-python</pre>
+  <p>If MySQL or Grafana has not been created, use the Docker setup from Lecture 16. The consumer creates the new database and grants the existing <code>grafana</code> user read-only access.</p>
+
+  <h3>2. Generate the Three Sources</h3>
+  <pre>python generate_surge_data_17.py
+
+# Expected:
+# Ride requests : 735
+# Supply updates: 300
+# Context rows  : 300</pre>
+  <p>Every run receives a timestamp-based run ID, so event primary keys do not conflict with previous classroom runs.</p>
+  <div class="callout green"><p><strong>Scenario checkpoint:</strong> With the default policy, the simulated peak is 2.5× in the Central Business District and Railway Station, about 1.41× at the Airport, and about 1.21× in the Tech Park and Residential zone.</p></div>
+
+  <h3>3. Optional Clean Reset</h3>
+  <pre>docker exec -it sda-mysql mysql -uroot -padmin \
+  -e "DROP DATABASE IF EXISTS sda_course_l17;"</pre>
+  <div class="callout amber"><p><strong>Classroom only:</strong> This deletes previous Lecture 17 evidence. Never use a destructive reset on a production database.</p></div>
+
+  <h3>4. Start Four Terminals</h3>
+  <table>
+    <tr><th>Terminal</th><th>Command</th><th>Role</th></tr>
+    <tr><td>1</td><td><code>python surge_pricing_consumer_17.py</code></td><td>Start first; creates schema and listens to all topics</td></tr>
+    <tr><td>2</td><td><code>python ride_request_producer_17.py</code></td><td>Demand stream</td></tr>
+    <tr><td>3</td><td><code>python driver_supply_producer_17.py</code></td><td>Supply stream</td></tr>
+    <tr><td>4</td><td><code>python context_producer_17.py</code></td><td>Weather, traffic, and event stream</td></tr>
+  </table>
+  <p>Launch the three producers close together. Each groups records by scenario second, publishes that second's events, then waits one real second. The scenario therefore unfolds live for approximately one minute.</p>
+
+  <h3>5. Verify MySQL</h3>
+  <pre>docker exec sda-mysql mysql -uroot -padmin -e "
+SELECT COUNT(*) AS requests FROM sda_course_l17.ride_requests;
+SELECT COUNT(*) AS decisions FROM sda_course_l17.pricing_decisions;
+SELECT zone, MAX(final_multiplier) AS peak
+FROM sda_course_l17.pricing_decisions
+GROUP BY zone ORDER BY peak DESC;"</pre>
+
+  <h2 id="dashboard">Section 5: Grafana Pricing Control Room</h2>
+  <ol>
+    <li>Add a MySQL datasource named <code>MySQL — Lecture 17 Surge</code>.</li>
+    <li>Host: <code>sda-mysql:3306</code> | Database: <code>sda_course_l17</code>.</li>
+    <li>User/password: <code>grafana</code> / <code>grafana</code>; disable TLS for the local lab.</li>
+    <li>Create dashboard <code>Surge Pricing Control Room — Lecture 17</code>.</li>
+    <li>Set range to <strong>Last 5 minutes</strong> and refresh to <strong>5s</strong>.</li>
+  </ol>
+
+  <h3>Variable — Zone</h3>
+  <pre>SELECT DISTINCT zone AS __text, zone AS __value
+FROM pricing_decisions
+ORDER BY zone;</pre>
+  <p>Enable Multi-value and Include All. Use custom All value <code>.*</code>.</p>
+
+  <h3>Panel A — Current Multiplier by Zone (Bar Gauge)</h3>
+  <pre>SELECT p.zone, p.final_multiplier AS value
+FROM pricing_decisions p
+JOIN (
+  SELECT zone, MAX(decision_id) AS latest_id
+  FROM pricing_decisions
+  GROUP BY zone
+) latest ON p.decision_id = latest.latest_id
+WHERE p.zone REGEXP '${zone:regex}'
+ORDER BY value DESC;</pre>
+
+  <h3>Panel B — Multiplier over Time (Time Series)</h3>
+  <pre>SELECT
+  decision_time AS time,
+  final_multiplier AS value,
+  zone AS metric
+FROM pricing_decisions
+WHERE $__timeFilter(decision_time)
+  AND zone REGEXP '${zone:regex}'
+ORDER BY decision_time;</pre>
+
+  <h3>Panel C — Demand versus Supply (Time Series)</h3>
+  <pre>SELECT
+  decision_time AS time,
+  demand_window AS `Requests in 10s`,
+  available_drivers AS `Available Drivers`
+FROM pricing_decisions
+WHERE $__timeFilter(decision_time)
+  AND zone = '${zone}'
+ORDER BY decision_time;</pre>
+  <p>For this panel, select one zone rather than All.</p>
+
+  <h3>Panel D — Latest Factor Breakdown (Table)</h3>
+  <pre>SELECT
+  zone,
+  demand_supply_ratio,
+  demand_adjustment,
+  weather_adjustment,
+  traffic_adjustment,
+  event_adjustment,
+  final_multiplier,
+  reason
+FROM pricing_decisions
+WHERE zone REGEXP '${zone:regex}'
+ORDER BY decision_id DESC
+LIMIT 20;</pre>
+
+  <h3>Panel E — Pricing Decision Audit (Table)</h3>
+  <pre>SELECT
+  decision_time,
+  phase,
+  zone,
+  demand_window,
+  available_drivers,
+  raw_multiplier,
+  final_multiplier,
+  reason
+FROM pricing_decisions
+WHERE $__timeFilter(decision_time)
+  AND zone REGEXP '${zone:regex}'
+ORDER BY decision_time DESC
+LIMIT 50;</pre>
+
+  <h2 id="decide">Section 6: Interpret, Challenge, and Govern</h2>
+  <h3>What Students Should Observe</h3>
+  <ol>
+    <li>Normal phase multipliers remain close to 1.0×.</li>
+    <li>The CBD and Railway Station respond more strongly than other zones.</li>
+    <li>The final multiplier moves gradually because each decision is rate-limited.</li>
+    <li>Recovery lags the source change; smoothing trades responsiveness for stability.</li>
+    <li>The audit table explains whether demand, weather, traffic, or an event contributed.</li>
+  </ol>
+
+  <h3>Policy Challenge — Change One Rule</h3>
+  <p>Each group chooses one change, predicts the effect, edits <code>surge_pricing_logic_17.py</code>, reruns the scenario, and compares the dashboard:</p>
+  <ul>
+    <li>Reduce the cap from 2.5× to 1.8×.</li>
+    <li>Remove weather as a direct price adjustment.</li>
+    <li>Increase the demand weight from 0.35 to 0.50.</li>
+    <li>Slow the maximum change from ±0.20 to ±0.10.</li>
+    <li>Require a minimum of 10 requests before any multiplier above 1.0×.</li>
+  </ul>
+
+  <h3>Fairness and Governance Discussion</h3>
+  <table>
+    <tr><th>Risk</th><th>Management Question</th><th>Possible Control</th></tr>
+    <tr><td>Emergency price shock</td><td>Should surge apply during floods or evacuations?</td><td>Emergency-mode cap or disable rule</td></tr>
+    <tr><td>Geographic proxy bias</td><td>Do some neighbourhoods face systematically higher prices?</td><td>Zone fairness audit and outcome monitoring</td></tr>
+    <tr><td>False scarcity</td><td>What if driver telemetry is delayed?</td><td>Freshness checks; freeze multiplier on stale supply</td></tr>
+    <tr><td>Customer transparency</td><td>Can a rider understand why price increased?</td><td>Reason codes and pre-booking disclosure</td></tr>
+    <tr><td>Driver gaming</td><td>Can coordinated sign-offs create artificial shortage?</td><td>Anomaly detection and minimum evidence window</td></tr>
+  </table>
+
+  <h3>60-Second Management Briefing</h3>
+  <ol>
+    <li><strong>Situation:</strong> Which zone changed, and when?</li>
+    <li><strong>Evidence:</strong> What happened to demand, supply, and context?</li>
+    <li><strong>Decision:</strong> Keep, cap, or suspend the multiplier?</li>
+    <li><strong>Guardrail:</strong> What customer or driver risk must be monitored?</li>
+  </ol>
+
+  <h3>Troubleshooting</h3>
+  <table>
+    <tr><th>Symptom</th><th>Likely Cause</th><th>Fix</th></tr>
+    <tr><td>No decisions</td><td>Supply or context producer has not started</td><td>Run all three producers; the engine needs complete zone state</td></tr>
+    <tr><td>Only one topic has rows</td><td>Producer started in the wrong folder</td><td>Keep all generated CSVs and scripts together</td></tr>
+    <tr><td>Dashboard is empty</td><td>Wrong database or time range</td><td>Use <code>sda_course_l17</code> and Last 5 minutes</td></tr>
+    <tr><td>Multiplier changes too quickly</td><td>Producers were not launched together</td><td>Reset the database and restart the four terminals</td></tr>
+    <tr><td>Duplicate run data</td><td>Database was not reset</td><td>Filter by time or use the optional clean reset</td></tr>
+  </table>
+
+  <div class="callout green"><p><strong>Key takeaway:</strong> Dynamic pricing is not a formula alone. It is a governed decision system: multiple sources, stateful processing, explainable rules, operational monitoring, and explicit limits on harm.</p></div>
+
+  <div class="page-nav"><a href="../lecture16/extension.html">← Lecture 16 Extension</a><a href="../index.html">Course Home →</a></div>
+</main>
+<script>
+function toggleTheme(){const root=document.documentElement;const dark=root.getAttribute('data-theme')==='dark';root.setAttribute('data-theme',dark?'light':'dark');document.querySelector('.theme-btn').textContent=dark?'🌙 Dark':'☀️ Light';}
+</script>
+</body>
+</html>
